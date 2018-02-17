@@ -100,14 +100,13 @@ static inline uint64_t rdtsc() {
   return __rdtsc();
 }
 
-static void bench32() {
+static void bench32(int count) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
-  int count = 100000;
   int64_t anything = 0;
   for (int i = 0; i < count; i++) {
     uint32_t r = RandomU32();
@@ -144,21 +143,16 @@ static void bench32() {
       printf("For %x %20s %20s\n", r, own, theirs);
     }
   }
-  printf("avg: %f %f %f %f %ld\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), anything);
+  printf("32: %8.3f %8.3f     %8.3f %8.3f        %9ld\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), anything);
 }
 
-static void bench64() {
+static void bench64(int count) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
-#ifdef RENDER_RESULTS
-  int count = 1000;
-#else
-  int count = 100000;
-#endif
   int64_t anything = 0;
   for (int i = 0; i < count; i++) {
     uint64_t r = RandomU64();
@@ -193,7 +187,7 @@ static void bench64() {
     if (throwaway == 12345) {
       printf("Argh!\n");
     }
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
     if (strcmp(own, theirs) != 0) {
 #else
     if (strlen(own) != strlen(theirs)) {
@@ -201,7 +195,7 @@ static void bench64() {
       printf("For %16lx %28s %28s\n", r, own, theirs);
     }
   }
-  printf("avg: %f %f %f %f %ld\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), anything);
+  printf("64: %8.3f %8.3f     %8.3f %8.3f        %9ld\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), anything);
 }
 
 int main(int argc, char** argv) {
@@ -213,10 +207,28 @@ int main(int argc, char** argv) {
   CPU_SET(2, &my_set);
   sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
 
-  if ((argc == 2) && (strcmp(argv[1], "-32") == 0)) {
-    bench32();
-  } else {
-    bench64();
+  // By default, run both 32 and 64-bit benchmarks with 100000 iterations each.
+  bool run32 = true;
+  bool run64 = true;
+  int count = 100000;
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "-32") == 0) {
+      run32 = true;
+      run64 = false;
+    } else if (strcmp(argv[i], "-64") == 0) {
+      run32 = false;
+      run64 = true;
+    } else if (strncmp(argv[i], "-count=", 7) == 0) {
+      sscanf(argv[i], "-count=%i", &count);
+    }
+  }
+
+  printf("    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)\n");
+  if (run32) {
+    bench32(count);
+  }
+  if (run64) {
+    bench64(count);
   }
   return 0;
 }

@@ -9,3 +9,58 @@ point numbers.
 
 All code outside of third_party/ is Copyright Ulf Adams, and published under the
 Apache License 2.0.
+
+## Building, Testing, Running
+
+We use the Bazel build system (https://bazel.build). We recommend using the
+latest release, but it should also work with earlier versions.
+
+### Tests
+You can run the tests with
+```
+bazel test //ryu/... //src/...
+```
+
+### Benchmarks
+We provide both C and Java benchmark programs.
+
+Enable optimization by adding "-c opt" on the command line, and select a custom
+C/C++ compiler by setting the CC environment variable before running bazel,
+e.g.:
+```
+$ CC=clang-3.9 bazel run -c opt //ryu/benchmark --
+    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
+32:   23.561    1.593       90.875   44.514         11443598
+64:   33.805    1.713      100.227   97.514         13403191
+```
+
+As of this writing, Bazel does not work with clang-4.0 or clang-5.0 due to
+https://github.com/bazelbuild/bazel/issues/3977.
+
+Additional parameters can be passed to the benchmark after the `--` parameter:
+```
+  -32      only run the 32-bit benchmark
+  -64      only run the 64-bit benchmark
+  -count=n run n iterations each
+```
+
+## Deviations from the (as yet, unpublished) Paper
+
+Given the feedback from the reviewers, we have decided to change the code to
+generate output that is closest to the original input, by default. Only the
+64-bit C variant still supports the original mode as described in the paper,
+and this needs to be enabled with the `LEGACY_MODE` preprocessor symbol.
+
+```
+$ CC=clang-3.9 bazel run -c opt --copt=-DLEGACY_MODE //ryu/benchmark -- -64
+    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
+64:   23.586    1.542      101.381   98.006         12496731
+```
+
+We've also added a mode to more closely match Grisu3 output, which can be
+enabled by setting the `MATCH_GRISU3_OUTPUT` preprocessor symbol.
+```
+$ CC=clang-3.9 bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
+    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
+64:   29.806    3.182      103.060   98.717         13286634
+```

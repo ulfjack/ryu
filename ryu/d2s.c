@@ -24,11 +24,13 @@
 #include <stdio.h>
 #endif
 
-// Disable this to get a faster variant that does not fulfill the requirement
-// that the output string needs to be the closest (shortest) to the input.
-#define NICER_OUTPUT
+// Set LEGACY_MODE to get the original behavior as described in the paper. Set
+// MATCH_GRISU3_OUTPUT to match Grisu3 output perfectly.
+#ifdef MATCH_GRISU3_OUTPUT
+#undef LEGACY_MODE
+#endif
 
-#ifdef PERFECT_OUTPUT
+#ifndef LEGACY_MODE
 #define NICER_OUTPUT
 #endif
 
@@ -515,7 +517,7 @@ void d2s_buffered(double f, char* result) {
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
 #ifdef NICER_OUTPUT
   uint64_t vr;
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
   bool vrIsTrailingZeros = false;
 #endif
 #endif
@@ -545,7 +547,7 @@ void d2s_buffered(double f, char* result) {
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
 #ifdef NICER_OUTPUT
       if (mv % 5 == 0) {
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
 #endif
       } else {
@@ -584,7 +586,7 @@ void d2s_buffered(double f, char* result) {
     printf("V+=%lu\nV =%lu\nV-=%lu\n", vp, vr, vm);
 #endif
     if (q <= 1) {
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
       vrIsTrailingZeros = (mv & ((1L << q) - 1)) == 0;
 #endif
       if (acceptBounds) {
@@ -593,7 +595,7 @@ void d2s_buffered(double f, char* result) {
         vp -= 1 >= q;
       }
     } else {
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
       // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q
       // <=> ntz(mv) >= q  &&  pow5Factor(mv) - e2 >= q
       // <=> ntz(mv) >= q
@@ -625,7 +627,7 @@ void d2s_buffered(double f, char* result) {
   uint64_t output;
   // On average, we remove ~2 digits.
   if (vmIsTrailingZeros
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
       || vrIsTrailingZeros
 #endif
       ) {
@@ -635,7 +637,7 @@ void d2s_buffered(double f, char* result) {
       // as vm - (vm / 10) * 10.
       vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0; // vm % 10 == 0;
 #ifdef NICER_OUTPUT
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
       vrIsTrailingZeros &= lastRemovedDigit == 0;
 #endif
       uint64_t nvr = vr / 10;
@@ -654,7 +656,7 @@ void d2s_buffered(double f, char* result) {
     if (vmIsTrailingZeros) {
       while (vm - (vm / 10) * 10 == 0) {
 #ifdef NICER_OUTPUT
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
         vrIsTrailingZeros &= lastRemovedDigit == 0;
 #endif
         uint64_t nvr = vr / 10;
@@ -671,7 +673,7 @@ void d2s_buffered(double f, char* result) {
     printf("%ld %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
-#ifdef PERFECT_OUTPUT
+#ifdef MATCH_GRISU3_OUTPUT
     if (vrIsTrailingZeros && (lastRemovedDigit == 5)) {
       if (vr % 10 != 7) {
         lastRemovedDigit = 4;
