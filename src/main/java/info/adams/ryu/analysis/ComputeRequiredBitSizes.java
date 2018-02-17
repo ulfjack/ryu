@@ -1,0 +1,199 @@
+// Copyright 2018 Ulf Adams
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package info.adams.ryu.analysis;
+
+import java.math.BigInteger;
+
+/**
+ * Computes appropriate values for B_0 and B_1 for a given floating point type.
+ */
+public final class ComputeRequiredBitSizes {
+  private static final BigInteger FIVE = BigInteger.valueOf(5);
+  private static final BigInteger TWO = BigInteger.valueOf(2);
+
+  private static final long LOG10_5_DENOMINATOR = 10000000L;
+  private static final long LOG10_5_NUMERATOR = (long) (LOG10_5_DENOMINATOR * Math.log10(5));
+
+  private static final long LOG10_2_DENOMINATOR = 10000000L;
+  private static final long LOG10_2_NUMERATOR = (long) (LOG10_2_DENOMINATOR * Math.log10(2));
+
+  public static void main(String[] args) {
+    FloatingPointFormat format = FloatingPointFormat.FLOAT256;
+    int mbits = format.mantissaBits() + 3;
+
+    int minE2 = 2; // 2;
+    int maxE2 = -(1 - format.bias() - format.mantissaBits() - 2);
+    int b0 = 0;
+    for (int e2 = minE2; e2 < maxE2 + 1; e2++) {
+      int q = Math.max(0, (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
+      int i = e2 - q;
+      BigInteger pow5 = FIVE.pow(i);
+      BigInteger pow2 = BigInteger.ONE.shiftLeft(q);
+
+      // max(w) = 4 * ((1 << format.mantissaBits()) * 2 - 1) + 2
+      //        = (1 << (format.mantissaBits() + 3)) - 2
+      BigInteger mxM = BigInteger.ONE.shiftLeft(mbits).subtract(TWO);
+      BigInteger min = min(pow5, pow2, mxM);
+//      BigInteger min2 = minSlow(pow5, pow2, mxM);
+//      if (!min.equals(min2)) {
+//        new IllegalStateException(min + " " + min2).printStackTrace(System.out);
+//      }
+
+      int bits = min.divide(mxM).bitLength();
+      int reqn = pow5.bitLength() - bits;
+      b0 = Math.max(b0, reqn);
+      System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
+          Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(i), Integer.valueOf(bits),
+          Integer.valueOf(reqn), Integer.valueOf(b0), Double.valueOf((100.0 * e2) / maxE2));
+    }
+    System.out.println("B_0 = " + b0);
+
+    minE2 = 2;
+    maxE2 = ((1 << format.exponentBits()) - 2) - format.bias() - format.mantissaBits() - 2;
+    int b1 = 0;
+    for (int e2 = minE2; e2 < maxE2 + 1; e2++) {
+      int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
+      BigInteger pow5 = FIVE.pow(q);
+      BigInteger pow2 = BigInteger.ONE.shiftLeft(e2 - q);
+
+      // max(w) = 4 * ((1 << format.mantissaBits()) * 2 - 1) + 2
+      //        = (1 << (format.mantissaBits() + 3)) - 2
+      BigInteger mxM = BigInteger.ONE.shiftLeft(mbits).subtract(TWO);
+      BigInteger max = max(pow2, pow5, mxM);
+//      BigInteger max2 = maxSlow(pow2, pow5, mxM);
+//      if (!max.equals(max2)) {
+//        new IllegalStateException(max + " " + max2).printStackTrace(System.out);
+//      }
+
+      BigInteger num = mxM.multiply(pow5).multiply(pow2);
+      BigInteger den = pow5.subtract(max);
+      int bits = num.divide(den).bitLength();
+      int reqn = bits - pow5.bitLength();
+      b1 = Math.max(b1, reqn);
+      System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
+          Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(e2 - q), Integer.valueOf(bits),
+          Integer.valueOf(reqn), Integer.valueOf(b1), Double.valueOf((100.0 * e2) / maxE2));
+    }
+    System.out.println("B_1 = " + b1);
+    System.out.println();
+    System.out.println(format);
+    System.out.println("B_0 = " + b0);
+    System.out.println("B_1 = " + b1);
+  }
+
+  private static BigInteger min(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
+    if (maximum.compareTo(modulo) >= 0) {
+      return BigInteger.ONE;
+    }
+    BigInteger a = multiplier;
+    BigInteger b = modulo;
+    BigInteger s = BigInteger.ONE;
+    BigInteger t = BigInteger.ZERO;
+    BigInteger u = BigInteger.ZERO;
+    BigInteger v = BigInteger.ONE;
+    while (true) {
+      while (b.compareTo(a) >= 0) {
+        b = b.subtract(a);
+        u = u.subtract(s);
+        v = v.subtract(t);
+        if (u.negate().compareTo(maximum) >= 0) {
+          return a;
+        }
+      }
+      if (b.equals(BigInteger.ZERO)) {
+        return BigInteger.ONE;
+      }
+      while (a.compareTo(b) >= 0) {
+        BigInteger oldA = a;
+        a = a.subtract(b);
+        s = s.subtract(u);
+        t = t.subtract(v);
+        if (s.compareTo(maximum) >= 0) {
+          return oldA;
+        }
+      }
+      if (a.equals(BigInteger.ZERO)) {
+        return BigInteger.ONE;
+      }
+    }
+  }
+
+  @SuppressWarnings("unused")
+  private static BigInteger minSlow(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
+    if (maximum.compareTo(modulo) >= 0) {
+      return BigInteger.ONE;
+    }
+    BigInteger result = multiplier.mod(modulo);
+    for (long l = 2; l < maximum.longValueExact(); l++) {
+      BigInteger cand = BigInteger.valueOf(l).multiply(multiplier).mod(modulo);
+      if (cand.compareTo(result) < 0) {
+        result = cand;
+      }
+    }
+    return result;
+  }
+
+  private static BigInteger max(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
+    if (maximum.compareTo(modulo) >= 0) {
+      return modulo.subtract(BigInteger.ONE);
+    }
+    BigInteger a = multiplier;
+    BigInteger b = modulo;
+    BigInteger s = BigInteger.ONE;
+    BigInteger t = BigInteger.ZERO;
+    BigInteger u = BigInteger.ZERO;
+    BigInteger v = BigInteger.ONE;
+    while (true) {
+      while (b.compareTo(a) >= 0) {
+        BigInteger oldB = b;
+        b = b.subtract(a);
+        u = u.subtract(s);
+        v = v.subtract(t);
+        if (u.negate().compareTo(maximum) >= 0) {
+          return oldB.negate().add(modulo);
+        }
+      }
+      if (b.equals(BigInteger.ZERO)) {
+        return BigInteger.ONE;
+      }
+      while (a.compareTo(b) >= 0) {
+        a = a.subtract(b);
+        s = s.subtract(u);
+        t = t.subtract(v);
+        if (s.compareTo(maximum) >= 0) {
+          return b.negate().add(modulo);
+        }
+      }
+      if (a.equals(BigInteger.ZERO)) {
+        return BigInteger.ONE;
+      }
+    }
+  }
+
+  @SuppressWarnings("unused")
+  private static BigInteger maxSlow(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
+    if (maximum.compareTo(modulo) >= 0) {
+      return modulo.subtract(BigInteger.ONE);
+    }
+    BigInteger result = multiplier.mod(modulo);
+    for (long l = 2; l < maximum.longValueExact(); l++) {
+      BigInteger cand = BigInteger.valueOf(l).multiply(multiplier).mod(modulo);
+      if (cand.compareTo(result) > 0) {
+        result = cand;
+      }
+    }
+    return result;
+  }
+}
