@@ -77,10 +77,6 @@ static const char DIGIT_TABLE[200] = {
 };
 #endif // NO_DIGIT_TABLE
 
-static inline int32_t min(int32_t a, int32_t b) {
-  return a < b ? a : b;
-}
-
 static uint32_t pow5Factor(uint32_t value) {
   for (uint32_t count = 0; value > 0; count++) {
     if (value - 5 * (value / 5) != 0) {
