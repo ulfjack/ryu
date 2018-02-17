@@ -19,6 +19,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+//#define DEBUG
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 #define FLOAT_MANTISSA_BITS 23
 #define FLOAT_EXPONENT_BITS 8
 
@@ -92,18 +97,18 @@ static inline uint32_t pow5bits(int32_t e) {
 
 // It seems to be slightly faster to avoid uint128_t here, although the
 // generated code for uint128_t looks slightly nicer.
-static inline uint32_t mulPow5InvDivPow2(uint32_t m, uint32_t q, int32_t j) {
+static inline uint64_t mulPow5InvDivPow2(uint32_t m, uint32_t q, int32_t j) {
   uint64_t factor = POW5_INV_SPLIT[q];
   uint64_t bits0 = ((uint64_t) m) * (factor & 0xffffffff);
   uint64_t bits1 = ((uint64_t) m) * (factor >> 32);
-  return (uint32_t) (((bits0 >> 32) + bits1) >> (j - 32));
+  return ((bits0 >> 32) + bits1) >> (j - 32);
 }
 
-static inline uint32_t mulPow5divPow2(uint32_t m, uint32_t i, int32_t j) {
+static inline uint64_t mulPow5divPow2(uint32_t m, uint32_t i, int32_t j) {
   uint64_t factor = POW5_SPLIT[i];
   uint64_t bits0 = ((uint64_t) m) * (factor & 0xffffffff);
   uint64_t bits1 = ((uint64_t) m) * (factor >> 32);
-  return (uint32_t) (((bits0 >> 32) + bits1) >> (j - 32));
+  return ((bits0 >> 32) + bits1) >> (j - 32);
 }
 
 static inline uint32_t decimalLength(uint32_t v) {
@@ -120,6 +125,7 @@ static inline uint32_t decimalLength(uint32_t v) {
 }
 
 void f2s_buffered(float f, char* result) {
+  // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
   uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
   uint32_t exponentBits = FLOAT_EXPONENT_BITS;
   uint32_t offset = (1 << (exponentBits - 1)) - 1;
@@ -153,40 +159,37 @@ void f2s_buffered(float f, char* result) {
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
 
-  // Compute the upper and lower bounds.
-#ifdef NICER_OUTPUT
+  // Step 2: Determine the interval of legal decimal representations.
   uint32_t mv = 4 * m2;
-#endif
   uint32_t mp = 4 * m2 + 2;
   uint32_t mm = 4 * m2 - (((m2 != (1L << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
 
-#ifdef NICER_OUTPUT
+  // Step 3: Convert to a decimal power base using 64-bit arithmetic.
   uint32_t vr;
-#endif
   uint32_t vp, vm;
   int32_t e10;
   bool vmIsTrailingZeros = false;
+  uint32_t lastRemovedDigit = 0;
   if (e2 >= 0) {
     int32_t q = (int32_t) ((e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR);
     e10 = q;
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
-#ifdef NICER_OUTPUT
-    vr = mulPow5InvDivPow2(mv, q, i);
-#endif
-    vp = mulPow5InvDivPow2(mp, q, i);
-    vm = mulPow5InvDivPow2(mm, q, i);
-    if (mp % 5 == 0) {
+    vr = (uint32_t) mulPow5InvDivPow2(mv, q, i);
+    vp = (uint32_t) mulPow5InvDivPow2(mp, q, i);
+    vm = (uint32_t) mulPow5InvDivPow2(mm, q, i);
+    if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
+      // We need to know one removed digit even if we are not going to loop below. We could use
+      // q = X - 1 above, except that would require 33 bits for the result, and we've found that
+      // 32-bit arithmetic is faster even on 64-bit machines.
+      int32_t l = POW5_INV_BITCOUNT + pow5bits(q - 1) - 1;
+      lastRemovedDigit = (uint32_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
+    }
+    if (q <= 9) {
       if (acceptBounds) {
-        vmIsTrailingZeros = 0 >= q;
+        vmIsTrailingZeros = pow5Factor(mm) >= q;
       } else {
-        vp -= min(e2 + 1, pow5Factor(mp)) >= q;
-      }
-    } else {
-      if (acceptBounds) {
-        vmIsTrailingZeros = min(e2 + (~mm & 1), pow5Factor(mm)) >= q;
-      } else {
-        vp -= 0 >= q;
+        vp -= pow5Factor(mp) >= q;
       }
     }
   } else {
@@ -195,51 +198,67 @@ void f2s_buffered(float f, char* result) {
     int32_t i = -e2 - q;
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
     int32_t j = q - k;
-#ifdef NICER_OUTPUT
-    vr = mulPow5divPow2(mv, i, j);
-#endif
-    vp = mulPow5divPow2(mp, i, j);
-    vm = mulPow5divPow2(mm, i, j);
+    vr = (uint32_t) mulPow5divPow2(mv, i, j);
+    vp = (uint32_t) mulPow5divPow2(mp, i, j);
+    vm = (uint32_t) mulPow5divPow2(mm, i, j);
+    if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
+      j = q - 1 - (pow5bits(i + 1) - POW5_BITCOUNT);
+      lastRemovedDigit = (uint32_t) (mulPow5divPow2(mv, i + 1, j) % 10);
+    }
     if (acceptBounds) {
       vmIsTrailingZeros = (~mm & 1) >= q;
     } else {
       vp -= 1 >= q;
     }
   }
+#ifdef DEBUG
+  printf("e10=%d\n", e10);
+  printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
+  printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
+#endif
 
+  // Step 4: Find the shortest decimal representation in the interval of legal representations.
   uint32_t vplength = decimalLength(vp);
   int32_t exp = e10 + vplength - 1;
 
-//  printf("%i %i\n", vpIsTrailingZeros, acceptBounds);
-
   uint32_t removed = 0;
-  while (vp / 10 > vm / 10) {
-    vmIsTrailingZeros &= vm % 10 == 0;
-#ifdef NICER_OUTPUT
-    vr /= 10;
-#endif
-    vp /= 10;
-    vm /= 10;
-    removed++;
-  }
-  if (vmIsTrailingZeros && acceptBounds) {
-    while (vm % 10 == 0) {
-#ifdef NICER_OUTPUT
-      vr /= 10;
-#endif
+  if (vmIsTrailingZeros) {
+    // General case, which happens rarely.
+    while (vp / 10 > vm / 10) {
+      vmIsTrailingZeros &= vm % 10 == 0;
+      uint64_t nvr = vr / 10;
+      lastRemovedDigit = vr - 10 * nvr;
+      vr = nvr;
+      vp /= 10;
+      vm /= 10;
+      removed++;
+    }
+    if (vmIsTrailingZeros && acceptBounds) {
+      while (vm % 10 == 0) {
+        uint64_t nvr = vr / 10;
+        lastRemovedDigit = vr - 10 * nvr;
+        vr = nvr;
+        vp /= 10;
+        vm /= 10;
+        removed++;
+      }
+    }
+  } else {
+    // Common case.
+    while (vp / 10 > vm / 10) {
+      uint64_t nvr = vr / 10;
+      lastRemovedDigit = vr - 10 * nvr;
+      vr = nvr;
       vp /= 10;
       vm /= 10;
       removed++;
     }
   }
-#ifdef NICER_OUTPUT
-  uint32_t output = vr > vm ? vr : vp;
-#else
-  uint32_t output = vp;
-#endif
+  uint32_t output = vr +
+      ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
   uint32_t olength = vplength - removed;
-//  printf("%i %i %i\n", output, vplength, olength);
 
+  // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
     result[index++] = '-';

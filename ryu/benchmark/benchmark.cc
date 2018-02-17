@@ -107,7 +107,7 @@ static void bench32() {
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
-  int count = 1000;
+  int count = 100000;
   int64_t anything = 0;
   for (int i = 0; i < count; i++) {
     uint32_t r = RandomU32();
@@ -140,6 +140,7 @@ static void bench32() {
       printf("Argh!\n");
     }
     if (strlen(own) != strlen(theirs)) {
+//    if (strcmp(own, theirs) != 0) {
       printf("For %x %20s %20s\n", r, own, theirs);
     }
   }
