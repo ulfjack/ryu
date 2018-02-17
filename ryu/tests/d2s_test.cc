@@ -17,6 +17,12 @@
 #include "ryu/ryu.h"
 #include "third_party/gtest/gtest.h"
 
+static double int64Bits2Double(uint64_t bits) {
+  double f;
+  memcpy(&f, &bits, sizeof(double));
+  return f;
+}
+
 TEST(D2sTest, Basic) {
   ASSERT_STREQ("0.0", d2s(0.0));
   ASSERT_STREQ("-0.0", d2s(-0.0));
@@ -27,7 +33,17 @@ TEST(D2sTest, Basic) {
   ASSERT_STREQ("-Infinity", d2s(-INFINITY));
 }
 
+TEST(D2sTest, SwitchToSubnormal) {
+  ASSERT_STREQ("2.2250738585072014E-308", d2s(2.2250738585072014E-308));
+}
+
+TEST(D2sTest, MinAndMax) {
+  ASSERT_STREQ("1.7976931348623157E308", d2s(int64Bits2Double(0x7fefffffffffffff)));
+  ASSERT_STREQ("5E-324", d2s(int64Bits2Double(1)));
+}
+
 TEST(D2sTest, Regression) {
+  ASSERT_STREQ("-2.109808898695963E16", d2s(-2.109808898695963E16));
   ASSERT_STREQ("4.940656E-318", d2s(4.940656E-318));
   ASSERT_STREQ("1.18575755E-316", d2s(1.18575755E-316));
   ASSERT_STREQ("2.989102097996E-312", d2s(2.989102097996E-312));

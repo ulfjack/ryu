@@ -469,6 +469,7 @@ static inline uint32_t decimalLength(uint64_t v) {
 }
 
 void d2s_buffered(double f, char* result) {
+  // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
   int32_t mantissaBits = DOUBLE_MANTISSA_BITS;
   int32_t exponentBits = DOUBLE_EXPONENT_BITS;
   int32_t offset = (1 << (exponentBits - 1)) - 1;
@@ -503,7 +504,7 @@ void d2s_buffered(double f, char* result) {
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
 
-  // Compute the upper and lower bounds.
+  // Step 2: Determine the interval of legal decimal representations.
 #ifdef NICER_OUTPUT
   uint64_t mv = 4 * m2;
 #endif
@@ -511,6 +512,7 @@ void d2s_buffered(double f, char* result) {
   // Implicit bool -> int conversion. True is 1, false is 0.
   uint64_t mm = 4 * m2 - 1 - ((m2 != (1L << mantissaBits)) || (ieeeExponent <= 1));
 
+  // Step 3: Convert to a decimal power base using 128-bit arithmetic.
 #ifdef NICER_OUTPUT
   uint64_t vr;
 #ifdef PERFECT_OUTPUT
@@ -612,6 +614,7 @@ void d2s_buffered(double f, char* result) {
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
 
+  // Step 4: Find the shortest decimal representation in the interval of legal representations.
   int32_t vplength = decimalLength(vp);
   int32_t exp = e10 + vplength - 1;
 
@@ -712,6 +715,7 @@ void d2s_buffered(double f, char* result) {
   printf("EXP=%d\n", exp);
 #endif
 
+  // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
     result[index++] = '-';
