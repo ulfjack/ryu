@@ -16,12 +16,7 @@ package info.adams.ryu;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Random;
-
-import org.junit.Ignore;
 import org.junit.Test;
-
-import info.adams.ryu.analysis.SlowConversion;
 
 public abstract class DoubleToStringTest {
   abstract String f(double f, RoundingMode roundingMode);
@@ -87,16 +82,5 @@ public abstract class DoubleToStringTest {
     assertD2sEquals("9.0608011534336E15", 9.0608011534336E15d);
     assertD2sEquals("4.708356024711512E18", 4.708356024711512E18);
     assertD2sEquals("9.409340012568248E18", 9.409340012568248E18);
-  }
-
-  @Test @Ignore
-  public void randomNumbers() {
-    Random rand = new Random(12345L);
-    for (int i = 0; i < 10000; i++) {
-      double value = Double.longBitsToDouble(rand.nextLong());
-      String a = f(value, RoundingMode.CONSERVATIVE);
-      String b = SlowConversion.doubleToString(value);
-      assertEquals(b, a);
-    }
   }
 }
