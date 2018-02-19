@@ -16,7 +16,6 @@ package info.adams.ryu;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public abstract class FloatToStringTest {
@@ -108,21 +107,5 @@ public abstract class FloatToStringTest {
     assertF2sEquals("1.00014165E-36", 1.00014165E-36f);
     assertF2sEquals("200.0", 200f);
     assertF2sEquals("3.3554432E7", 3.3554432E7f);
-  }
-
-  @Test @Ignore
-  public void roundTrip() {
-    for (long l = 0L; l <= 0x7fffffffL; l += 199) {
-      float f = Float.intBitsToFloat((int) l);
-      int g = Float.floatToRawIntBits(Float.parseFloat(f(f, RoundingMode.CONSERVATIVE)));
-      if (!Float.isNaN(f)) {
-        assertEquals("" + f, (int) l, g);
-      }
-      if (l % 1000000 == 0) {
-        double frac = l;
-        frac /= 0x7fffffffL;
-        System.out.printf("%.3f%% %s\n", Double.valueOf(100 * frac), Float.toString(f));
-      }
-    }
   }
 }

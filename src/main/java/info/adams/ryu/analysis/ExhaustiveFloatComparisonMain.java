@@ -36,6 +36,14 @@ public class ExhaustiveFloatComparisonMain {
           System.out.println(String.format("expected %s, but was %s", expected, actual));
           throw new RuntimeException(String.format("expected %s, but was %s", expected, actual));
         }
+
+        // Also check round-trip safety.
+        long g = Float.floatToRawIntBits(Float.parseFloat(actual)) & 0xffffffffL;
+        if (!Float.isNaN(f) && g != l) {
+          String message = String.format("expected %d, but was %d", Long.valueOf(l), Long.valueOf(g));
+          System.out.println(message);
+          throw new RuntimeException(message);
+        }
       }
       double frac = (base + 1) / (double) stride;
       System.out.printf("(%6.2f%%)\n", Double.valueOf(100 * frac));
