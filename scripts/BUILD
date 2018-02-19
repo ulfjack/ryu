@@ -14,7 +14,8 @@ CONVERSION_CMD="".join([
     "TMP_FILE=$$(mktemp /tmp/plot.XXXXXX)",
     " && cat $(location gnuplot.template)",
     "  | sed \"s|INPUT_FILE|$<|g\"",
-    "  | sed \"s|COMPARISON_NAME|%s|g\"",
+    "  | sed \"s|COMPARISON_NAME_1|%s|g\"",
+    "  | sed \"s|COMPARISON_NAME_2|%s|g\"",
     "  > $${TMP_FILE}",
     " && gnuplot $${TMP_FILE} > $@",
     " && rm -f $${TMP_FILE}"])
@@ -24,6 +25,6 @@ CONVERSION_CMD="".join([
   srcs = [t + "-" + f + ".csv"],
   tools = ["gnuplot.template"],
   outs = [t + "-" + f + ".pdf"],
-  cmd = CONVERSION_CMD % c,
-) for (t,c) in [("c","Grisu3"),("java","Jdk")] for f in ["float","double"]]
+  cmd = CONVERSION_CMD % (c, d),
+) for (t,c,d) in [("c","Grisu3",""),("java","Jdk","Jaffer")] for f in ["float","double"]]
 

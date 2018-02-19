@@ -14,6 +14,8 @@
 
 package info.adams.ryu.benchmark;
 
+import org.yuanheng.cookjson.DoubleUtils;
+
 import info.adams.random.MersenneTwister;
 import info.adams.ryu.RyuDouble;
 import info.adams.ryu.RyuFloat;
@@ -42,19 +44,22 @@ public class BenchmarkMain {
     }
 
     if (verbose) {
-      System.out.println("float_bits_as_int,ryu_time_in_ns,grisu3_time_in_ns");
+      System.out.println("float_bits_as_int,ryu_time_in_ns,jdk_time_in_ns,jaffer_time_in_ns");
     } else {
-      System.out.printf("    Average & Stddev Ryu  Average & Stddev JDK  (----------)\n");
+      System.out.printf("    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer\n");
     }
+    int throwaway = 0;
     if (run32) {
-      bench32(samples, iterations, verbose);
+      throwaway += bench32(samples, iterations, verbose);
     }
     if (run64) {
-      bench64(samples, iterations, verbose);
+      throwaway += bench64(samples, iterations, verbose);
     }
+    System.err.println();
+    System.err.println("Preventing the compiler from optimizing the code away: " + throwaway);
   }
 
-  private static void bench32(int samples, int iterations, boolean verbose) {
+  private static int bench32(int samples, int iterations, boolean verbose) {
     MersenneTwister twister = new MersenneTwister(12345);
     // Warm up the JIT.
     MeanAndVariance warmUp = new MeanAndVariance();
@@ -103,18 +108,18 @@ public class BenchmarkMain {
       double delta2 = (stop - start) / (double) iterations;
       mv2.update(delta2);
       if (verbose) {
-        System.out.println(Integer.toUnsignedString(r) + "," + delta1 + "," + delta2);
+        System.out.println(Integer.toUnsignedString(r) + "," + delta1 + "," + delta2 + ",");
       }
     }
     if (!verbose) {
-      System.out.printf("32: %8.3f %8.3f      %8.3f %8.3f     %10d\n",
+      System.out.printf("32: %8.3f %8.3f      %8.3f %8.3f\n",
           Double.valueOf(mv1.mean()), Double.valueOf(mv1.stddev()),
-          Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()),
-          Integer.valueOf(throwaway));
+          Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()));
     }
+    return throwaway;
   }
 
-  private static void bench64(int samples, int iterations, boolean verbose) {
+  private static int bench64(int samples, int iterations, boolean verbose) {
     MersenneTwister twister = new MersenneTwister(12345);
     // Warm up the JIT.
     MeanAndVariance warmUp = new MeanAndVariance();
@@ -130,12 +135,16 @@ public class BenchmarkMain {
       for (int j = 0; j < 100; j++) {
         Double.toString(f).length();
       }
+      for (int j = 0; j < 100; j++) {
+        DoubleUtils.toString(f).length();
+      }
       long stop = System.nanoTime();
       warmUp.update((stop - start) / 100.0);
     }
 
     MeanAndVariance mv1 = new MeanAndVariance();
     MeanAndVariance mv2 = new MeanAndVariance();
+    MeanAndVariance mv3 = new MeanAndVariance();
     twister.setSeed(12345);
     // We track some value computed from the result of the conversion to make sure that the
     // compiler does not eliminate the conversion due to the result being otherwise unused.
@@ -162,15 +171,26 @@ public class BenchmarkMain {
       stop = System.nanoTime();
       double delta2 = (stop - start) / (double) iterations;
       mv2.update(delta2);
+
+      System.gc();
+      System.gc();
+      start = System.nanoTime();
+      for (int j = 0; j < iterations; j++) {
+        throwaway += Double.toString(f).length();
+      }
+      stop = System.nanoTime();
+      double delta3 = (stop - start) / (double) iterations;
+      mv3.update(delta3);
       if (verbose) {
-        System.out.println(Long.toUnsignedString(r) + "," + delta1 + "," + delta2);
+        System.out.println(Long.toUnsignedString(r) + "," + delta1 + "," + delta2 + "," + delta3);
       }
     }
     if (!verbose) {
-      System.out.printf("64: %8.3f %8.3f      %8.3f %8.3f     %10d\n",
+      System.out.printf("64: %8.3f %8.3f      %8.3f %8.3f     %8.3f %8.3f\n",
           Double.valueOf(mv1.mean()), Double.valueOf(mv1.stddev()),
           Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()),
-          Integer.valueOf(throwaway));
+          Double.valueOf(mv3.mean()), Double.valueOf(mv3.stddev()));
     }
+    return throwaway;
   }
 }
