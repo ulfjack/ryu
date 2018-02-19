@@ -100,38 +100,35 @@ static inline uint64_t rdtsc() {
   return __rdtsc();
 }
 
-static void bench32(int count) {
+static void bench32(int samples, int iterations) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
-  int64_t anything = 0;
-  for (int i = 0; i < count; i++) {
+  int throwaway = 0;
+  for (int i = 0; i < samples; i++) {
     uint32_t r = RandomU32();
     float f = int32Bits2Float(r);
 
-    int throwaway = 0;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < iterations; j++) {
       f2s_buffered(f, bufferown);
       throwaway += strlen(bufferown);
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    int64_t delta1 = duration_cast<microseconds>( t2 - t1 ).count();
+    int64_t delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv1, delta1);
 
     t1 = high_resolution_clock::now();
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < iterations; j++) {
       fcv(f);
       throwaway += strlen(buffer);
     }
     t2 = high_resolution_clock::now();
-    int64_t delta2 = duration_cast<microseconds>( t2 - t1 ).count();
+    int64_t delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
-    anything += delta1 + delta2;
-//    printf("%u,%ld,%ld\n", r,delta1, delta2);
 
     char* own = bufferown;
     char* theirs = fcv(f);
@@ -143,50 +140,44 @@ static void bench32(int count) {
       printf("For %x %20s %20s\n", r, own, theirs);
     }
   }
-  printf("32: %8.3f %8.3f     %8.3f %8.3f        %9ld\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), anything);
+  printf("32: %8.3f %8.3f     %8.3f %8.3f         %10d\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
 }
 
-static void bench64(int count) {
+static void bench64(int samples, int iterations) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
-  int64_t anything = 0;
-  for (int i = 0; i < count; i++) {
+  int throwaway = 0;
+  for (int i = 0; i < samples; i++) {
     uint64_t r = RandomU64();
     double f = int64Bits2Double(r);
 
-    int throwaway = 0;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < iterations; j++) {
       d2s_buffered(f, bufferown);
       throwaway += bufferown[2];
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    int64_t delta1 = duration_cast<microseconds>( t2 - t1 ).count();
+    int64_t delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv1, delta1);
 
     t1 = high_resolution_clock::now();
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < iterations; j++) {
       dcv(f);
       throwaway += buffer[2];
     }
     t2 = high_resolution_clock::now();
-    int64_t delta2 = duration_cast<microseconds>( t2 - t1 ).count();
+    int64_t delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
-    anything += delta1 + delta2;
 #ifdef RENDER_RESULTS
     printf("%lu,%ld,%ld\n", r,delta1, delta2);
 #endif
 
     char* own = bufferown;
     char* theirs = dcv(f);
-//    printf("For %16lx %28s %28s\n", r, own, theirs);
-    if (throwaway == 12345) {
-      printf("Argh!\n");
-    }
 #ifdef MATCH_GRISU3_OUTPUT
     if (strcmp(own, theirs) != 0) {
 #else
@@ -195,7 +186,7 @@ static void bench64(int count) {
       printf("For %16lx %28s %28s\n", r, own, theirs);
     }
   }
-  printf("64: %8.3f %8.3f     %8.3f %8.3f        %9ld\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), anything);
+  printf("64: %8.3f %8.3f     %8.3f %8.3f         %10d\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
 }
 
 int main(int argc, char** argv) {
@@ -210,7 +201,8 @@ int main(int argc, char** argv) {
   // By default, run both 32 and 64-bit benchmarks with 100000 iterations each.
   bool run32 = true;
   bool run64 = true;
-  int count = 100000;
+  int samples = 100000;
+  int iterations = 1000;
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-32") == 0) {
       run32 = true;
@@ -218,17 +210,19 @@ int main(int argc, char** argv) {
     } else if (strcmp(argv[i], "-64") == 0) {
       run32 = false;
       run64 = true;
-    } else if (strncmp(argv[i], "-count=", 7) == 0) {
-      sscanf(argv[i], "-count=%i", &count);
+    } else if (strncmp(argv[i], "-samples=", 9) == 0) {
+      sscanf(argv[i], "-samples=%i", &samples);
+    } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
+      sscanf(argv[i], "-iterations=%i", &iterations);
     }
   }
 
-  printf("    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)\n");
+  printf("    Average & Stddev Ryu  Average & Stddev Grisu3  (----------)\n");
   if (run32) {
-    bench32(count);
+    bench32(samples, iterations);
   }
   if (run64) {
-    bench64(count);
+    bench64(samples, iterations);
   }
   return 0;
 }

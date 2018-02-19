@@ -5,4 +5,3 @@ cc_library(
   srcs = ["f2s.c", "d2s.c"],
   hdrs = ["ryu.h"],
 )
-

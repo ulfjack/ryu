@@ -29,9 +29,14 @@ C/C++ compiler by setting the CC environment variable before running bazel,
 e.g.:
 ```
 $ CC=clang-3.9 bazel run -c opt //ryu/benchmark --
-    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
-32:   23.561    1.593       90.875   44.514         11443598
-64:   33.805    1.713      100.227   97.514         13403191
+    Average & Stddev Ryu  Average & Stddev Grisu3  (----------)
+32:   23.561    1.593       90.875   44.514           11443598
+64:   33.805    1.713      100.227   97.514           13403191
+
+$ bazel run //src/main/java/info/adams/ryu/benchmark --
+    Average & Stddev Ryu  Average & Stddev JDK  (----------)
+32:   55.879   11.802       255.617  172.629       24455000
+64:   88.724    7.411      1069.786  295.320       43958000
 ```
 
 As of this writing, Bazel does not work with clang-4.0 or clang-5.0 due to
@@ -39,9 +44,10 @@ https://github.com/bazelbuild/bazel/issues/3977.
 
 Additional parameters can be passed to the benchmark after the `--` parameter:
 ```
-  -32      only run the 32-bit benchmark
-  -64      only run the 64-bit benchmark
-  -count=n run n iterations each
+  -32           only run the 32-bit benchmark
+  -64           only run the 64-bit benchmark
+  -samples=n    run n pseudo-randomly selected numbers
+  -iterations=n run each number n times
 ```
 
 ## Deviations from the (as yet, unpublished) Paper
