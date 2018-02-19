@@ -25,6 +25,8 @@ import org.junit.runners.Suite.SuiteClasses;
 
   SlowFloatTest.class,
   SlowDoubleTest.class,
+
+  JafferDoubleTest.class,
 })
 public class AllTests {
 }

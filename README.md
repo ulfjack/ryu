@@ -86,8 +86,21 @@ $ bazel build --jobs=1 //scripts:{c,java}-{float,double}.pdf
 
 The resulting files are `bazel-genfiles/scripts/{c,java}-{float,double}.pdf`.
 
+### Differences between Ryu and Jaffer / Jdk implementations
+We provide a binary to find differences between Ryu and the Jaffer / Jdk
+implementations:
+```
+$ bazel run //src/main/java/info/adams/ryu/analysis:FindDifferences --
+```
+
+Add the `-mode=csv` option to get all the discovered differences as a CSV. Use
+`-mode=latex` instead to get a latex snippet of the first 20. Use
+`-mode=summary` to only print the number of discovered differences (this is the
+default mode).
+
 ## Deviations from the (as yet, unpublished) Paper
 
+### Changes to the Algorithm
 Given the feedback from the reviewers, we have decided to change the code to
 generate output that is closest to the original input, by default. Only the
 64-bit C variant still supports the original mode as described in the paper,
@@ -109,3 +122,9 @@ $ CC=clang-3.9 bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- 
     Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
 64:   29.806    3.182      103.060   98.717         13286634
 ```
+
+### Jaffer's Implementation
+The code given by Jaffer in the original paper does not come with a license
+declaration. Instead, we're using code found on GitHub, which contains a license
+declaration by Jaffer. This implementation was fixed to no longer output
+incorrect values for negative numbers compared to the one we used in the paper.

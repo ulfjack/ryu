@@ -5,6 +5,8 @@ java_library(
   srcs = glob(["*.java"]),
   deps = [
     "//src/main/java/info/adams/ryu",
+    "//third_party/jaffer",
+    "//third_party/mersenne_java",
   ],
 )
 
@@ -30,5 +32,10 @@ java_binary(
 
 java_binary(
   name = "ComputeTableSizes",
+  runtime_deps = [":analysis"],
+)
+
+java_binary(
+  name = "FindDifferences",
   runtime_deps = [":analysis"],
 )

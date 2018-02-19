@@ -7,6 +7,7 @@ java_test(
   deps = [
     "//src/main/java/info/adams/ryu",
     "//src/main/java/info/adams/ryu/analysis",
+    "//third_party/jaffer",
     "//third_party/junit",
   ],
 )
