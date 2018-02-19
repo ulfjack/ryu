@@ -229,6 +229,11 @@ int main(int argc, char** argv) {
     }
   }
 
+  if (!verbose) {
+    // No need to buffer the output if we're just going to print three lines.
+    setbuf(stdout, NULL);
+  }
+
   if (verbose) {
     printf("float_bits_as_int,ryu_time_in_ns,grisu3_time_in_ns\n");
   } else {
