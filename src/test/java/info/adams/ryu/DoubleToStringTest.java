@@ -75,7 +75,7 @@ public abstract class DoubleToStringTest {
   }
 
   @Test
-  public void knownBadValues() {
+  public void regressionTest() {
     assertD2sEquals("4.940656E-318", 4.940656E-318d);
     assertD2sEquals("1.18575755E-316", 1.18575755E-316d);
     assertD2sEquals("2.989102097996E-312", 2.989102097996E-312d);
