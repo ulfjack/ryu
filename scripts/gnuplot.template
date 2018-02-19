@@ -1,0 +1,9 @@
+set title ""
+set datafile separator ","
+set linetype 1 lc rgb '#000000'
+set linetype 2 lc rgb '#999999'
+set term pdf size 25cm, 15cm
+set key above left horizontal Left reverse samplen 0.1
+set ylabel "Time in ns"
+plot "INPUT_FILE" using 1:2 with points ps 0.5 title "Ryū", \
+     "INPUT_FILE" using 1:3 with points ps 0.5 title "COMPARISON_NAME"

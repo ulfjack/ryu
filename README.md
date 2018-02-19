@@ -70,6 +70,14 @@ Additional parameters can be passed to the benchmark after the `--` parameter:
   -v            generate verbose output in CSV format
 ```
 
+If you have gnuplot installed, you can generate plots from the benchmark data
+with:
+```
+$ bazel build --jobs=1 //scripts:{c,java}-{float,double}.pdf
+```
+
+The resulting files are `bazel-genfiles/scripts/{c,java}-{float,double}.pdf`.
+
 ## Deviations from the (as yet, unpublished) Paper
 
 Given the feedback from the reviewers, we have decided to change the code to
