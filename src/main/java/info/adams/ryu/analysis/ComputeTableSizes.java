@@ -17,7 +17,7 @@ package info.adams.ryu.analysis;
 /**
  * Computes and outputs the lookup table sizes.
  */
-public class TableSizesMain {
+public class ComputeTableSizes {
   private static final long LOG10_2_DENOMINATOR = 10000000L;
   private static final long LOG10_2_NUMERATOR = (long) (LOG10_2_DENOMINATOR * Math.log10(2));
 
@@ -25,7 +25,18 @@ public class TableSizesMain {
   private static final long LOG10_5_NUMERATOR = (long) (LOG10_5_DENOMINATOR * Math.log10(5));
 
   public static void main(String[] args) {
-    System.out.println("These are the lookup table sizes required for each floating point type:");
+    boolean verbose = false;
+    for (String s : args) {
+      if (s.equals("-v")) {
+        verbose = true;
+      }
+    }
+
+    if (verbose) {
+      System.out.println("These are the lookup table sizes required for each floating point type:");
+    } else {
+      System.out.println("floating_point_type,table_size_1,table_size_2,total_size");
+    }
     for (FloatingPointFormat format : FloatingPointFormat.values()) {
       int minE2 = 1 - format.bias() - format.mantissaBits() - 2;
       int maxE2 = ((1 << format.exponentBits()) - 2) - format.bias() - format.mantissaBits() - 2;
@@ -41,10 +52,14 @@ public class TableSizesMain {
       }
       long negTableSize = (-minE2 - minQ) + 1;
       long posTableSize = maxQ + 1;
-      System.out.println(format);
-      System.out.println("  " + minE2 + " <= e_2 <= " + maxE2);
-      System.out.println("  " + (-minQ) + " <= q <= " + maxQ);
-      System.out.println("  Total table size = " + negTableSize + " + " + posTableSize + " = " + (negTableSize + posTableSize));
+      if (verbose) {
+        System.out.println(format);
+        System.out.println("  " + minE2 + " <= e_2 <= " + maxE2);
+        System.out.println("  " + (-minQ) + " <= q <= " + maxQ);
+        System.out.println("  Total table size = " + negTableSize + " + " + posTableSize + " = " + (negTableSize + posTableSize));
+      } else {
+        System.out.println(format + "," + negTableSize + "," + posTableSize + "," + (negTableSize + posTableSize));
+      }
     }
   }
 }

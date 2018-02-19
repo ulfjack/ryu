@@ -17,3 +17,18 @@ java_binary(
   name = "ExhaustiveFloatComparison",
   runtime_deps = [":analysis"],
 )
+
+java_binary(
+  name = "PrintFloatLookupTable",
+  runtime_deps = [":analysis"],
+)
+
+java_binary(
+  name = "PrintDoubleLookupTable",
+  runtime_deps = [":analysis"],
+)
+
+java_binary(
+  name = "ComputeTableSizes",
+  runtime_deps = [":analysis"],
+)

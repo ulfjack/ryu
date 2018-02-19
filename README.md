@@ -21,6 +21,14 @@ You can run the tests with
 $ bazel test //ryu/... //src/...
 ```
 
+### Computing Required Lookup Table Sizes
+You can compute the required lookup table sizes with:
+```
+$ bazel run //src/main/java/info/adams/ryu/analysis:ComputeTableSizes --
+```
+
+Add `-v` to get slightly more verbose output.
+
 ### Computing Required Bit Sizes
 You can compute the required bit sizes with:
 ```
