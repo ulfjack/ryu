@@ -67,6 +67,7 @@ Additional parameters can be passed to the benchmark after the `--` parameter:
   -64           only run the 64-bit benchmark
   -samples=n    run n pseudo-randomly selected numbers
   -iterations=n run each number n times
+  -v            generate verbose output in CSV format
 ```
 
 ## Deviations from the (as yet, unpublished) Paper

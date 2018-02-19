@@ -100,7 +100,7 @@ static inline uint64_t rdtsc() {
   return __rdtsc();
 }
 
-static void bench32(int samples, int iterations) {
+static void bench32(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
@@ -118,7 +118,7 @@ static void bench32(int samples, int iterations) {
       throwaway += strlen(bufferown);
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    int64_t delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv1, delta1);
 
     t1 = high_resolution_clock::now();
@@ -127,8 +127,11 @@ static void bench32(int samples, int iterations) {
       throwaway += strlen(buffer);
     }
     t2 = high_resolution_clock::now();
-    int64_t delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
+    if (verbose) {
+      printf("%u,%lf,%lf\n", r, delta1, delta2);
+    }
 
     char* own = bufferown;
     char* theirs = fcv(f);
@@ -140,10 +143,13 @@ static void bench32(int samples, int iterations) {
       printf("For %x %20s %20s\n", r, own, theirs);
     }
   }
-  printf("32: %8.3f %8.3f     %8.3f %8.3f         %10d\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
+  if (!verbose) {
+    printf("32: %8.3f %8.3f     %8.3f %8.3f         %10d\n",
+        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
+  }
 }
 
-static void bench64(int samples, int iterations) {
+static void bench64(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
@@ -161,7 +167,7 @@ static void bench64(int samples, int iterations) {
       throwaway += bufferown[2];
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    int64_t delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv1, delta1);
 
     t1 = high_resolution_clock::now();
@@ -170,11 +176,11 @@ static void bench64(int samples, int iterations) {
       throwaway += buffer[2];
     }
     t2 = high_resolution_clock::now();
-    int64_t delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
-#ifdef RENDER_RESULTS
-    printf("%lu,%ld,%ld\n", r,delta1, delta2);
-#endif
+    if (verbose) {
+      printf("%lu,%lf,%lf\n", r, delta1, delta2);
+    }
 
     char* own = bufferown;
     char* theirs = dcv(f);
@@ -186,7 +192,10 @@ static void bench64(int samples, int iterations) {
       printf("For %16lx %28s %28s\n", r, own, theirs);
     }
   }
-  printf("64: %8.3f %8.3f     %8.3f %8.3f         %10d\n", mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
+  if (!verbose) {
+    printf("64: %8.3f %8.3f     %8.3f %8.3f         %10d\n",
+        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
+  }
 }
 
 int main(int argc, char** argv) {
@@ -203,6 +212,7 @@ int main(int argc, char** argv) {
   bool run64 = true;
   int samples = 100000;
   int iterations = 1000;
+  bool verbose = false;
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-32") == 0) {
       run32 = true;
@@ -210,6 +220,8 @@ int main(int argc, char** argv) {
     } else if (strcmp(argv[i], "-64") == 0) {
       run32 = false;
       run64 = true;
+    } else if (strcmp(argv[i], "-v") == 0) {
+      verbose = true;
     } else if (strncmp(argv[i], "-samples=", 9) == 0) {
       sscanf(argv[i], "-samples=%i", &samples);
     } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
@@ -217,12 +229,16 @@ int main(int argc, char** argv) {
     }
   }
 
-  printf("    Average & Stddev Ryu  Average & Stddev Grisu3  (----------)\n");
+  if (verbose) {
+    printf("float_bits_as_int,ryu_time_in_ns,grisu3_time_in_ns\n");
+  } else {
+    printf("    Average & Stddev Ryu  Average & Stddev Grisu3  (----------)\n");
+  }
   if (run32) {
-    bench32(samples, iterations);
+    bench32(samples, iterations, verbose);
   }
   if (run64) {
-    bench64(samples, iterations);
+    bench64(samples, iterations, verbose);
   }
   return 0;
 }

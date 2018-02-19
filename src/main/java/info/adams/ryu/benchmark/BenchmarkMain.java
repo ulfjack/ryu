@@ -24,6 +24,7 @@ public class BenchmarkMain {
     boolean run64 = true;
     int samples = 1000;
     int iterations = 1000;
+    boolean verbose = false;
     for (String s : args) {
       if (s.equals("-32")) {
         run32 = true;
@@ -31,6 +32,8 @@ public class BenchmarkMain {
       } else if (s.equals("-64")) {
         run32 = false;
         run64 = true;
+      } else if (s.equals("-v")) {
+        verbose = true;
       } else if (s.startsWith("-samples=")) {
         samples = Integer.parseInt(s.substring(9));
       } else if (s.startsWith("-iterations=")) {
@@ -38,16 +41,20 @@ public class BenchmarkMain {
       }
     }
 
-    System.out.printf("    Average & Stddev Ryu  Average & Stddev JDK  (----------)\n");
+    if (verbose) {
+      System.out.println("float_bits_as_int,ryu_time_in_ns,grisu3_time_in_ns");
+    } else {
+      System.out.printf("    Average & Stddev Ryu  Average & Stddev JDK  (----------)\n");
+    }
     if (run32) {
-      bench32(samples, iterations);
+      bench32(samples, iterations, verbose);
     }
     if (run64) {
-      bench64(samples, iterations);
+      bench64(samples, iterations, verbose);
     }
   }
 
-  private static void bench32(int samples, int iterations) {
+  private static void bench32(int samples, int iterations, boolean verbose) {
     MersenneTwister twister = new MersenneTwister(12345);
     // Warm up the JIT.
     MeanAndVariance warmUp = new MeanAndVariance();
@@ -95,15 +102,19 @@ public class BenchmarkMain {
       stop = System.nanoTime();
       double delta2 = (stop - start) / (double) iterations;
       mv2.update(delta2);
-//      System.out.println(Long.toUnsignedString(r) + "," + delta1 + "," + delta2 + "," + delta3 + "   " + throwaway);
+      if (verbose) {
+        System.out.println(Integer.toUnsignedString(r) + "," + delta1 + "," + delta2);
+      }
     }
-    System.out.printf("32: %8.3f %8.3f      %8.3f %8.3f     %10d\n",
-        Double.valueOf(mv1.mean()), Double.valueOf(mv1.stddev()),
-        Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()),
-        Integer.valueOf(throwaway));
+    if (!verbose) {
+      System.out.printf("32: %8.3f %8.3f      %8.3f %8.3f     %10d\n",
+          Double.valueOf(mv1.mean()), Double.valueOf(mv1.stddev()),
+          Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()),
+          Integer.valueOf(throwaway));
+    }
   }
 
-  private static void bench64(int samples, int iterations) {
+  private static void bench64(int samples, int iterations, boolean verbose) {
     MersenneTwister twister = new MersenneTwister(12345);
     // Warm up the JIT.
     MeanAndVariance warmUp = new MeanAndVariance();
@@ -151,11 +162,15 @@ public class BenchmarkMain {
       stop = System.nanoTime();
       double delta2 = (stop - start) / (double) iterations;
       mv2.update(delta2);
-//      System.out.println(Long.toUnsignedString(r) + "," + delta1 + "," + delta2 + "," + delta3 + "   " + throwaway);
+      if (verbose) {
+        System.out.println(Long.toUnsignedString(r) + "," + delta1 + "," + delta2);
+      }
     }
-    System.out.printf("64: %8.3f %8.3f      %8.3f %8.3f     %10d\n",
-        Double.valueOf(mv1.mean()), Double.valueOf(mv1.stddev()),
-        Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()),
-        Integer.valueOf(throwaway));
+    if (!verbose) {
+      System.out.printf("64: %8.3f %8.3f      %8.3f %8.3f     %10d\n",
+          Double.valueOf(mv1.mean()), Double.valueOf(mv1.stddev()),
+          Double.valueOf(mv2.mean()), Double.valueOf(mv2.stddev()),
+          Integer.valueOf(throwaway));
+    }
   }
 }
