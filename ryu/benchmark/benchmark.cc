@@ -207,10 +207,10 @@ int main(int argc, char** argv) {
   CPU_SET(2, &my_set);
   sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
 
-  // By default, run both 32 and 64-bit benchmarks with 100000 iterations each.
+  // By default, run both 32 and 64-bit benchmarks with 10000 iterations each.
   bool run32 = true;
   bool run64 = true;
-  int samples = 100000;
+  int samples = 10000;
   int iterations = 1000;
   bool verbose = false;
   for (int i = 1; i < argc; i++) {
