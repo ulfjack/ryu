@@ -95,7 +95,7 @@ public final class RyuFloat {
   public static String floatToString(float value, RoundingMode roundingMode) {
     // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
     // First, handle all the trivial cases.
-    if (value != value) return "NaN";
+    if (Float.isNaN(value)) return "NaN";
     if (value == Float.POSITIVE_INFINITY) return "Infinity";
     if (value == Float.NEGATIVE_INFINITY) return "-Infinity";
     int bits = Float.floatToIntBits(value);

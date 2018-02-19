@@ -16,8 +16,6 @@ package info.adams.ryu;
 
 import java.math.BigInteger;
 
-import info.adams.ryu.analysis.SlowConversion;
-
 /**
  * An implementation of Ryu for double.
  */
@@ -96,10 +94,8 @@ public final class RyuDouble {
   public static void main(String[] args) {
     DEBUG = true;
     double value = Double.longBitsToDouble(0x7fefffffffffffffL);
-    String expected = SlowConversion.doubleToString(value);
     String result = doubleToString(value);
-    System.out.println("RESULT  =" + result);
-    System.out.println("EXPECTED=" + expected);
+    System.out.println(result + " " + value);
   }
 
   public static String doubleToString(double value) {
@@ -109,7 +105,7 @@ public final class RyuDouble {
   public static String doubleToString(double value, RoundingMode roundingMode) {
     // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
     // First, handle all the trivial cases.
-    if (value != value) return "NaN";
+    if (Double.isNaN(value)) return "NaN";
     if (value == Float.POSITIVE_INFINITY) return "Infinity";
     if (value == Float.NEGATIVE_INFINITY) return "-Infinity";
     long bits = Double.doubleToLongBits(value);
