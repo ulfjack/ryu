@@ -19,7 +19,7 @@ import info.adams.ryu.RyuDouble;
 /**
  * Extensively tests the fast implementation of Ryu against the slow one.
  */
-public class ExtensiveDoubleComparisonMain {
+public class ExtensiveDoubleComparison {
   public static void main(String[] args) {
     checkDoubleFastAgainstSlow();
   }

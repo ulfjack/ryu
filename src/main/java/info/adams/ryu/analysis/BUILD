@@ -7,3 +7,13 @@ java_library(
     "//src/main/java/info/adams/ryu",
   ],
 )
+
+java_binary(
+  name = "ComputeRequiredBitSizes",
+  runtime_deps = [":analysis"],
+)
+
+java_binary(
+  name = "ExhaustiveFloatComparison",
+  runtime_deps = [":analysis"],
+)

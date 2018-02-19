@@ -15,6 +15,7 @@
 package info.adams.ryu.analysis;
 
 import java.math.BigInteger;
+import java.util.EnumSet;
 
 /**
  * Computes appropriate values for B_0 and B_1 for a given floating point type.
@@ -30,7 +31,27 @@ public final class ComputeRequiredBitSizes {
   private static final long LOG10_2_NUMERATOR = (long) (LOG10_2_DENOMINATOR * Math.log10(2));
 
   public static void main(String[] args) {
-    FloatingPointFormat format = FloatingPointFormat.FLOAT256;
+    boolean verbose = false;
+    EnumSet<FloatingPointFormat> formats = EnumSet.noneOf(FloatingPointFormat.class);
+    formats.add(FloatingPointFormat.FLOAT16);
+    formats.add(FloatingPointFormat.FLOAT32);
+    formats.add(FloatingPointFormat.FLOAT64);
+    for (String s : args) {
+      if ("-128".equals(s)) {
+        formats.add(FloatingPointFormat.FLOAT128);
+      } else if ("-256".equals(s)) {
+        formats.add(FloatingPointFormat.FLOAT128);
+      } else if ("-v".equals(s)) {
+        verbose = true;
+      }
+    }
+
+    for (FloatingPointFormat format : formats) {
+      compute(format, verbose);
+    }
+  }
+
+  private static void compute(FloatingPointFormat format, boolean verbose) {
     int mbits = format.mantissaBits() + 3;
 
     int minE2 = 2; // 2;
@@ -54,11 +75,15 @@ public final class ComputeRequiredBitSizes {
       int bits = min.divide(mxM).bitLength();
       int reqn = pow5.bitLength() - bits;
       b0 = Math.max(b0, reqn);
-      System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
-          Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(i), Integer.valueOf(bits),
-          Integer.valueOf(reqn), Integer.valueOf(b0), Double.valueOf((100.0 * e2) / maxE2));
+      if (verbose) {
+        System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
+            Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(i), Integer.valueOf(bits),
+            Integer.valueOf(reqn), Integer.valueOf(b0), Double.valueOf((100.0 * e2) / maxE2));
+      }
     }
-    System.out.println("B_0 = " + b0);
+    if (verbose) {
+      System.out.println("B_0 = " + b0);
+    }
 
     minE2 = 2;
     maxE2 = ((1 << format.exponentBits()) - 2) - format.bias() - format.mantissaBits() - 2;
@@ -82,15 +107,17 @@ public final class ComputeRequiredBitSizes {
       int bits = num.divide(den).bitLength();
       int reqn = bits - pow5.bitLength();
       b1 = Math.max(b1, reqn);
-      System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
-          Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(e2 - q), Integer.valueOf(bits),
-          Integer.valueOf(reqn), Integer.valueOf(b1), Double.valueOf((100.0 * e2) / maxE2));
+      if (verbose) {
+        System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
+            Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(e2 - q), Integer.valueOf(bits),
+            Integer.valueOf(reqn), Integer.valueOf(b1), Double.valueOf((100.0 * e2) / maxE2));
+      }
     }
-    System.out.println("B_1 = " + b1);
-    System.out.println();
-    System.out.println(format);
-    System.out.println("B_0 = " + b0);
-    System.out.println("B_1 = " + b1);
+    if (verbose) {
+      System.out.println("B_1 = " + b1);
+      System.out.println();
+    }
+    System.out.printf("%s,%d,%d\n", format, b0, b1);
   }
 
   private static BigInteger min(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {

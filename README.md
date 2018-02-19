@@ -18,8 +18,27 @@ latest release, but it should also work with earlier versions.
 ### Tests
 You can run the tests with
 ```
-bazel test //ryu/... //src/...
+$ bazel test //ryu/... //src/...
 ```
+
+### Computing Required Bit Sizes
+You can compute the required bit sizes with:
+```
+$ bazel run //src/main/java/info/adams/ryu/analysis:ComputeRequiredBitSizes --
+```
+
+Add the `-128` and `-256` flags to also cover 128- and 256-bit numbers. This
+could take a while - 128-bit takes ~20 seconds on my machine while 256-bit takes
+a few hours. Add `-v` to get very verbose output.
+
+### Comparing All Possible 32-bit Values Exhaustively
+You can check the slow vs. the fast implementation for all 32-bit floating point
+numbers using:
+```
+$ bazel run //src/main/java/info/adams/ryu/analysis:ExhaustiveFloatComparison
+```
+
+This takes ~60 hours to run to completion.
 
 ### Benchmarks
 We provide both C and Java benchmark programs.

@@ -19,14 +19,17 @@ import info.adams.ryu.RyuFloat;
 /**
  * Exhaustively tests the fast implementation of Ryu against the slow one.
  */
-public class ExhaustiveFloatComparisonMain {
+public class ExhaustiveFloatComparison {
   public static void main(String[] args) {
-    checkFloatFastAgainstSlow();
-  }
-
-  private static void checkFloatFastAgainstSlow() {
-    System.out.println("This checks every possible 32-bit floating point value - this takes ~60 hours.");
-    long stride = 10000L;
+    System.out.println("This checks every possible 32-bit floating point value, which takes ~60 hours.");
+    System.out.println("We report progress approximately every ~10 seconds.");
+    long stride = 10007L; // 10007 is prime
+    // We go through the set of all possible values in stride-sized steps, and go through all
+    // possible [0,stride) offsets. This gives us good coverage across the whole range of floating
+    // point numbers even in the first loop, which quickly finds systematic errors. We use a prime
+    // to avoid bit patterns in the floating point number.
+    //
+    // We also don't check any negative numbers; we assume that the code behaves identically.
     for (long base = 0; base < stride; base++) {
       for (long l = base; l <= 0x7fffffffL; l += stride) {
         float f = Float.intBitsToFloat((int) l);
