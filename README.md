@@ -1,7 +1,8 @@
 # Ryu
 
 This project contains a C and a Java implementation of Ryu, an algorithm to
-quickly convert floating point numbers to decimal strings.
+quickly convert floating point numbers to decimal strings. We have tested the
+code on Ubuntu 17.10 and MacOS High Sierra.
 
 The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
 C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
@@ -13,7 +14,8 @@ Apache License 2.0.
 ## Building, Testing, Running
 
 We use the Bazel build system (https://bazel.build). We recommend using the
-latest release, but it should also work with earlier versions.
+latest release, but it should also work with earlier versions. You will also
+need to have a Jdk and a C++ compiler installed.
 
 ### Tests
 You can run the tests with
@@ -52,22 +54,22 @@ This takes ~60 hours to run to completion.
 We provide both C and Java benchmark programs.
 
 Enable optimization by adding "-c opt" on the command line, and select a custom
-C/C++ compiler by setting the CC environment variable before running bazel,
-e.g.:
+C/C++ compiler by setting the CC environment variable (e.g., `CC=clang-3.9 bazel
+...`) before running bazel:
 ```
-$ CC=clang-3.9 bazel run -c opt //ryu/benchmark --
-    Average & Stddev Ryu  Average & Stddev Grisu3  (----------)
-32:   23.561    1.593       90.875   44.514           11443598
-64:   33.805    1.713      100.227   97.514           13403191
+$ bazel run -c opt //ryu/benchmark --
+    Average & Stddev Ryu  Average & Stddev Grisu3
+32:   31.047   11.145      120.671   51.626
+64:   38.583    6.085      133.333   95.799
 
 $ bazel run //src/main/java/info/adams/ryu/benchmark --
-    Average & Stddev Ryu  Average & Stddev JDK  (----------)
-32:   55.879   11.802       255.617  172.629       24455000
-64:   88.724    7.411      1069.786  295.320       43958000
+    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
+32:   66.285   10.015       282.043  174.225
+64:  102.859   14.495      1173.578  329.220     1175.798  332.171
 ```
 
-As of this writing, Bazel does not work with clang-4.0 or clang-5.0 due to
-https://github.com/bazelbuild/bazel/issues/3977.
+As of this writing, Bazel does not work with clang-4.0 or clang-5.0 on Ubuntu
+due to https://github.com/bazelbuild/bazel/issues/3977.
 
 Additional parameters can be passed to the benchmark after the `--` parameter:
 ```
