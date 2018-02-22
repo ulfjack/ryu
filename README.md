@@ -14,8 +14,14 @@ Apache License 2.0.
 ## Building, Testing, Running
 
 We use the Bazel build system (https://bazel.build). We recommend using the
-latest release, but it should also work with earlier versions. You will also
-need to have a Jdk and a C++ compiler installed.
+latest release, but it should also work with earlier versions. You also need
+to install Jdk 8 and a C++ compiler (gcc or clang on Ubuntu, or XCode on
+MacOS).
+
+As of this writing, Bazel does not work with clang-4.0 or clang-5.0 on Ubuntu
+17.10 due to https://github.com/bazelbuild/bazel/issues/3977. Select a custom
+C++ compiler by setting the CC environment variable (e.g.,
+`export CC=clang-3.9`).
 
 ### Tests
 You can run the tests with
@@ -53,9 +59,7 @@ This takes ~60 hours to run to completion.
 ### Benchmarks
 We provide both C and Java benchmark programs.
 
-Enable optimization by adding "-c opt" on the command line, and select a custom
-C/C++ compiler by setting the CC environment variable (e.g., `CC=clang-3.9 bazel
-...`) before running bazel:
+Enable optimization by adding "-c opt" on the command line:
 ```
 $ bazel run -c opt //ryu/benchmark --
     Average & Stddev Ryu  Average & Stddev Grisu3
@@ -67,9 +71,6 @@ $ bazel run //src/main/java/info/adams/ryu/benchmark --
 32:   66.285   10.015       282.043  174.225
 64:  102.859   14.495      1173.578  329.220     1175.798  332.171
 ```
-
-As of this writing, Bazel does not work with clang-4.0 or clang-5.0 on Ubuntu
-due to https://github.com/bazelbuild/bazel/issues/3977.
 
 Additional parameters can be passed to the benchmark after the `--` parameter:
 ```
