@@ -55,8 +55,11 @@ public class BenchmarkMain {
     if (run64) {
       throwaway += bench64(samples, iterations, verbose);
     }
-    System.err.println();
-    System.err.println("Preventing the compiler from optimizing the code away: " + throwaway);
+    if (args.length == 1000) {
+      // Prevent the compiler from optimizing the code away. Technically, the
+      // JIT could see that args.length != 1000, but it seems unlikely.
+      System.err.println(throwaway);
+    }
   }
 
   private static int bench32(int samples, int iterations, boolean verbose) {

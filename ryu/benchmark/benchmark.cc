@@ -90,7 +90,7 @@ double variance(mean_and_variance &mv) {
   return mv.m2 / (mv.n - 1);
 }
 
-static void bench32(int samples, int iterations, bool verbose) {
+static int bench32(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
@@ -134,12 +134,13 @@ static void bench32(int samples, int iterations, bool verbose) {
     }
   }
   if (!verbose) {
-    printf("32: %8.3f %8.3f     %8.3f %8.3f         %10d\n",
-        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
+    printf("32: %8.3f %8.3f     %8.3f %8.3f\n",
+        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)));
   }
+  return throwaway;
 }
 
-static void bench64(int samples, int iterations, bool verbose) {
+static int bench64(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
   mean_and_variance mv1;
@@ -183,9 +184,10 @@ static void bench64(int samples, int iterations, bool verbose) {
     }
   }
   if (!verbose) {
-    printf("64: %8.3f %8.3f     %8.3f %8.3f         %10d\n",
-        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)), throwaway);
+    printf("64: %8.3f %8.3f     %8.3f %8.3f\n",
+        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)));
   }
+  return throwaway;
 }
 
 int main(int argc, char** argv) {
@@ -229,13 +231,18 @@ int main(int argc, char** argv) {
   if (verbose) {
     printf("float_bits_as_int,ryu_time_in_ns,grisu3_time_in_ns\n");
   } else {
-    printf("    Average & Stddev Ryu  Average & Stddev Grisu3  (----------)\n");
+    printf("    Average & Stddev Ryu  Average & Stddev Grisu3\n");
   }
+  int throwaway = 0;
   if (run32) {
-    bench32(samples, iterations, verbose);
+    throwaway += bench32(samples, iterations, verbose);
   }
   if (run64) {
-    bench64(samples, iterations, verbose);
+    throwaway += bench64(samples, iterations, verbose);
+  }
+  if (argc == 1000) {
+    // Prevent the compiler from optimizing the code away.
+    printf("%d\n", throwaway);
   }
   return 0;
 }
