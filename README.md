@@ -111,8 +111,8 @@ and this needs to be enabled with the `LEGACY_MODE` preprocessor symbol.
 
 ```
 $ bazel run -c opt --copt=-DLEGACY_MODE //ryu/benchmark -- -64
-    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
-64:   23.586    1.542      101.381   98.006         12496731
+    Average & Stddev Ryu  Average & Stddev Grisu3
+64:   23.586    1.542      101.381   98.006
 ```
 
 We've also added a mode to more closely match Grisu3 output, which can be
@@ -122,8 +122,8 @@ the generated strings for all other numbers are unaffected. In this mode, the
 benchmark also verfies that the generated strings are identical.
 ```
 $ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
-    Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
-64:   29.806    3.182      103.060   98.717         13286634
+    Average & Stddev Ryu  Average & Stddev Grisu3
+64:   29.806    3.182      103.060   98.717
 ```
 
 ### Jaffer's Implementation
