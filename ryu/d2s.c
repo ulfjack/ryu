@@ -540,8 +540,8 @@ void d2s_buffered(double f, char* result) {
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef DEBUG
-    printf("%ld * 2^%d / 10^%d\n", mv, e2, q);
-    printf("V+=%lu\nV =%lu\nV-=%lu\n", vp, vr, vm);
+    printf("%lld * 2^%d / 10^%d\n", mv, e2, q);
+    printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
 #endif
     if (q <= 21) {
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
@@ -581,9 +581,9 @@ void d2s_buffered(double f, char* result) {
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
 #ifdef DEBUG
-    printf("%ld * 5^%d / 10^%d\n", mv, -e2, q);
+    printf("%lld * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d\n", i, j);
-    printf("V+=%lu\nV =%lu\nV-=%lu\n", vp, vr, vm);
+    printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
 #endif
     if (q <= 1) {
 #ifdef MATCH_GRISU3_OUTPUT
@@ -611,9 +611,11 @@ void d2s_buffered(double f, char* result) {
   }
 #ifdef DEBUG
   printf("e10=%d\n", e10);
-  printf("V+=%lu\nV =%lu\nV-=%lu\n", vp, vr, vm);
+  printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
   printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
+#ifdef MATCH_GRISU3_OUTPUT
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
@@ -649,7 +651,7 @@ void d2s_buffered(double f, char* result) {
       removed++;
     }
 #ifdef DEBUG
-    printf("V+=%lu\nV =%lu\nV-=%lu\n", vp, vr, vm);
+    printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
     printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
 #endif
     // Same as above; use vm % 10 == vm - (vm / 10) * 10.
@@ -670,8 +672,10 @@ void d2s_buffered(double f, char* result) {
     }
 #ifdef NICER_OUTPUT
 #ifdef DEBUG
-    printf("%ld %d\n", vr, lastRemovedDigit);
+    printf("%lld %d\n", vr, lastRemovedDigit);
+#ifdef MATCH_GRISU3_OUTPUT
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
 #endif
 #ifdef MATCH_GRISU3_OUTPUT
     if (vrIsTrailingZeros && (lastRemovedDigit == 5)) {
@@ -698,8 +702,10 @@ void d2s_buffered(double f, char* result) {
     }
 #ifdef NICER_OUTPUT
 #ifdef DEBUG
-    printf("%ld %d\n", vr, lastRemovedDigit);
+    printf("%lld %d\n", vr, lastRemovedDigit);
+#ifdef MATCH_GRISU3_OUTPUT
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
 #endif
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
@@ -711,9 +717,9 @@ void d2s_buffered(double f, char* result) {
   // The average output length is 16.38 digits.
   int32_t olength = vplength - removed;
 #ifdef DEBUG
-  printf("V+=%lu\nV =%lu\nV-=%lu\n", vp, vr, vm);
-  printf("O=%lu\n", output);
-  printf("OLEN=%lu\n", olength);
+  printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
+  printf("O=%llu\n", output);
+  printf("OLEN=%d\n", olength);
   printf("EXP=%d\n", exp);
 #endif
 

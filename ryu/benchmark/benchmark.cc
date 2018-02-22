@@ -90,16 +90,6 @@ double variance(mean_and_variance &mv) {
   return mv.m2 / (mv.n - 1);
 }
 
-extern int64_t timeTimeTime;
-
-#include <sched.h>
-#include <unistd.h>
-
-#include <x86intrin.h>
-static inline uint64_t rdtsc() {
-  return __rdtsc();
-}
-
 static void bench32(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
   RandomInit(12345);
@@ -179,7 +169,7 @@ static void bench64(int samples, int iterations, bool verbose) {
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
     if (verbose) {
-      printf("%lu,%lf,%lf\n", r, delta1, delta2);
+      printf("%llu,%lf,%lf\n", r, delta1, delta2);
     }
 
     char* own = bufferown;
@@ -189,7 +179,7 @@ static void bench64(int samples, int iterations, bool verbose) {
 #else
     if (strlen(own) != strlen(theirs)) {
 #endif
-      printf("For %16lx %28s %28s\n", r, own, theirs);
+      printf("For %16llx %28s %28s\n", r, own, theirs);
     }
   }
   if (!verbose) {
@@ -199,6 +189,7 @@ static void bench64(int samples, int iterations, bool verbose) {
 }
 
 int main(int argc, char** argv) {
+#if defined(__linux__)
   // Also disable hyperthreading with something like this:
   // cat /sys/devices/system/cpu/cpu*/topology/core_id
   // sudo /bin/bash -c "echo 0 > /sys/devices/system/cpu/cpu6/online"
@@ -206,6 +197,7 @@ int main(int argc, char** argv) {
   CPU_ZERO(&my_set);
   CPU_SET(2, &my_set);
   sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
+#endif
 
   // By default, run both 32 and 64-bit benchmarks with 10000 iterations each.
   bool run32 = true;
