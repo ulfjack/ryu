@@ -20,7 +20,7 @@ MacOS).
 
 As of this writing, Bazel does not work with clang-4.0 or clang-5.0 on Ubuntu
 17.10 due to https://github.com/bazelbuild/bazel/issues/3977. Select a custom
-C++ compiler by setting the CC environment variable (e.g.,
+C++ compiler by setting the CC environment variable (e.g., on Ubuntu, run
 `export CC=clang-3.9`).
 
 ### Tests
@@ -110,7 +110,7 @@ generate output that is closest to the original input, by default. Only the
 and this needs to be enabled with the `LEGACY_MODE` preprocessor symbol.
 
 ```
-$ CC=clang-3.9 bazel run -c opt --copt=-DLEGACY_MODE //ryu/benchmark -- -64
+$ bazel run -c opt --copt=-DLEGACY_MODE //ryu/benchmark -- -64
     Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
 64:   23.586    1.542      101.381   98.006         12496731
 ```
@@ -121,7 +121,7 @@ applies to values that are exactly halfway between two shortest decimal numbers;
 the generated strings for all other numbers are unaffected. In this mode, the
 benchmark also verfies that the generated strings are identical.
 ```
-$ CC=clang-3.9 bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
+$ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
     Average & Stddev Ryu  Average & Stddev Grisu3  (--------)
 64:   29.806    3.182      103.060   98.717         13286634
 ```
