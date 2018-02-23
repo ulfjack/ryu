@@ -54,7 +54,8 @@ numbers using:
 $ bazel run //src/main/java/info/adams/ryu/analysis:ExhaustiveFloatComparison
 ```
 
-This takes ~60 hours to run to completion.
+This takes ~60 hours to run to completion on an
+Intel(R) Core(TM) i7-4770K with 3.50GHz.
 
 ### Benchmarks
 We provide both C and Java benchmark programs.
@@ -63,13 +64,13 @@ Enable optimization by adding "-c opt" on the command line:
 ```
 $ bazel run -c opt //ryu/benchmark --
     Average & Stddev Ryu  Average & Stddev Grisu3
-32:   31.047   11.145      120.671   51.626
-64:   38.583    6.085      133.333   95.799
+32:   23.625    1.618       91.647   44.685
+64:   29.724    1.650      100.062   83.147
 
 $ bazel run //src/main/java/info/adams/ryu/benchmark --
     Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
-32:   66.285   10.015       282.043  174.225
-64:  102.859   14.495      1173.578  329.220     1175.798  332.171
+32:   56.680    9.127       254.903  170.099
+64:   89.751   13.442      1085.596  302.371     1089.535  309.245
 ```
 
 Additional parameters can be passed to the benchmark after the `--` parameter:
