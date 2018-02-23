@@ -18,10 +18,18 @@ latest release, but it should also work with earlier versions. You also need
 to install Jdk 8 and a C++ compiler (gcc or clang on Ubuntu, or XCode on
 MacOS).
 
+You can select a custom C++ compiler by setting the CC environment variable
+(e.g., on Ubuntu, run `export CC=clang-3.9`).
+
 As of this writing, Bazel does not work with clang-4.0 or clang-5.0 on Ubuntu
-17.10 due to https://github.com/bazelbuild/bazel/issues/3977. Select a custom
-C++ compiler by setting the CC environment variable (e.g., on Ubuntu, run
-`export CC=clang-3.9`).
+17.10 due to https://github.com/bazelbuild/bazel/issues/3977. As a workaround to
+run the benchmark with clang-4.0 or clang-5.0, you can take the following steps:
+```
+$ export CC=clang-4.0
+$ bazel build //ryu
+$ sed -i 's|cxx_builtin_include_directory: "/.*"|cxx_builtin_include_directory: "/"|' \
+    $(readlink -f bazel-$(basename $PWD)/external/local_config_cc/CROSSTOOL)
+```
 
 ### Tests
 You can run the tests with
