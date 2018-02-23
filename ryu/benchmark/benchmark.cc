@@ -13,11 +13,17 @@
 // limitations under the License.
 
 #include <math.h>
+#include <inttypes.h>
 #include <iostream>
 #include <string.h>
 #include <chrono>
 #include <stdint.h>
 #include <stdio.h>
+
+#if defined(__linux__)
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 #include "ryu/ryu.h"
 #include "third_party/double-conversion/double-conversion/utils.h"
@@ -170,7 +176,7 @@ static int bench64(int samples, int iterations, bool verbose) {
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
     if (verbose) {
-      printf("%llu,%lf,%lf\n", r, delta1, delta2);
+      printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
     }
 
     char* own = bufferown;
@@ -180,7 +186,7 @@ static int bench64(int samples, int iterations, bool verbose) {
 #else
     if (strlen(own) != strlen(theirs)) {
 #endif
-      printf("For %16llx %28s %28s\n", r, own, theirs);
+      printf("For %16" PRIX64 " %28s %28s\n", r, own, theirs);
     }
   }
   if (!verbose) {

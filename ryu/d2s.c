@@ -14,6 +14,7 @@
 
 #include "ryu/ryu.h"
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -540,8 +541,8 @@ void d2s_buffered(double f, char* result) {
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef DEBUG
-    printf("%lld * 2^%d / 10^%d\n", mv, e2, q);
-    printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
+    printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
+    printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 21) {
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
@@ -581,9 +582,9 @@ void d2s_buffered(double f, char* result) {
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
 #ifdef DEBUG
-    printf("%lld * 5^%d / 10^%d\n", mv, -e2, q);
+    printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d\n", i, j);
-    printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
+    printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
 #ifdef MATCH_GRISU3_OUTPUT
@@ -611,7 +612,7 @@ void d2s_buffered(double f, char* result) {
   }
 #ifdef DEBUG
   printf("e10=%d\n", e10);
-  printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
+  printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
 #ifdef MATCH_GRISU3_OUTPUT
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
@@ -651,7 +652,7 @@ void d2s_buffered(double f, char* result) {
       removed++;
     }
 #ifdef DEBUG
-    printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
+    printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
     printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
 #endif
     // Same as above; use vm % 10 == vm - (vm / 10) * 10.
@@ -672,7 +673,7 @@ void d2s_buffered(double f, char* result) {
     }
 #ifdef NICER_OUTPUT
 #ifdef DEBUG
-    printf("%lld %d\n", vr, lastRemovedDigit);
+    printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
 #ifdef MATCH_GRISU3_OUTPUT
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
@@ -702,7 +703,7 @@ void d2s_buffered(double f, char* result) {
     }
 #ifdef NICER_OUTPUT
 #ifdef DEBUG
-    printf("%lld %d\n", vr, lastRemovedDigit);
+    printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
 #ifdef MATCH_GRISU3_OUTPUT
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
@@ -717,8 +718,8 @@ void d2s_buffered(double f, char* result) {
   // The average output length is 16.38 digits.
   int32_t olength = vplength - removed;
 #ifdef DEBUG
-  printf("V+=%llu\nV =%llu\nV-=%llu\n", vp, vr, vm);
-  printf("O=%llu\n", output);
+  printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
+  printf("O=%" PRIu64 "\n", output);
   printf("OLEN=%d\n", olength);
   printf("EXP=%d\n", exp);
 #endif
