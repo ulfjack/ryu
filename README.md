@@ -152,3 +152,22 @@ Add the `-mode=csv` option to get all the discovered differences as a CSV. Use
 `-mode=latex` instead to get a latex snippet of the first 20. Use
 `-mode=summary` to only print the number of discovered differences (this is the
 default mode).
+
+### Building without Bazel
+You can build and run the C benchmark without using Bazel with the following shell
+command:
+```
+$ gcc -o benchmark -I. -O2 -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
+    third_party/double-conversion/double-conversion/*.cc \
+    third_party/mersenne/*.c
+$ ./benchmark
+```
+
+You can build and run the Java benchmark with the following shell command:
+```
+$ mkdir out
+$ javac -d out \
+    -sourcepath src/main/java/:third_party/mersenne_java/java/:third_party/jaffer/java/ \
+    src/main/java/info/adams/ryu/benchmark/BenchmarkMain.java
+$ java -cp out info.adams.ryu.benchmark.BenchmarkMain
+```
