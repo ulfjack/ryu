@@ -11,6 +11,39 @@ point numbers.
 All code outside of third_party/ is Copyright Ulf Adams, and published under the
 Apache License 2.0.
 
+## Deviations from the (as yet, unpublished) Paper
+
+### Changes to the Algorithm
+Given the feedback from the reviewers, we have decided to change the code to
+generate output that is closest to the original input, by default. This
+results in slightly worse performance compared to the original code. Only the
+64-bit C variant still supports the original mode, and this needs to be
+enabled with the `LEGACY_MODE` preprocessor symbol.
+
+```
+$ bazel run -c opt --copt=-DLEGACY_MODE //ryu/benchmark -- -64
+    Average & Stddev Ryu  Average & Stddev Grisu3
+64:   23.586    1.542      101.381   98.006
+```
+
+We've also added a mode to more closely match Grisu3 output, which can be
+enabled by setting the `MATCH_GRISU3_OUTPUT` preprocessor symbol. This only
+applies to values that are exactly halfway between two shortest decimal numbers;
+the generated strings for all other numbers are unaffected. In this mode, the
+benchmark also verfies that the generated strings are identical.
+```
+$ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
+    Average & Stddev Ryu  Average & Stddev Grisu3
+64:   29.806    3.182      103.060   98.717
+```
+
+### Jaffer's Implementation
+The code given by Jaffer in the original paper, which we used in our paper,
+does not come with a license declaration. Instead, we're using code found on
+GitHub, which contains a license declaration by Jaffer. This implementation
+was fixed to no longer output incorrect values for negative numbers compared
+to the original implementation.
+
 ## Building, Testing, Running
 
 We use the Bazel build system (https://bazel.build). We recommend using the
@@ -119,34 +152,3 @@ Add the `-mode=csv` option to get all the discovered differences as a CSV. Use
 `-mode=latex` instead to get a latex snippet of the first 20. Use
 `-mode=summary` to only print the number of discovered differences (this is the
 default mode).
-
-## Deviations from the (as yet, unpublished) Paper
-
-### Changes to the Algorithm
-Given the feedback from the reviewers, we have decided to change the code to
-generate output that is closest to the original input, by default. Only the
-64-bit C variant still supports the original mode as described in the paper,
-and this needs to be enabled with the `LEGACY_MODE` preprocessor symbol.
-
-```
-$ bazel run -c opt --copt=-DLEGACY_MODE //ryu/benchmark -- -64
-    Average & Stddev Ryu  Average & Stddev Grisu3
-64:   23.586    1.542      101.381   98.006
-```
-
-We've also added a mode to more closely match Grisu3 output, which can be
-enabled by setting the `MATCH_GRISU3_OUTPUT` preprocessor symbol. This only
-applies to values that are exactly halfway between two shortest decimal numbers;
-the generated strings for all other numbers are unaffected. In this mode, the
-benchmark also verfies that the generated strings are identical.
-```
-$ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
-    Average & Stddev Ryu  Average & Stddev Grisu3
-64:   29.806    3.182      103.060   98.717
-```
-
-### Jaffer's Implementation
-The code given by Jaffer in the original paper does not come with a license
-declaration. Instead, we're using code found on GitHub, which contains a license
-declaration by Jaffer. This implementation was fixed to no longer output
-incorrect values for negative numbers compared to the one we used in the paper.
