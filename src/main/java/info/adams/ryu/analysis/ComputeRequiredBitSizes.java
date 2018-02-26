@@ -40,7 +40,7 @@ public final class ComputeRequiredBitSizes {
       if ("-128".equals(s)) {
         formats.add(FloatingPointFormat.FLOAT128);
       } else if ("-256".equals(s)) {
-        formats.add(FloatingPointFormat.FLOAT128);
+        formats.add(FloatingPointFormat.FLOAT256);
       } else if ("-v".equals(s)) {
         verbose = true;
       }
