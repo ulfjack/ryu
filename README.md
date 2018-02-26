@@ -111,6 +111,16 @@ $ bazel run //src/main/java/info/adams/ryu/analysis:ExhaustiveFloatComparison
 This takes ~60 hours to run to completion on an
 Intel(R) Core(TM) i7-4770K with 3.50GHz.
 
+### Comparing All Possible 64-bit Values Exhaustively
+You can check the slow vs. the fast implementation for all 64-bit floating point
+numbers using:
+```
+$ bazel run //src/main/java/info/adams/ryu/analysis:ExtensiveDoubleComparison
+```
+
+However, this takes approximately forever, so you will need to interrupt the
+program.
+
 ### Benchmarks
 We provide both C and Java benchmark programs.
 
