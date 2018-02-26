@@ -37,6 +37,9 @@ $ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
 64:   29.806    3.182      103.060   98.717
 ```
 
+Note that these changes also apply to the computation of the required lookup
+table sizes and bit sizes.
+
 ### Jaffer's Implementation
 The code given by Jaffer in the original paper, which we used in our paper,
 does not come with a license declaration. Instead, we're using code found on
