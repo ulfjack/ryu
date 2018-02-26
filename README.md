@@ -38,7 +38,22 @@ $ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
 ```
 
 Note that these changes also apply to the computation of the required lookup
-table sizes and bit sizes.
+table sizes and bit sizes. You can pass the `-legacy` option to the lookup
+table and bit size programs to switch to the original mode.
+
+### Errors in the Paper
+We had an off-by-one error in `ComputeTableSizes` (Figure 3), which is fixed
+in the code shown here. We also changed the output to match the
+implementation, which has two zero-indexed tables, one of which is not
+strictly necessary, but simplifies the code, so the totals are off by two
+compared to the paper.
+
+We were also using an incorrect value in the implementation of
+`ComputeRequiredBitSizes` (also Figure 3); this resulted in numbers that are
+larger than necessary. In addition, note that our approach is already
+unnecessarily conservative; at least for the 32-bit case, we've found through
+exhaustive testing that the code still returns correct results for some
+smaller bit sizes.
 
 ### Jaffer's Implementation
 The code given by Jaffer in the original paper, which we used in our paper,
@@ -89,7 +104,8 @@ You can compute the required lookup table sizes with:
 $ bazel run //src/main/java/info/adams/ryu/analysis:ComputeTableSizes --
 ```
 
-Add `-v` to get slightly more verbose output.
+Add `-v` to get slightly more verbose output. Add `-legacy` to match the
+original algorithm as described in the paper.
 
 ### Computing Required Bit Sizes
 You can compute the required bit sizes with:
@@ -99,7 +115,8 @@ $ bazel run //src/main/java/info/adams/ryu/analysis:ComputeRequiredBitSizes --
 
 Add the `-128` and `-256` flags to also cover 128- and 256-bit numbers. This
 could take a while - 128-bit takes ~20 seconds on my machine while 256-bit takes
-a few hours. Add `-v` to get very verbose output.
+a few hours. Add `-v` to get very verbose output. Add `-legacy` to match the
+original algorithm as described in the paper.
 
 ### Comparing All Possible 32-bit Values Exhaustively
 You can check the slow vs. the fast implementation for all 32-bit floating point
