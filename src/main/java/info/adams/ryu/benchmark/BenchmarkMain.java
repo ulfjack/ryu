@@ -179,7 +179,7 @@ public class BenchmarkMain {
       System.gc();
       start = System.nanoTime();
       for (int j = 0; j < iterations; j++) {
-        throwaway += Double.toString(f).length();
+        throwaway += DoubleUtils.toString(f).length();
       }
       stop = System.nanoTime();
       double delta3 = (stop - start) / (double) iterations;
