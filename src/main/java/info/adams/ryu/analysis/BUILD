@@ -21,6 +21,11 @@ java_binary(
 )
 
 java_binary(
+  name = "ExtensiveDoubleComparison",
+  runtime_deps = [":analysis"],
+)
+
+java_binary(
   name = "PrintFloatLookupTable",
   runtime_deps = [":analysis"],
 )

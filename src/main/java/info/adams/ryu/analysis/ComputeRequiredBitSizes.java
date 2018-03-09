@@ -32,6 +32,7 @@ public final class ComputeRequiredBitSizes {
 
   public static void main(String[] args) {
     boolean verbose = false;
+    boolean legacy = false;
     EnumSet<FloatingPointFormat> formats = EnumSet.noneOf(FloatingPointFormat.class);
     formats.add(FloatingPointFormat.FLOAT16);
     formats.add(FloatingPointFormat.FLOAT32);
@@ -40,25 +41,32 @@ public final class ComputeRequiredBitSizes {
       if ("-128".equals(s)) {
         formats.add(FloatingPointFormat.FLOAT128);
       } else if ("-256".equals(s)) {
-        formats.add(FloatingPointFormat.FLOAT128);
+        formats.add(FloatingPointFormat.FLOAT256);
       } else if ("-v".equals(s)) {
         verbose = true;
+      } else if ("-legacy".equals(s)) {
+        legacy = true;
       }
     }
 
     for (FloatingPointFormat format : formats) {
-      compute(format, verbose);
+      compute(format, legacy, verbose);
     }
   }
 
-  private static void compute(FloatingPointFormat format, boolean verbose) {
+  private static void compute(FloatingPointFormat format, boolean legacy, boolean verbose) {
     int mbits = format.mantissaBits() + 3;
 
-    int minE2 = 2; // 2;
+    int minE2 = 0;
     int maxE2 = -(1 - format.bias() - format.mantissaBits() - 2);
-    int b0 = 0;
+    int b1 = 0;
     for (int e2 = minE2; e2 < maxE2 + 1; e2++) {
-      int q = Math.max(0, (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
+      int q;
+      if (legacy) {
+        q = (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR);
+      } else {
+        q = Math.max(0, (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
+      }
       int i = e2 - q;
       BigInteger pow5 = FIVE.pow(i);
       BigInteger pow2 = BigInteger.ONE.shiftLeft(q);
@@ -74,22 +82,27 @@ public final class ComputeRequiredBitSizes {
 
       int bits = min.divide(mxM).bitLength();
       int reqn = pow5.bitLength() - bits;
-      b0 = Math.max(b0, reqn);
+      b1 = Math.max(b1, reqn);
       if (verbose) {
         System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
             Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(i), Integer.valueOf(bits),
-            Integer.valueOf(reqn), Integer.valueOf(b0), Double.valueOf((100.0 * e2) / maxE2));
+            Integer.valueOf(reqn), Integer.valueOf(b1), Double.valueOf((100.0 * e2) / maxE2));
       }
     }
     if (verbose) {
-      System.out.println("B_0 = " + b0);
+      System.out.println("B_1 = " + b1);
     }
 
-    minE2 = 2;
+    minE2 = 0;
     maxE2 = ((1 << format.exponentBits()) - 2) - format.bias() - format.mantissaBits() - 2;
-    int b1 = 0;
+    int b0 = 0;
     for (int e2 = minE2; e2 < maxE2 + 1; e2++) {
-      int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
+      int q;
+      if (legacy) {
+        q = (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR);
+      } else {
+        q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
+      }
       BigInteger pow5 = FIVE.pow(q);
       BigInteger pow2 = BigInteger.ONE.shiftLeft(e2 - q);
 
@@ -106,18 +119,18 @@ public final class ComputeRequiredBitSizes {
       BigInteger den = pow5.subtract(max);
       int bits = num.divide(den).bitLength();
       int reqn = bits - pow5.bitLength();
-      b1 = Math.max(b1, reqn);
+      b0 = Math.max(b0, reqn);
       if (verbose) {
         System.out.printf("%s,%s,%s,%s,%s,%s,%.2f%%\n",
             Integer.valueOf(e2), Integer.valueOf(q), Integer.valueOf(e2 - q), Integer.valueOf(bits),
-            Integer.valueOf(reqn), Integer.valueOf(b1), Double.valueOf((100.0 * e2) / maxE2));
+            Integer.valueOf(reqn), Integer.valueOf(b0), Double.valueOf((100.0 * e2) / maxE2));
       }
     }
     if (verbose) {
-      System.out.println("B_1 = " + b1);
+      System.out.println("B_0 = " + b0);
       System.out.println();
     }
-    System.out.printf("%s,%d,%d\n", format, b0, b1);
+    System.out.printf("%s,%d,%d\n", format, Integer.valueOf(b0), Integer.valueOf(b1));
   }
 
   private static BigInteger min(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {

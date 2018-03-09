@@ -26,9 +26,12 @@ public class ComputeTableSizes {
 
   public static void main(String[] args) {
     boolean verbose = false;
+    boolean legacy = false;
     for (String s : args) {
-      if (s.equals("-v")) {
+      if ("-v".equals(s)) {
         verbose = true;
+      } else if ("-legacy".equals(s)) {
+        legacy = true;
       }
     }
 
@@ -41,7 +44,10 @@ public class ComputeTableSizes {
       int minE2 = 1 - format.bias() - format.mantissaBits() - 2;
       int maxE2 = ((1 << format.exponentBits()) - 2) - format.bias() - format.mantissaBits() - 2;
       long minQ, maxQ;
-      if (format == FloatingPointFormat.FLOAT32) {
+      if (legacy) {
+        minQ = (-minE2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR;
+        maxQ = (maxE2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR;
+      } else if (format == FloatingPointFormat.FLOAT32) {
         // Float32 is special; using -1 as below is problematic as it would require 33 bit
         // integers. Instead, we compute the additionally required digit separately.
         minQ = (-minE2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR;
