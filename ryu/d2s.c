@@ -441,42 +441,30 @@ static inline uint32_t pow5bits(int32_t e) {
 }
 
 #ifndef HAS_UINT128
+
+#include <intrin.h>
+#pragma intrinsic(_umul128,__shiftright128)
+
 static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
-  uint64_t mHigh = m >> 32;
-  uint64_t mLow = m & 0xffffffffL;
-  uint64_t bits13 = mHigh * (POW5_INV_SPLIT[i][0] >> 32);
-  uint64_t bits03 = mLow  * (POW5_INV_SPLIT[i][0] >> 32);
-  uint64_t bits12 = mHigh * (POW5_INV_SPLIT[i][0] & 0xffffffffL);
-  uint64_t bits02 = mLow  * (POW5_INV_SPLIT[i][0] & 0xffffffffL);
-  uint64_t bits11 = mHigh * (POW5_INV_SPLIT[i][1] >> 32);
-  uint64_t bits01 = mLow  * (POW5_INV_SPLIT[i][1] >> 32);
-  uint64_t bits10 = mHigh * (POW5_INV_SPLIT[i][1] & 0xffffffffL);
-  uint64_t bits00 = mLow  * (POW5_INV_SPLIT[i][1] & 0xffffffffL);
-  uint32_t actualShift = j - 3 * 32 - 22;
-  return ((((((
-        ((bits00 >> 32) + bits01 + bits10) >> 32)
-                        + bits02 + bits11) >> 32)
-                        + bits03 + bits12) >> 22)
-                        + (bits13 << 9)) >> actualShift;
+  // m is maximum 55 bits
+  uint64_t high1;                                            // 128
+  uint64_t low1 = _umul128(m, POW5_INV_SPLIT[i][1], &high1); // 64
+  uint64_t high0;                                            // 64
+  uint64_t low0 = _umul128(m, POW5_INV_SPLIT[i][0], &high0); // 0
+  uint64_t sum = high0 + low1;
+  if (sum < high0) high1++; // overflow into high1
+  return __shiftright128(sum, high1, j - 64);
 }
 
 static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
-  uint64_t mHigh = m >> 32;
-  uint64_t mLow = m & 0xffffffffL;
-  uint64_t bits13 = mHigh * (POW5_SPLIT[i][0] >> 32);
-  uint64_t bits03 = mLow  * (POW5_SPLIT[i][0] >> 32);
-  uint64_t bits12 = mHigh * (POW5_SPLIT[i][0] & 0xffffffffL);
-  uint64_t bits02 = mLow  * (POW5_SPLIT[i][0] & 0xffffffffL);
-  uint64_t bits11 = mHigh * (POW5_SPLIT[i][1] >> 32);
-  uint64_t bits01 = mLow  * (POW5_SPLIT[i][1] >> 32);
-  uint64_t bits10 = mHigh * (POW5_SPLIT[i][1] & 0xffffffffL);
-  uint64_t bits00 = mLow  * (POW5_SPLIT[i][1] & 0xffffffffL);
-  uint32_t actualShift = j - 3 * 32 - 22;
-  return ((((((
-        ((bits00 >> 32) + bits01 + bits10) >> 32)
-                        + bits02 + bits11) >> 32)
-                        + bits03 + bits12) >> 22)
-                        + (bits13 << 9)) >> actualShift;
+  // m is maximum 55 bits
+  uint64_t high1;                                        // 128
+  uint64_t low1 = _umul128(m, POW5_SPLIT[i][1], &high1); // 64
+  uint64_t high0;                                        // 64
+  uint64_t low0 = _umul128(m, POW5_SPLIT[i][0], &high0); // 0
+  uint64_t sum = high0 + low1;
+  if (sum < high0) high1++; // overflow into high1
+  return __shiftright128(sum, high1, j - 64);
 }
 
 #else // HAS_UINT128
@@ -536,7 +524,7 @@ void d2s_buffered(double f, char* result) {
 #ifdef DEBUG
   printf("IN=");
   for (int32_t bit = 63; bit >= 0; bit--) {
-    printf("%d", (bits >> bit) & 1);
+    printf("%d", (int) ((bits >> bit) & 1));
   }
   printf("\n");
 #endif
@@ -557,13 +545,13 @@ void d2s_buffered(double f, char* result) {
     m2 = ieeeMantissa;
   } else {
     e2 = ieeeExponent - offset - mantissaBits - 2;
-    m2 = (1L << mantissaBits) | ieeeMantissa;
+    m2 = (1ull << mantissaBits) | ieeeMantissa;
   }
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
 
 #ifdef DEBUG
-  printf("S=%s E=%d M=%" PRIu64 "\n", sign ? "-" : "+", e2, m2);
+  printf("S=%s E=%d M=%" PRIu64 "\n", sign ? "-" : "+", e2 + 2, m2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
