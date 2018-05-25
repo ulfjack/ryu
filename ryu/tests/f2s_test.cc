@@ -62,7 +62,12 @@ TEST(F2sTest, Regression) {
   ASSERT_STREQ("6.0898E-39", f2s(6.0898E-39f));
   ASSERT_STREQ("1.0310042E-3", f2s(0.0010310042f));
   ASSERT_STREQ("2.882326E17", f2s(2.8823261E17f));
+#ifndef _WIN32
+  // MSVC rounds this up to the next higher floating point number
   ASSERT_STREQ("7.038531E-26", f2s(7.038531E-26f));
+#else
+  ASSERT_STREQ("7.038531E-26", f2s(7.0385309E-26f));
+#endif
   ASSERT_STREQ("9.223404E17", f2s(9.2234038E17f));
   ASSERT_STREQ("6.710887E7", f2s(6.7108872E7f));
   ASSERT_STREQ("1E-44", f2s(1.0E-44f));

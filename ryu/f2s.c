@@ -135,6 +135,14 @@ void f2s_buffered(float f, char* result) {
   uint32_t ieeeMantissa = bits & ((1L << mantissaBits) - 1);
   uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
+#ifdef DEBUG
+  printf("IN=");
+  for (int32_t bit = 31; bit >= 0; bit--) {
+    printf("%d", (bits >> bit) & 1);
+  }
+  printf("\n");
+#endif
+
   int32_t e2;
   uint32_t m2;
   // Case distinction; exit early for the easy cases.
@@ -154,6 +162,10 @@ void f2s_buffered(float f, char* result) {
   }
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
+
+#ifdef DEBUG
+  printf("S=%s E=%d M=%u\n", sign ? "-" : "+", e2, m2);
+#endif
 
   // Step 2: Determine the interval of legal decimal representations.
   uint32_t mv = 4 * m2;
