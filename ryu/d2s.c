@@ -530,7 +530,7 @@ void d2s_buffered(double f, char* result) {
 
   // Decode bits into sign, mantissa, and exponent.
   bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  uint64_t ieeeMantissa = bits & ((1L << mantissaBits) - 1);
+  uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
   int32_t ieeeExponent = (int32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
 #ifdef DEBUG
@@ -572,7 +572,7 @@ void d2s_buffered(double f, char* result) {
 #endif
   uint64_t mp = 4 * m2 + 2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  uint64_t mm = 4 * m2 - 1 - ((m2 != (1L << mantissaBits)) || (ieeeExponent <= 1));
+  uint64_t mm = 4 * m2 - 1 - ((m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1));
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
 #ifdef NICER_OUTPUT
@@ -648,7 +648,7 @@ void d2s_buffered(double f, char* result) {
 #endif
     if (q <= 1) {
 #ifdef MATCH_GRISU3_OUTPUT
-      vrIsTrailingZeros = (mv & ((1L << q) - 1)) == 0;
+      vrIsTrailingZeros = (mv & ((1ull << q) - 1)) == 0;
 #endif
       if (acceptBounds) {
         vmIsTrailingZeros = (~mm & 1) >= q;
@@ -663,7 +663,7 @@ void d2s_buffered(double f, char* result) {
       // <=> mv & ((1 << q) - 1) == 0
       // We also need to make sure that the left shift does not overflow.
       vrIsTrailingZeros =
-          ((q < mantissaBits) && ((mv & ((1L << q) - 1)) == 0));
+          ((q < mantissaBits) && ((mv & ((1ull << q) - 1)) == 0));
 #if DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
