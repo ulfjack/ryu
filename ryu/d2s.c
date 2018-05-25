@@ -25,6 +25,16 @@
 #include <stdio.h>
 #endif
 
+#ifndef _WIN32
+typedef __uint128_t uint128_t;
+#define HAS_UINT128
+// FAST_POW5 requires uint128, so it's only available on non-Win32 platforms.
+#define FAST_POW5
+#else
+// MSVC calls it __inline, not inline in C mode.
+#define inline __inline
+#endif // _WIN32
+
 // Set LEGACY_MODE to get the original behavior as described in the paper. Set
 // MATCH_GRISU3_OUTPUT to match Grisu3 output perfectly.
 #ifdef MATCH_GRISU3_OUTPUT
@@ -362,7 +372,27 @@ static uint64_t POW5_SPLIT[326][2] = {
  {  5969538097335305869u,    89002954340288055u }, {  2850236603241744433u,   111253692925360069u },
 };
 
-#define FAST_POW5
+#ifndef NO_DIGIT_TABLE
+static const char DIGIT_TABLE[200] = {
+  '0','0','0','1','0','2','0','3','0','4','0','5','0','6','0','7','0','8','0','9',
+  '1','0','1','1','1','2','1','3','1','4','1','5','1','6','1','7','1','8','1','9',
+  '2','0','2','1','2','2','2','3','2','4','2','5','2','6','2','7','2','8','2','9',
+  '3','0','3','1','3','2','3','3','3','4','3','5','3','6','3','7','3','8','3','9',
+  '4','0','4','1','4','2','4','3','4','4','4','5','4','6','4','7','4','8','4','9',
+  '5','0','5','1','5','2','5','3','5','4','5','5','5','6','5','7','5','8','5','9',
+  '6','0','6','1','6','2','6','3','6','4','6','5','6','6','6','7','6','8','6','9',
+  '7','0','7','1','7','2','7','3','7','4','7','5','7','6','7','7','7','8','7','9',
+  '8','0','8','1','8','2','8','3','8','4','8','5','8','6','8','7','8','8','8','9',
+  '9','0','9','1','9','2','9','3','9','4','9','5','9','6','9','7','9','8','9','9'
+};
+#endif // NO_DIGIT_TABLE
+
+#ifdef NICER_OUTPUT
+static inline int32_t max_uint32(int32_t a, int32_t b) {
+  return a > b ? a : b;
+}
+#endif
+
 #ifdef FAST_POW5
 static uint64_t POW5[22] = {
   1u, 5u, 25u, 125u, 625u, 3125u, 15625u, 78125u, 390625u, 1953125u, 9765625u,
@@ -384,30 +414,13 @@ static uint64_t POW5_MUL[22] = {
 static uint64_t POW5_SHR[22] = {
   0, 0, 0, 0, 2, 4, 4, 8, 10, 11, 14, 17, 19, 23, 25, 26, 28, 31, 34, 35, 38, 38,
 };
-#endif
 
-#ifndef NO_DIGIT_TABLE
-static const char DIGIT_TABLE[200] = {
-  '0','0','0','1','0','2','0','3','0','4','0','5','0','6','0','7','0','8','0','9',
-  '1','0','1','1','1','2','1','3','1','4','1','5','1','6','1','7','1','8','1','9',
-  '2','0','2','1','2','2','2','3','2','4','2','5','2','6','2','7','2','8','2','9',
-  '3','0','3','1','3','2','3','3','3','4','3','5','3','6','3','7','3','8','3','9',
-  '4','0','4','1','4','2','4','3','4','4','4','5','4','6','4','7','4','8','4','9',
-  '5','0','5','1','5','2','5','3','5','4','5','5','5','6','5','7','5','8','5','9',
-  '6','0','6','1','6','2','6','3','6','4','6','5','6','6','6','7','6','8','6','9',
-  '7','0','7','1','7','2','7','3','7','4','7','5','7','6','7','7','7','8','7','9',
-  '8','0','8','1','8','2','8','3','8','4','8','5','8','6','8','7','8','8','8','9',
-  '9','0','9','1','9','2','9','3','9','4','9','5','9','6','9','7','9','8','9','9'
-};
-#endif // NO_DIGIT_TABLE
-
-#ifdef NICER_OUTPUT
-static inline int32_t max(int32_t a, int32_t b) {
-  return a > b ? a : b;
+static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
+  if (p == 0) return true;
+  uint64_t div = ((value * (uint128_t) POW5_MUL[p]) >> 64) >> POW5_SHR[p];
+  return (value - POW5[p] * div) == 0;
 }
-#endif
-
-#ifndef FAST_POW5
+#else // FAST_POW5
 static inline uint32_t pow5Factor(uint64_t value) {
   for (uint32_t count = 0; value > 0; count++) {
     if (value - 5 * (value / 5) != 0) {
@@ -417,23 +430,56 @@ static inline uint32_t pow5Factor(uint64_t value) {
   }
   return 0;
 }
-#endif
 
 static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
-#ifdef FAST_POW5
-  if (p == 0) return true;
-  uint64_t div = ((value * (__uint128_t) POW5_MUL[p]) >> 64) >> POW5_SHR[p];
-  return (value - POW5[p] * div) == 0;
-#else
   return pow5Factor(value) >= p;
-#endif
 }
+#endif // FAST_POW5
 
 static inline int32_t pow5bits(int32_t e) {
   return e == 0 ? 1 : (uint32_t) ((e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
 }
 
-typedef __uint128_t uint128_t;
+#ifndef HAS_UINT128
+static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
+  uint64_t mHigh = m >> 32;
+  uint64_t mLow = m & 0xffffffffL;
+  uint64_t bits13 = mHigh * (POW5_INV_SPLIT[i][0] >> 32);
+  uint64_t bits03 = mLow  * (POW5_INV_SPLIT[i][0] >> 32);
+  uint64_t bits12 = mHigh * (POW5_INV_SPLIT[i][0] & 0xffffffffL);
+  uint64_t bits02 = mLow  * (POW5_INV_SPLIT[i][0] & 0xffffffffL);
+  uint64_t bits11 = mHigh * (POW5_INV_SPLIT[i][1] >> 32);
+  uint64_t bits01 = mLow  * (POW5_INV_SPLIT[i][1] >> 32);
+  uint64_t bits10 = mHigh * (POW5_INV_SPLIT[i][1] & 0xffffffffL);
+  uint64_t bits00 = mLow  * (POW5_INV_SPLIT[i][1] & 0xffffffffL);
+  uint32_t actualShift = j - 3 * 32 - 22;
+  return ((((((
+        ((bits00 >> 32) + bits01 + bits10) >> 32)
+                        + bits02 + bits11) >> 32)
+                        + bits03 + bits12) >> 22)
+                        + (bits13 << 9)) >> actualShift;
+}
+
+static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
+  uint64_t mHigh = m >> 32;
+  uint64_t mLow = m & 0xffffffffL;
+  uint64_t bits13 = mHigh * (POW5_SPLIT[i][0] >> 32);
+  uint64_t bits03 = mLow  * (POW5_SPLIT[i][0] >> 32);
+  uint64_t bits12 = mHigh * (POW5_SPLIT[i][0] & 0xffffffffL);
+  uint64_t bits02 = mLow  * (POW5_SPLIT[i][0] & 0xffffffffL);
+  uint64_t bits11 = mHigh * (POW5_SPLIT[i][1] >> 32);
+  uint64_t bits01 = mLow  * (POW5_SPLIT[i][1] >> 32);
+  uint64_t bits10 = mHigh * (POW5_SPLIT[i][1] & 0xffffffffL);
+  uint64_t bits00 = mLow  * (POW5_SPLIT[i][1] & 0xffffffffL);
+  uint32_t actualShift = j - 3 * 32 - 22;
+  return ((((((
+        ((bits00 >> 32) + bits01 + bits10) >> 32)
+                        + bits02 + bits11) >> 32)
+                        + bits03 + bits12) >> 22)
+                        + (bits13 << 9)) >> actualShift;
+}
+
+#else // HAS_UINT128
 
 static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
   uint128_t b0 = ((uint128_t) m) * POW5_INV_SPLIT[i][0];
@@ -446,6 +492,7 @@ static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
   uint128_t b2 = ((uint128_t) m) * POW5_SPLIT[i][1];
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
+#endif // HAS_UINT128
 
 static inline uint32_t decimalLength(uint64_t v) {
   // This is slightly faster than a loop. For a random set of numbers, the
@@ -528,7 +575,7 @@ void d2s_buffered(double f, char* result) {
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
 #ifdef NICER_OUTPUT
-    int32_t q = max(0, ((int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
+    int32_t q = max_uint32(0, ((int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
 #else
     int32_t q = (int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR);
 #endif
@@ -541,6 +588,7 @@ void d2s_buffered(double f, char* result) {
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef DEBUG
+    // TODO: mv may not be defined here!
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
@@ -568,7 +616,7 @@ void d2s_buffered(double f, char* result) {
     }
   } else {
 #ifdef NICER_OUTPUT
-    int32_t q = max(0, ((int32_t) (((uint64_t) -e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
+    int32_t q = max_uint32(0, ((int32_t) (((uint64_t) -e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
 #else
     int32_t q = (int32_t) (((uint64_t) -e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR);
 #endif
