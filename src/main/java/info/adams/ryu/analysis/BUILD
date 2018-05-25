@@ -44,3 +44,8 @@ java_binary(
   name = "FindDifferences",
   runtime_deps = [":analysis"],
 )
+
+java_binary(
+  name = "SlowConversion",
+  runtime_deps = [":analysis"],
+)

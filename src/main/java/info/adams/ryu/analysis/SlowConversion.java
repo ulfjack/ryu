@@ -28,7 +28,7 @@ public final class SlowConversion {
   public static void main(String[] args) {
     DEBUG = true;
     if (DEBUG_FLOAT) {
-      float f = 3.3554432E7f;
+      float f = 7.038531E-26f;
       String result = floatToString(f);
       System.out.println(result + " " + f);
     } else {
