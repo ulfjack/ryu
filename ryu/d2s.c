@@ -436,8 +436,8 @@ static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
 }
 #endif // FAST_POW5
 
-static inline int32_t pow5bits(int32_t e) {
-  return e == 0 ? 1 : (uint32_t) ((e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
+static inline uint32_t pow5bits(int32_t e) {
+  return e == 0 ? 1 : (uint32_t) (((uint64_t) e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
 }
 
 #ifndef HAS_UINT128
@@ -533,6 +533,14 @@ void d2s_buffered(double f, char* result) {
   uint64_t ieeeMantissa = bits & ((1L << mantissaBits) - 1);
   int32_t ieeeExponent = (int32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
+#ifdef DEBUG
+  printf("IN=");
+  for (int32_t bit = 63; bit >= 0; bit--) {
+    printf("%d", (bits >> bit) & 1);
+  }
+  printf("\n");
+#endif
+
   int32_t e2;
   uint64_t m2;
   // Case distinction; exit early for the easy cases.
@@ -553,6 +561,10 @@ void d2s_buffered(double f, char* result) {
   }
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
+
+#ifdef DEBUG
+  printf("S=%s E=%d M=%" PRIu64 "\n", sign ? "-" : "+", e2, m2);
+#endif
 
   // Step 2: Determine the interval of legal decimal representations.
 #ifdef NICER_OUTPUT
@@ -631,7 +643,7 @@ void d2s_buffered(double f, char* result) {
     vm = mulPow5divPow2(mm, i, j);
 #ifdef DEBUG
     printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
-    printf("%d %d\n", i, j);
+    printf("%d %d %d %d\n", q, i, k, j);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
