@@ -27,15 +27,26 @@
 #include <stdio.h>
 #endif
 
-#ifndef _WIN32
-typedef __uint128_t uint128_t;
+// ABSL avoids uint128_t on Win32 even if __SIZEOF_INT128__ is defined.
+// Let's do the same for now.
+#if defined(__SIZEOF_INT128__) && !defined(_WIN32)
+
 #define HAS_UINT128
+typedef __uint128_t uint128_t;
 // FAST_POW5 requires uint128, so it's only available on non-Win32 platforms.
 #define FAST_POW5
-#else
+
+#elif defined(_MSC_VER)
+
+#define HAS_64_BIT_INTRINSICS
 // MSVC calls it __inline, not inline in C mode.
 #define inline __inline
-#endif // _WIN32
+
+#else
+
+#define USE_MANUAL_64_BIT_MUL
+
+#endif
 
 // Set LEGACY_MODE to get the original behavior as described in the paper. Set
 // MATCH_GRISU3_OUTPUT to match Grisu3 output perfectly.
@@ -125,35 +136,46 @@ static inline uint32_t pow5bits(int32_t e) {
   return e == 0 ? 1 : (uint32_t) (((uint64_t) e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
 }
 
-#ifndef HAS_UINT128
+// We need a 64x128 bit multiplication and a subsequent 128-bit shift.
+// Multiplication:
+//   The 64-bit factor is variable and passed in, the 128-bit factor comes
+//   from a lookup table. We know that the 64-bit factor only has 55
+//   significant bits (i.e., the 9 topmost bits are zeros). The 128-bit
+//   factor only has 124 significant bits (i.e., the 4 topmost bits are
+//   zeros).
+// Shift:
+//   In principle, the multiplication result requires 55+124=179 bits to
+//   represent. However, we then shift this value to the right by j, which is
+//   at least j >= 115, so the result is guaranteed to fit into 179-115=64
+//   bits. This means that we only need the topmost 64 significant bits of
+//   the 64x128-bit multiplication.
+//
+// There are several ways to do this:
+// 1. Best case: the compiler exposes a 128-bit type
+//    We perform two 64x64-bit multiplications, add the higher 64 bits of the
+//    lower result to the higher result, and shift by j-64 bits.
+//
+//    We explicitly case from 64-bit to 128-bit, so the compiler can tell
+//    that these are only 64-bit inputs, and can map these to the best
+//    possible sequence of assembly instructions.
+//    x86-64 machines happen to have matching assembly instructions for
+//    64x64-bit multiplications and 128-bit shifts.
+//
+// 2. Second best case: the compiler exposes intrinsicts for the x86-64 assembly
+//    instructions mentioned in 1.
+//
+// 3. We only have 64x64 bit instructions that return the lower 64 bit of
+//    the result, i.e., we have to use plain C.
+//    Our inputs are less than the full width, so we have three options:
+//    a. Ignore this fact and just implement the intrinsics manually
+//    b. Split both into 31-bit pieces, which guarantees no internal overflow,
+//       but requires extra work upfront (unless we change the lookup table).
+//    c. Split only the first factor into 31-bit pieces, which also guarantees
+//       no internal overflow, but requires extra work since the intermediate
+//       results are not perfectly aligned.
+#ifdef HAS_UINT128
 
-#include <intrin.h>
-#pragma intrinsic(_umul128,__shiftright128)
-
-static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
-  // m is maximum 55 bits
-  uint64_t high1;                                            // 128
-  uint64_t low1 = _umul128(m, POW5_INV_SPLIT[i][1], &high1); // 64
-  uint64_t high0;                                            // 64
-  uint64_t low0 = _umul128(m, POW5_INV_SPLIT[i][0], &high0); // 0
-  uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
-  return __shiftright128(sum, high1, j - 64);
-}
-
-static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
-  // m is maximum 55 bits
-  uint64_t high1;                                        // 128
-  uint64_t low1 = _umul128(m, POW5_SPLIT[i][1], &high1); // 64
-  uint64_t high0;                                        // 64
-  uint64_t low0 = _umul128(m, POW5_SPLIT[i][0], &high0); // 0
-  uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
-  return __shiftright128(sum, high1, j - 64);
-}
-
-#else // HAS_UINT128
-
+// Best case: use 128-bit type.
 static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
   uint128_t b0 = ((uint128_t) m) * POW5_INV_SPLIT[i][0];
   uint128_t b2 = ((uint128_t) m) * POW5_INV_SPLIT[i][1];
@@ -165,6 +187,70 @@ static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
   uint128_t b2 = ((uint128_t) m) * POW5_SPLIT[i][1];
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
+
+#else
+
+#ifdef HAS_64_BIT_INTRINSICS
+
+#include <intrin.h>
+#pragma intrinsic(__umul128,__shiftright128)
+#define umul128 __umul128
+#define shiftright128 __shiftright128
+
+#else // Use our own.
+
+static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
+  uint64_t aLo = a & 0xffffffff;
+  uint64_t aHi = a >> 32;
+  uint64_t bLo = b & 0xffffffff;
+  uint64_t bHi = b >> 32;
+
+  uint64_t b00 = aLo * bLo;
+  uint64_t b01 = aLo * bHi;
+  uint64_t b10 = aHi * bLo;
+  uint64_t b11 = aHi * bHi;
+
+  uint64_t midSum = b01 + b10;
+  uint64_t midCarry = midSum < b01;
+
+  uint64_t productLo = b00 + (midSum << 32);
+  uint64_t productLoCarry = productLo < b00;
+
+  *productHi = b11 + (midSum >> 32) + (midCarry << 32) + productLoCarry;
+  return productLo;
+}
+
+static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
+  // shift hi-lo right by 0 <= dist <= 128
+  return (dist >= 64)
+      ? hi >> (dist - 64)
+      : (hi << (64 - dist)) + (lo >> dist);
+}
+
+#endif // HAS_64_BIT_INTRINSICS
+
+static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
+  // m is maximum 55 bits
+  uint64_t high1;                                             // 128
+  uint64_t low1 = umul128(m, POW5_INV_SPLIT[i][1], &high1); // 64
+  uint64_t high0;                                             // 64
+  umul128(m, POW5_INV_SPLIT[i][0], &high0); // 0
+  uint64_t sum = high0 + low1;
+  if (sum < high0) high1++; // overflow into high1
+  return shiftright128(sum, high1, j - 64);
+}
+
+static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
+  // m is maximum 55 bits
+  uint64_t high1;                                         // 128
+  uint64_t low1 = umul128(m, POW5_SPLIT[i][1], &high1); // 64
+  uint64_t high0;                                         // 64
+  umul128(m, POW5_SPLIT[i][0], &high0); // 0
+  uint64_t sum = high0 + low1;
+  if (sum < high0) high1++; // overflow into high1
+  return shiftright128(sum, high1, j - 64);
+}
+
 #endif // HAS_UINT128
 
 static inline uint32_t decimalLength(uint64_t v) {
