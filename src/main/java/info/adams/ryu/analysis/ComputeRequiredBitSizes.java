@@ -32,7 +32,6 @@ public final class ComputeRequiredBitSizes {
 
   public static void main(String[] args) {
     boolean verbose = false;
-    boolean legacy = false;
     EnumSet<FloatingPointFormat> formats = EnumSet.noneOf(FloatingPointFormat.class);
     formats.add(FloatingPointFormat.FLOAT16);
     formats.add(FloatingPointFormat.FLOAT32);
@@ -44,29 +43,22 @@ public final class ComputeRequiredBitSizes {
         formats.add(FloatingPointFormat.FLOAT256);
       } else if ("-v".equals(s)) {
         verbose = true;
-      } else if ("-legacy".equals(s)) {
-        legacy = true;
       }
     }
 
     for (FloatingPointFormat format : formats) {
-      compute(format, legacy, verbose);
+      compute(format, verbose);
     }
   }
 
-  private static void compute(FloatingPointFormat format, boolean legacy, boolean verbose) {
+  private static void compute(FloatingPointFormat format, boolean verbose) {
     int mbits = format.mantissaBits() + 3;
 
     int minE2 = 0;
     int maxE2 = -(1 - format.bias() - format.mantissaBits() - 2);
     int b1 = 0;
     for (int e2 = minE2; e2 < maxE2 + 1; e2++) {
-      int q;
-      if (legacy) {
-        q = (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR);
-      } else {
-        q = Math.max(0, (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
-      }
+      int q = Math.max(0, (int) (e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
       int i = e2 - q;
       BigInteger pow5 = FIVE.pow(i);
       BigInteger pow2 = BigInteger.ONE.shiftLeft(q);
@@ -97,12 +89,7 @@ public final class ComputeRequiredBitSizes {
     maxE2 = ((1 << format.exponentBits()) - 2) - format.bias() - format.mantissaBits() - 2;
     int b0 = 0;
     for (int e2 = minE2; e2 < maxE2 + 1; e2++) {
-      int q;
-      if (legacy) {
-        q = (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR);
-      } else {
-        q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
-      }
+      int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
       BigInteger pow5 = FIVE.pow(q);
       BigInteger pow2 = BigInteger.ONE.shiftLeft(e2 - q);
 
