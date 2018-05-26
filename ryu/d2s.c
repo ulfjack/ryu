@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Compile with -DMATCH_GRISU3_OUTPUT to match Grisu3 output perfectly.
+// Compile with -DDEBUG to get very verbose debugging output to stdout.
+
 #include "ryu/ryu.h"
 
 #include <inttypes.h>
@@ -48,16 +51,6 @@ typedef __uint128_t uint128_t;
 
 #endif
 
-// Set LEGACY_MODE to get the original behavior as described in the paper. Set
-// MATCH_GRISU3_OUTPUT to match Grisu3 output perfectly.
-#ifdef MATCH_GRISU3_OUTPUT
-#undef LEGACY_MODE
-#endif
-
-#ifndef LEGACY_MODE
-#define NICER_OUTPUT
-#endif
-
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
 
@@ -83,11 +76,9 @@ static const char DIGIT_TABLE[200] = {
 };
 #endif // NO_DIGIT_TABLE
 
-#ifdef NICER_OUTPUT
 static inline int32_t max_uint32(int32_t a, int32_t b) {
   return a > b ? a : b;
 }
-#endif
 
 #ifdef FAST_POW5
 static uint64_t POW5[22] = {
@@ -326,52 +317,39 @@ void d2s_buffered(double f, char* result) {
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
-#ifdef NICER_OUTPUT
   uint64_t mv = 4 * m2;
-#endif
   uint64_t mp = 4 * m2 + 2;
   // Implicit bool -> int conversion. True is 1, false is 0.
   uint64_t mm = 4 * m2 - 1 - ((m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1));
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
-#ifdef NICER_OUTPUT
   uint64_t vr;
 #ifdef MATCH_GRISU3_OUTPUT
   bool vrIsTrailingZeros = false;
-#endif
 #endif
   uint64_t vp, vm;
   int32_t e10;
   bool vmIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
-#ifdef NICER_OUTPUT
     int32_t q = max_uint32(0, ((int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
-#else
-    int32_t q = (int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR);
-#endif
     e10 = q;
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
-#ifdef NICER_OUTPUT
     vr = mulPow5InvDivPow2(mv, q, i);
-#endif
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef DEBUG
-    // TODO: mv may not be defined here!
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 21) {
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
-#ifdef NICER_OUTPUT
       if (mv % 5 == 0) {
 #ifdef MATCH_GRISU3_OUTPUT
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
 #endif
       } else {
-#endif
         if (acceptBounds) {
           // Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
           // <=> e2 + (~mm & 1) >= q && pow5Factor(mm) >= q
@@ -381,23 +359,15 @@ void d2s_buffered(double f, char* result) {
           // Same as min(e2 + 1, pow5Factor(mp)) >= q.
           vp -= multipleOfPowerOf5(mp, q);
         }
-#ifdef NICER_OUTPUT
       }
-#endif
     }
   } else {
-#ifdef NICER_OUTPUT
     int32_t q = max_uint32(0, ((int32_t) (((uint64_t) -e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
-#else
-    int32_t q = (int32_t) (((uint64_t) -e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR);
-#endif
     e10 = q + e2;
     int32_t i = -e2 - q;
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
     int32_t j = q - k;
-#ifdef NICER_OUTPUT
     vr = mulPow5divPow2(mv, i, j);
-#endif
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
 #ifdef DEBUG
@@ -443,9 +413,7 @@ void d2s_buffered(double f, char* result) {
   int32_t exp = e10 + vplength - 1;
 
   uint32_t removed = 0;
-#ifdef NICER_OUTPUT
   int32_t lastRemovedDigit = 0;
-#endif
   uint64_t output;
   // On average, we remove ~2 digits.
   if (vmIsTrailingZeros
@@ -458,14 +426,12 @@ void d2s_buffered(double f, char* result) {
       // The compiler does not realize that vm % 10 can be computed from vm / 10
       // as vm - (vm / 10) * 10.
       vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0; // vm % 10 == 0;
-#ifdef NICER_OUTPUT
 #ifdef MATCH_GRISU3_OUTPUT
       vrIsTrailingZeros &= lastRemovedDigit == 0;
 #endif
       uint64_t nvr = vr / 10;
       lastRemovedDigit = vr - 10 * nvr;
       vr = nvr;
-#endif
       vp /= 10;
       vm /= 10;
       removed++;
@@ -477,20 +443,17 @@ void d2s_buffered(double f, char* result) {
     // Same as above; use vm % 10 == vm - (vm / 10) * 10.
     if (vmIsTrailingZeros) {
       while (vm - (vm / 10) * 10 == 0) {
-#ifdef NICER_OUTPUT
 #ifdef MATCH_GRISU3_OUTPUT
         vrIsTrailingZeros &= lastRemovedDigit == 0;
 #endif
         uint64_t nvr = vr / 10;
         lastRemovedDigit = vr - 10 * nvr;
         vr = nvr;
-#endif
         vp /= 10;
         vm /= 10;
         removed++;
       }
     }
-#ifdef NICER_OUTPUT
 #ifdef DEBUG
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
 #ifdef MATCH_GRISU3_OUTPUT
@@ -507,20 +470,16 @@ void d2s_buffered(double f, char* result) {
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr +
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
-#endif
   } else {
     // Specialized for the common case (>99%).
     while (vp / 10 > vm / 10) {
-#ifdef NICER_OUTPUT
       uint64_t nvr = vr / 10;
       lastRemovedDigit = vr - 10 * nvr;
       vr = nvr;
-#endif
       vp /= 10;
       vm /= 10;
       removed++;
     }
-#ifdef NICER_OUTPUT
 #ifdef DEBUG
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
 #ifdef MATCH_GRISU3_OUTPUT
@@ -529,11 +488,7 @@ void d2s_buffered(double f, char* result) {
 #endif
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
-#endif
   }
-#ifndef NICER_OUTPUT
-  output = vp;
-#endif
   // The average output length is 16.38 digits.
   int32_t olength = vplength - removed;
 #ifdef DEBUG
