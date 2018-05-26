@@ -8,8 +8,9 @@ The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
 C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
 point numbers.
 
-All code outside of third_party/ is Copyright Ulf Adams, and published under the
-Apache License 2.0.
+All code outside of third_party/ is Copyright Ulf Adams, and may be used in
+accordance with the Apache 2.0 license. Alternatively, the files in the ryu/
+directory may be used in accordance with the Boost 1.0 license.
 
 ## Building, Testing, Running
 
