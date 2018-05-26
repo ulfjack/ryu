@@ -184,8 +184,8 @@ static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
 #ifdef HAS_64_BIT_INTRINSICS
 
 #include <intrin.h>
-#pragma intrinsic(__umul128,__shiftright128)
-#define umul128 __umul128
+#pragma intrinsic(_umul128,__shiftright128)
+#define umul128 _umul128
 #define shiftright128 __shiftright128
 
 #else // Use our own.
