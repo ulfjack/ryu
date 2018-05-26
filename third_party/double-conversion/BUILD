@@ -26,9 +26,10 @@ cc_library(
         "double-conversion/ieee.h",
         "double-conversion/strtod.h",
     ],
-    linkopts = [
-        "-lm",
-    ],
+    linkopts = select({
+      "@bazel_tools//src/conditions:windows": [],
+      "//conditions:default": ["-lm"],
+    }),
     visibility = ["//visibility:public"],
 )
 

@@ -12,5 +12,8 @@ cc_library(
   name = "gtest-lib",
   srcs = ["gtest-all.cc"],
   hdrs = ["gtest.h"],
-  linkopts = ["-lpthread"],
+  linkopts = select({
+    "@bazel_tools//src/conditions:windows": [],
+    "//conditions:default": ["-lpthread"],
+  }),
 )
