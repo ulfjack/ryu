@@ -225,10 +225,10 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
 
 static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
   // m is maximum 55 bits
-  uint64_t high1;                                             // 128
+  uint64_t high1;                                           // 128
   uint64_t low1 = umul128(m, POW5_INV_SPLIT[i][1], &high1); // 64
-  uint64_t high0;                                             // 64
-  umul128(m, POW5_INV_SPLIT[i][0], &high0); // 0
+  uint64_t high0;                                           // 64
+  umul128(m, POW5_INV_SPLIT[i][0], &high0);                 // 0
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
   return shiftright128(sum, high1, j - 64);
@@ -236,10 +236,10 @@ static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
 
 static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
   // m is maximum 55 bits
-  uint64_t high1;                                         // 128
+  uint64_t high1;                                       // 128
   uint64_t low1 = umul128(m, POW5_SPLIT[i][1], &high1); // 64
-  uint64_t high0;                                         // 64
-  umul128(m, POW5_SPLIT[i][0], &high0); // 0
+  uint64_t high0;                                       // 64
+  umul128(m, POW5_SPLIT[i][0], &high0);                 // 0
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
   return shiftright128(sum, high1, j - 64);
