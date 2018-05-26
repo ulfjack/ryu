@@ -135,7 +135,7 @@ void f2s_buffered(float f, char* result) {
 
   // Decode bits into sign, mantissa, and exponent.
   bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  uint32_t ieeeMantissa = bits & ((1L << mantissaBits) - 1);
+  uint32_t ieeeMantissa = bits & ((1 << mantissaBits) - 1);
   uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
 #ifdef DEBUG
@@ -173,7 +173,7 @@ void f2s_buffered(float f, char* result) {
   // Step 2: Determine the interval of legal decimal representations.
   uint32_t mv = 4 * m2;
   uint32_t mp = 4 * m2 + 2;
-  uint32_t mm = 4 * m2 - (((m2 != (1L << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
+  uint32_t mm = 4 * m2 - (((m2 != (1 << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
   uint32_t vr;
