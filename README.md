@@ -2,7 +2,7 @@
 
 This project contains a C and a Java implementation of Ryu, an algorithm to
 quickly convert floating point numbers to decimal strings. We have tested the
-code on Ubuntu 17.10 and MacOS High Sierra.
+code on Ubuntu 17.10, MacOS High Sierra, and Windows 10.
 
 The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
 C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
