@@ -332,9 +332,10 @@ void d2s_buffered(double f, char* result) {
 
   // Step 2: Determine the interval of legal decimal representations.
   uint64_t mv = 4 * m2;
-//  uint64_t mp = 4 * m2 + 2;
   // Implicit bool -> int conversion. True is 1, false is 0.
   uint32_t mmShift = (m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1);
+  // We would compute mp and mm like this:
+//  uint64_t mp = 4 * m2 + 2;
 //  uint64_t mm = mv - 1 - mmShift;
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
@@ -349,11 +350,6 @@ void d2s_buffered(double f, char* result) {
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
     vr = mulShiftAll(mv, POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
-//    vp = mulPow5InvDivPow2(mp, q, i);
-//    vm = mulPow5InvDivPow2(mv - 1 - mmShift, q, i);
-//    if (vm != x) {
-//      printf("%20" PRIu64 " %20" PRIu64 "\n", x, vm);
-//    }
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -381,9 +377,6 @@ void d2s_buffered(double f, char* result) {
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
     int32_t j = q - k;
     vr = mulShiftAll(mv, POW5_SPLIT[i], j, &vp, &vm, mmShift);
-//    vr = mulPow5divPow2(mv, i, j);
-//    vp = mulPow5divPow2(mv + 2, i, j);
-//    vm = mulPow5divPow2(mv - 1 - mmShift, i, j);
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
