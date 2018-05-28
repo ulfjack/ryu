@@ -46,16 +46,17 @@ public final class RyuDouble {
   private static final BigInteger[] POW5_INV = new BigInteger[NEG_TABLE_SIZE];
 
   private static final int POW5_BITCOUNT = 121; // max 3*31 = 124
-  private static final int POW5_QUARTER_BITCOUNT = 31;
+  private static final int POW5_QUARTER_BITCOUNT = 32;
   private static final int[][] POW5_SPLIT = new int[POS_TABLE_SIZE][4];
 
   private static final int POW5_INV_BITCOUNT = 122; // max 3*31 = 124
-  private static final int POW5_INV_QUARTER_BITCOUNT = 31;
+  private static final int POW5_INV_QUARTER_BITCOUNT = 32;
   private static final int[][] POW5_INV_SPLIT = new int[NEG_TABLE_SIZE][4];
 
   static {
     BigInteger mask = BigInteger.valueOf(1).shiftLeft(POW5_QUARTER_BITCOUNT).subtract(BigInteger.ONE);
     BigInteger invMask = BigInteger.valueOf(1).shiftLeft(POW5_INV_QUARTER_BITCOUNT).subtract(BigInteger.ONE);
+
     for (int i = 0; i < Math.max(POW5.length, POW5_INV.length); i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
@@ -68,10 +69,8 @@ public final class RyuDouble {
       }
       if (i < POW5_SPLIT.length) {
         for (int j = 0; j < 4; j++) {
-          POW5_SPLIT[i][j] = pow
-              .shiftRight(pow5len - POW5_BITCOUNT + (3 - j) * POW5_QUARTER_BITCOUNT)
-              .and(mask)
-              .intValueExact();
+          POW5_SPLIT[i][j] = toUnsignedIntExact(
+              pow.shiftRight(pow5len - POW5_BITCOUNT + (3 - j) * POW5_QUARTER_BITCOUNT).and(mask));
         }
       }
 
@@ -81,14 +80,19 @@ public final class RyuDouble {
         BigInteger inv = BigInteger.ONE.shiftLeft(j).divide(pow).add(BigInteger.ONE);
         POW5_INV[i] = inv;
         for (int k = 0; k < 4; k++) {
-          if (k == 0) {
-            POW5_INV_SPLIT[i][k] = inv.shiftRight((3 - k) * POW5_INV_QUARTER_BITCOUNT).intValueExact();
-          } else {
-            POW5_INV_SPLIT[i][k] = inv.shiftRight((3 - k) * POW5_INV_QUARTER_BITCOUNT).and(invMask).intValueExact();
-          }
+          POW5_INV_SPLIT[i][k] = toUnsignedIntExact(
+              inv.shiftRight((3 - k) * POW5_INV_QUARTER_BITCOUNT).and(invMask));
         }
       }
     }
+  }
+
+  private static int toUnsignedIntExact(BigInteger v) {
+	long value = v.longValueExact();
+	if (value > 0xffffffffL) {
+	  throw new ArithmeticException("value too large for int");
+	}
+	return (int) value;
   }
 
   public static void main(String[] args) {
@@ -181,9 +185,9 @@ public final class RyuDouble {
       e10 = q;
       if (DEBUG) {
         System.out.println(mv + " * 2^" + e2);
-        System.out.println("V+=" + dp);
-        System.out.println("V =" + dv);
-        System.out.println("V-=" + dm);
+        System.out.println("V+=" + Long.toUnsignedString(dp));
+        System.out.println("V =" + Long.toUnsignedString(dv));
+        System.out.println("V-=" + Long.toUnsignedString(dm));
       }
       if (DEBUG) {
         long exact = POW5_INV[q]
@@ -435,26 +439,7 @@ public final class RyuDouble {
    * point number.
    */
   private static long mulPow5divPow2(long m, int i, int j) {
-    // m has at most 55 bits.
-    long mHigh = m >>> 31;
-    long mLow = m & 0x7fffffff;
-    long bits13 = mHigh * POW5_SPLIT[i][0]; // 124
-    long bits03 = mLow * POW5_SPLIT[i][0];  // 93
-    long bits12 = mHigh * POW5_SPLIT[i][1]; // 93
-    long bits02 = mLow * POW5_SPLIT[i][1];  // 62
-    long bits11 = mHigh * POW5_SPLIT[i][2]; // 62
-    long bits01 = mLow * POW5_SPLIT[i][2];  // 31
-    long bits10 = mHigh * POW5_SPLIT[i][3]; // 31
-    long bits00 = mLow * POW5_SPLIT[i][3];  // 0
-    int actualShift = j - 3 * 31 - 21;
-    if (actualShift < 0) {
-      throw new IllegalArgumentException("" + actualShift);
-    }
-    return ((((((
-        ((bits00 >>> 31) + bits01 + bits10) >>> 31)
-                         + bits02 + bits11) >>> 31)
-                         + bits03 + bits12) >>> 21)
-                         + (bits13 << 10)) >>> actualShift;
+    return mulAndShiftRight(m, POW5_SPLIT[i], j);
   }
 
   /**
@@ -462,26 +447,45 @@ public final class RyuDouble {
    * decimal digits. i and j are already chosen appropriately.
    */
   private static long mulPow5InvDivPow2(long m, int i, int j) {
-    // m has at most 55 bits.
-    long mHigh = m >>> 31;
-    long mLow = m & 0x7fffffff;
-    long bits13 = mHigh * POW5_INV_SPLIT[i][0];
-    long bits03 = mLow * POW5_INV_SPLIT[i][0];
-    long bits12 = mHigh * POW5_INV_SPLIT[i][1];
-    long bits02 = mLow * POW5_INV_SPLIT[i][1];
-    long bits11 = mHigh * POW5_INV_SPLIT[i][2];
-    long bits01 = mLow * POW5_INV_SPLIT[i][2];
-    long bits10 = mHigh * POW5_INV_SPLIT[i][3];
-    long bits00 = mLow * POW5_INV_SPLIT[i][3];
+    return mulAndShiftRight(m, POW5_INV_SPLIT[i], j);
+  }
 
-    int actualShift = j - 3 * 31 - 21;
+  private static long mulAndShiftRight(long m, int[] mul, int shift) {
+    // m has at most 55 bits.
+    long mHi = m >>> 32; // 23 bit
+    long mLo = m & 0xffffffffL;
+    long bits11 = mHi * Integer.toUnsignedLong(mul[2]); // 64
+    long bits01 = mLo * Integer.toUnsignedLong(mul[2]); // 32
+    long bits10 = mHi * Integer.toUnsignedLong(mul[3]); // 32
+    long bits00 = mLo * Integer.toUnsignedLong(mul[3]); // 0
+
+    long mLoMid = bits01 + bits10;
+    long carry96 = Long.compareUnsigned(mLoMid, bits01) < 0 ? 1 : 0;
+    long mLoLo = bits00 + (mLoMid << 32);
+    long carry64 = Long.compareUnsigned(mLoLo, bits00) < 0 ? 1 : 0;
+    long mLoHi = bits11 + (mLoMid >>> 32) + (carry96 << 32) + carry64; // Can't overflow, 64
+
+    long bits13 = mHi * Integer.toUnsignedLong(mul[0]); // 128
+    long bits03 = mLo * Integer.toUnsignedLong(mul[0]); // 96
+    long bits12 = mHi * Integer.toUnsignedLong(mul[1]); // 96
+    long bits02 = mLo * Integer.toUnsignedLong(mul[1]); // 64
+
+    long mHiMid = bits03 + bits12;
+    long carry160 = Long.compareUnsigned(mHiMid, bits03) < 0 ? 1 : 0;
+    long mHiLo = bits02 + (mHiMid << 32); // 64
+    long carry128 = Long.compareUnsigned(mHiLo, bits02) < 0 ? 1 : 0;
+    long mHiHi = bits13 + (mHiMid >>> 32) + (carry160 << 32) + carry128; // Can't overflow, 128
+
+    long lo = mHiLo + mLoHi; // 64
+    long carry = Long.compareUnsigned(lo, mHiLo) < 0 ? 1 : 0;
+    long hi = mHiHi + carry; // 128
+
+    int actualShift = shift - 64;
     if (actualShift < 0) {
       throw new IllegalArgumentException("" + actualShift);
     }
-    return ((((((
-        ((bits00 >>> 31) + bits01 + bits10) >>> 31)
-                         + bits02 + bits11) >>> 31)
-                         + bits03 + bits12) >>> 21)
-                         + (bits13 << 10)) >>> actualShift;
+    return actualShift >= 64
+        ? hi >>> (actualShift - 64)
+        : (hi << (64 - actualShift)) + (lo >>> actualShift);
   }
 }
