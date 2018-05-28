@@ -326,13 +326,12 @@ void d2s_buffered(double f, char* result) {
   uint64_t mm = 4 * m2 - 1 - ((m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1));
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
-  uint64_t vr;
+  uint64_t vr, vp, vm;
+  int32_t e10;
+  bool vmIsTrailingZeros = false;
 #ifdef MATCH_GRISU3_OUTPUT
   bool vrIsTrailingZeros = false;
 #endif
-  uint64_t vp, vm;
-  int32_t e10;
-  bool vmIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
     int32_t q = max_uint32(0, ((int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
