@@ -169,7 +169,7 @@ public final class RyuDouble {
     // -1077 = 1 - 1023 - 53 - 2 <= e_2 - 2 <= 2046 - 1023 - 53 - 2 = 968
     long dv, dp, dm;
     int e10;
-    boolean dpIsTrailingZeros, dmIsTrailingZeros;
+    boolean dpIsTrailingZeros = false, dmIsTrailingZeros = false;
     if (e2 >= 0) {
       int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
       // k = constant + floor(log_2(5^q))
@@ -195,8 +195,10 @@ public final class RyuDouble {
         }
       }
 
-      dpIsTrailingZeros = pow5Factor(mp) >= q; // Math.min(e2 + 1, pow5Factor(mp)) >= q;
-      dmIsTrailingZeros = pow5Factor(mm) >= q; // Math.min(e2 + (~mm & 1), pow5Factor(mm)) >= q;
+      if (q <= 21) {
+        dpIsTrailingZeros = multipleOfPowerOf5(mp, q);
+        dmIsTrailingZeros = multipleOfPowerOf5(mm, q);
+      }
     } else {
       int q = Math.max(0, (int) (-e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
       int i = -e2 - q;
@@ -209,8 +211,10 @@ public final class RyuDouble {
       if (DEBUG) {
         System.out.println(mv + " * 5^" + (-e2) + " / 10^" + q);
       }
-      dpIsTrailingZeros = 1 >= q;
-      dmIsTrailingZeros = (~mm & 1) >= q;
+      if (q <= 1) {
+        dpIsTrailingZeros = true;
+        dmIsTrailingZeros = (~mm & 1) >= q;
+      }
     }
     if (DEBUG) {
       System.out.println("d+=" + dp);
@@ -241,20 +245,37 @@ public final class RyuDouble {
     }
 
     int lastRemovedDigit = 0;
-    while (dp / 10 > dm / 10) {
-      if ((dp < 100) && scientificNotation) {
-        // Double.toString semantics requires printing at least two digits.
-        break;
-      }
-      dmIsTrailingZeros &= dm % 10 == 0;
-      dp /= 10;
-      lastRemovedDigit = (int) (dv % 10);
-      dv /= 10;
-      dm /= 10;
-      removed++;
-    }
+    long output;
     if (dmIsTrailingZeros && roundingMode.acceptLowerBound(even)) {
-      while (dm % 10 == 0) {
+      while (dp / 10 > dm / 10) {
+        if ((dp < 100) && scientificNotation) {
+          // Double.toString semantics requires printing at least two digits.
+          break;
+        }
+        dmIsTrailingZeros &= dm % 10 == 0;
+        dp /= 10;
+        lastRemovedDigit = (int) (dv % 10);
+        dv /= 10;
+        dm /= 10;
+        removed++;
+      }
+      if (dmIsTrailingZeros && roundingMode.acceptLowerBound(even)) {
+        while (dm % 10 == 0) {
+          if ((dp < 100) && scientificNotation) {
+            // Double.toString semantics requires printing at least two digits.
+            break;
+          }
+          dp /= 10;
+          lastRemovedDigit = (int) (dv % 10);
+          dv /= 10;
+          dm /= 10;
+          removed++;
+        }
+      }
+      output = dv +
+          ((dv == dm && !(dmIsTrailingZeros && roundingMode.acceptLowerBound(even))) || (lastRemovedDigit >= 5) ? 1 : 0);
+    } else {
+      while (dp / 10 > dm / 10) {
         if ((dp < 100) && scientificNotation) {
           // Double.toString semantics requires printing at least two digits.
           break;
@@ -265,10 +286,8 @@ public final class RyuDouble {
         dm /= 10;
         removed++;
       }
+      output = dv + ((dv == dm || (lastRemovedDigit >= 5)) ? 1 : 0);
     }
-
-    long output = dv +
-        ((dv == dm && !(dmIsTrailingZeros && roundingMode.acceptLowerBound(even))) || (lastRemovedDigit >= 5) ? 1 : 0);
     int olength = vplength - removed;
 
     if (DEBUG) {
@@ -386,6 +405,10 @@ public final class RyuDouble {
     if (v >= 100L) return 3;
     if (v >= 10L) return 2;
     return 1;
+  }
+
+  private static boolean multipleOfPowerOf5(long value, int q) {
+    return pow5Factor(value) >= q;
   }
 
   private static int pow5Factor(long value) {
