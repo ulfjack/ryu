@@ -166,7 +166,7 @@ static inline uint32_t pow5bits(int32_t e) {
 //    c. Split only the first factor into 31-bit pieces, which also guarantees
 //       no internal overflow, but requires extra work since the intermediate
 //       results are not perfectly aligned.
-#ifdef HAS_UINT128
+#if defined(HAS_UINT128)
 
 // Best case: use 128-bit type.
 static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
@@ -177,6 +177,7 @@ static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
 
 static inline uint64_t mulShiftAll(
     uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+  m <<= 2;
   uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
   uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
 
@@ -188,21 +189,37 @@ static inline uint64_t mulShiftAll(
   uint128_t vmLo = lo - (factor << mmShift);
   *vm = (uint64_t) ((hi + (vmLo >> 64) - (((uint128_t) 1ull) << 64)) >> (j - 64));
   return (uint64_t) (hi >> (j - 64));
-  // *vp = mulShift(m + 2, mul, j);
-  // *vm = mulShift(m - 1 - mmShift, mul, j);
-  // return mulShift(m, mul, j);
+  // *vp = mulShift(4 * m + 2, mul, j);
+  // *vm = mulShift(4 * m - 1 - mmShift, mul, j);
+  // return mulShift(4 * m, mul, j);
 }
 
-#else
-
-#ifdef HAS_64_BIT_INTRINSICS
+#elif defined(HAS_64_BIT_INTRINSICS)
 
 #include <intrin.h>
 #pragma intrinsic(_umul128,__shiftright128)
 #define umul128 _umul128
 #define shiftright128 __shiftright128
 
-#else // Use our own.
+static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
+  // m is maximum 55 bits
+  uint64_t high1;                             // 128
+  uint64_t low1 = umul128(m, mul[1], &high1); // 64
+  uint64_t high0;                             // 64
+  umul128(m, mul[0], &high0);                 // 0
+  uint64_t sum = high0 + low1;
+  if (sum < high0) high1++; // overflow into high1
+  return shiftright128(sum, high1, j - 64);
+}
+
+static inline uint64_t mulShiftAll(
+    uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+  *vp = mulShift(4 * m + 2, mul, j);
+  *vm = mulShift(4 * m - 1 - mmShift, mul, j);
+  return mulShift(4 * m, mul, j);
+}
+
+#else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
 static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
   uint64_t aLo = a & 0xffffffff;
@@ -232,27 +249,40 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
       : (hi << (64 - dist)) + (lo >> dist);
 }
 
-#endif // HAS_64_BIT_INTRINSICS
-
-static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
-  // m is maximum 55 bits
-  uint64_t high1;                             // 128
-  uint64_t low1 = umul128(m, mul[1], &high1); // 64
-  uint64_t high0;                             // 64
-  umul128(m, mul[0], &high0);                 // 0
-  uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
-  return shiftright128(sum, high1, j - 64);
-}
-
 static inline uint64_t mulShiftAll(
     uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
-  *vp = mulShift(m + 2, mul, j);
-  *vm = mulShift(m - 1 - mmShift, mul, j);
-  return mulShift(m, mul, j);
+  m <<= 1;
+  // m is maximum 55 bits
+  uint64_t tmp;
+  uint64_t lo = umul128(m, mul[0], &tmp);
+  uint64_t hi;
+  uint64_t mid = tmp + umul128(m, mul[1], &hi);
+  hi += mid < tmp; // overflow into hi
+
+  uint64_t lo2 = lo + mul[0];
+  uint64_t mid2 = mid + mul[1] + (lo2 < lo);
+  uint64_t hi2 = hi + (mid2 < mid);
+  *vp = shiftright128(mid2, hi2, j - 64 - 1);
+
+  if (mmShift == 1) {
+    uint64_t lo3 = lo - mul[0];
+    uint64_t mid3 = mid - mul[1] - (lo3 > lo);
+    uint64_t hi3 = hi - (mid3 > mid);
+    *vm = shiftright128(mid3, hi3, j - 64 - 1);
+  } else {
+    uint64_t lo3 = lo + lo;
+    uint64_t mid3 = mid + mid + (lo3 < lo);
+    uint64_t hi3 = hi + hi + (mid3 < mid);
+    uint64_t lo4 = lo3 - mul[0];
+    uint64_t mid4 = mid3 - mul[1] - (lo4 > lo3);
+    uint64_t hi4 = hi3 - (mid4 > mid3);
+    *vm = shiftright128(mid4, hi4, j - 64);
+  }
+
+  return shiftright128(mid, hi, j - 64 - 1);
 }
 
-#endif // HAS_UINT128
+#endif // HAS_64_BIT_INTRINSICS
 
 static inline uint32_t decimalLength(uint64_t v) {
   // This is slightly faster than a loop. For a random set of numbers, the
@@ -345,7 +375,7 @@ void d2s_buffered(double f, char* result) {
     e10 = q;
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
-    vr = mulShiftAll(mv, POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
+    vr = mulShiftAll(m2, POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -372,7 +402,7 @@ void d2s_buffered(double f, char* result) {
     int32_t i = -e2 - q;
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
     int32_t j = q - k;
-    vr = mulShiftAll(mv, POW5_SPLIT[i], j, &vp, &vm, mmShift);
+    vr = mulShiftAll(m2, POW5_SPLIT[i], j, &vp, &vm, mmShift);
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
