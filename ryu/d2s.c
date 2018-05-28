@@ -169,16 +169,28 @@ static inline uint32_t pow5bits(int32_t e) {
 #ifdef HAS_UINT128
 
 // Best case: use 128-bit type.
-static inline uint64_t mulPow5InvDivPow2(uint64_t m, int32_t i, int32_t j) {
-  uint128_t b0 = ((uint128_t) m) * POW5_INV_SPLIT[i][0];
-  uint128_t b2 = ((uint128_t) m) * POW5_INV_SPLIT[i][1];
+static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
+  uint128_t b0 = ((uint128_t) m) * mul[0];
+  uint128_t b2 = ((uint128_t) m) * mul[1];
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
 
-static inline uint64_t mulPow5divPow2(uint64_t m, int32_t i, int32_t j) {
-  uint128_t b0 = ((uint128_t) m) * POW5_SPLIT[i][0];
-  uint128_t b2 = ((uint128_t) m) * POW5_SPLIT[i][1];
-  return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
+static inline uint64_t mulShiftAll(
+    uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
+  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
+
+  uint128_t hi = (b0 >> 64) + b2;
+  uint128_t lo = b0 & 0xffffffffffffffffull;
+  uint128_t factor = (((uint128_t) mul[1]) << 64) + mul[0];
+  uint128_t vpLo = lo + (factor << 1);
+  *vp = (uint64_t) ((hi + (vpLo >> 64)) >> (j - 64));
+  uint128_t vmLo = lo - (factor << mmShift);
+  *vm = (uint64_t) ((hi + (vmLo >> 64) - (((uint128_t) 1ull) << 64)) >> (j - 64));
+  return (uint64_t) (hi >> (j - 64));
+  // *vp = mulShift(m + 2, mul, j);
+  // *vm = mulShift(m - 1 - mmShift, mul, j);
+  // return mulShift(m, mul, j);
 }
 
 #else
@@ -320,9 +332,10 @@ void d2s_buffered(double f, char* result) {
 
   // Step 2: Determine the interval of legal decimal representations.
   uint64_t mv = 4 * m2;
-  uint64_t mp = 4 * m2 + 2;
+//  uint64_t mp = 4 * m2 + 2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  uint64_t mm = 4 * m2 - 1 - ((m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1));
+  uint32_t mmShift = (m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1);
+//  uint64_t mm = mv - 1 - mmShift;
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
   uint64_t vr, vp, vm;
@@ -335,9 +348,12 @@ void d2s_buffered(double f, char* result) {
     e10 = q;
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
-    vr = mulPow5InvDivPow2(mv, q, i);
-    vp = mulPow5InvDivPow2(mp, q, i);
-    vm = mulPow5InvDivPow2(mm, q, i);
+    vr = mulShiftAll(mv, POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
+//    vp = mulPow5InvDivPow2(mp, q, i);
+//    vm = mulPow5InvDivPow2(mv - 1 - mmShift, q, i);
+//    if (vm != x) {
+//      printf("%20" PRIu64 " %20" PRIu64 "\n", x, vm);
+//    }
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -351,10 +367,10 @@ void d2s_buffered(double f, char* result) {
           // Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
           // <=> e2 + (~mm & 1) >= q && pow5Factor(mm) >= q
           // <=> true && pow5Factor(mm) >= q, since e2 >= q.
-          vmIsTrailingZeros = multipleOfPowerOf5(mm, q);
+          vmIsTrailingZeros = multipleOfPowerOf5(mv - 1 - mmShift, q);
         } else {
           // Same as min(e2 + 1, pow5Factor(mp)) >= q.
-          vp -= multipleOfPowerOf5(mp, q);
+          vp -= multipleOfPowerOf5(mv + 2, q);
         }
       }
     }
@@ -364,9 +380,10 @@ void d2s_buffered(double f, char* result) {
     int32_t i = -e2 - q;
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
     int32_t j = q - k;
-    vr = mulPow5divPow2(mv, i, j);
-    vp = mulPow5divPow2(mp, i, j);
-    vm = mulPow5divPow2(mm, i, j);
+    vr = mulShiftAll(mv, POW5_SPLIT[i], j, &vp, &vm, mmShift);
+//    vr = mulPow5divPow2(mv, i, j);
+//    vp = mulPow5divPow2(mv + 2, i, j);
+//    vm = mulPow5divPow2(mv - 1 - mmShift, i, j);
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
@@ -375,7 +392,7 @@ void d2s_buffered(double f, char* result) {
     if (q <= 1) {
       vrIsTrailingZeros = (~mv & 1) >= q;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~mm & 1) >= q;
+        vmIsTrailingZeros = (~(mv - 1 - mmShift) & 1) >= q;
       } else {
         vp -= 1 >= q;
       }
