@@ -45,11 +45,11 @@ public final class RyuDouble {
   private static final BigInteger[] POW5 = new BigInteger[POS_TABLE_SIZE];
   private static final BigInteger[] POW5_INV = new BigInteger[NEG_TABLE_SIZE];
 
-  private static final int POW5_BITCOUNT = 121; // max 3*31 = 124
+  private static final int POW5_BITCOUNT = 124; // max 128
   private static final int POW5_QUARTER_BITCOUNT = 32;
   private static final int[][] POW5_SPLIT = new int[POS_TABLE_SIZE][4];
 
-  private static final int POW5_INV_BITCOUNT = 122; // max 3*31 = 124
+  private static final int POW5_INV_BITCOUNT = 124; // max 128
   private static final int POW5_INV_QUARTER_BITCOUNT = 32;
   private static final int[][] POW5_INV_SPLIT = new int[NEG_TABLE_SIZE][4];
 
@@ -97,7 +97,7 @@ public final class RyuDouble {
 
   public static void main(String[] args) {
     DEBUG = true;
-    double value = Double.longBitsToDouble(0x7fefffffffffffffL);
+    double value = 1.8531501765868567E21; //Double.longBitsToDouble(0x7fefffffffffffffL);
     String result = doubleToString(value);
     System.out.println(result + " " + value);
   }
@@ -176,13 +176,20 @@ public final class RyuDouble {
     boolean dpIsTrailingZeros = false, dmIsTrailingZeros = false;
     if (e2 >= 0) {
       int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
+      boolean cutOne = (q & 1) != 0;
+      e10 = q;
+      q &= ~1;
       // k = constant + floor(log_2(5^q))
       int k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
-      int i = -e2 + q + k;
+      int i = -e2 + q + k + (cutOne ? 1 : 0);
       dv = mulPow5InvDivPow2(mv, q, i);
       dp = mulPow5InvDivPow2(mp, q, i);
       dm = mulPow5InvDivPow2(mm, q, i);
-      e10 = q;
+      if (cutOne) {
+        dv = Long.divideUnsigned(dv, 5);
+        dp = Long.divideUnsigned(dp, 5);
+        dm = Long.divideUnsigned(dm, 5);
+      }
       if (DEBUG) {
         System.out.println(mv + " * 2^" + e2);
         System.out.println("V+=" + Long.toUnsignedString(dp));
@@ -192,7 +199,9 @@ public final class RyuDouble {
       if (DEBUG) {
         long exact = POW5_INV[q]
             .multiply(BigInteger.valueOf(mv))
-            .shiftRight(-e2 + q + k).longValueExact();
+            .shiftRight(-e2 + q + k)
+            .divide(cutOne ? BigInteger.TEN : BigInteger.ONE)
+            .longValueExact();
         System.out.println(exact + " " + POW5_INV[q].bitCount());
         if (dv != exact) {
           throw new IllegalStateException();
