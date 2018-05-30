@@ -177,21 +177,21 @@ static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
 
 static inline uint64_t mulShiftAll(
     uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
-  m <<= 2;
-  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
-  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
-
-  uint128_t hi = (b0 >> 64) + b2;
-  uint128_t lo = b0 & 0xffffffffffffffffull;
-  uint128_t factor = (((uint128_t) mul[1]) << 64) + mul[0];
-  uint128_t vpLo = lo + (factor << 1);
-  *vp = (uint64_t) ((hi + (vpLo >> 64)) >> (j - 64));
-  uint128_t vmLo = lo - (factor << mmShift);
-  *vm = (uint64_t) ((hi + (vmLo >> 64) - (((uint128_t) 1ull) << 64)) >> (j - 64));
-  return (uint64_t) (hi >> (j - 64));
-  // *vp = mulShift(4 * m + 2, mul, j);
-  // *vm = mulShift(4 * m - 1 - mmShift, mul, j);
-  // return mulShift(4 * m, mul, j);
+//  m <<= 2;
+//  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
+//  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
+//
+//  uint128_t hi = (b0 >> 64) + b2;
+//  uint128_t lo = b0 & 0xffffffffffffffffull;
+//  uint128_t factor = (((uint128_t) mul[1]) << 64) + mul[0];
+//  uint128_t vpLo = lo + (factor << 1);
+//  *vp = (uint64_t) ((hi + (vpLo >> 64)) >> (j - 64));
+//  uint128_t vmLo = lo - (factor << mmShift);
+//  *vm = (uint64_t) ((hi + (vmLo >> 64) - (((uint128_t) 1ull) << 64)) >> (j - 64));
+//  return (uint64_t) (hi >> (j - 64));
+  *vp = mulShift(4 * m + 2, mul, j);
+  *vm = mulShift(4 * m - 1 - mmShift, mul, j);
+  return mulShift(4 * m, mul, j);
 }
 
 #elif defined(HAS_64_BIT_INTRINSICS)
