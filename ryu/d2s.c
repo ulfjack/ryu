@@ -15,7 +15,7 @@
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
 
-// Compile with -DDEBUG to get very verbose debugging output to stdout.
+// Compile with -DDEBUG_RYU to get very verbose debugging output to stdout.
 
 #include "ryu/ryu.h"
 
@@ -27,8 +27,8 @@
 
 #include "ryu/dtable.h"
 
-//#define DEBUG
-#ifdef DEBUG
+//#define DEBUG_RYU
+#ifdef DEBUG_RYU
 #include <stdio.h>
 #endif
 
@@ -285,7 +285,7 @@ void d2s_buffered(double f, char* result) {
   uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
   int32_t ieeeExponent = (int32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("IN=");
   for (int32_t bit = 63; bit >= 0; bit--) {
     printf("%d", (int) ((bits >> bit) & 1));
@@ -314,7 +314,7 @@ void d2s_buffered(double f, char* result) {
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
 
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("S=%s E=%d M=%" PRIu64 "\n", sign ? "-" : "+", e2 + 2, m2);
 #endif
 
@@ -338,7 +338,7 @@ void d2s_buffered(double f, char* result) {
     vr = mulPow5InvDivPow2(mv, q, i);
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
@@ -367,7 +367,7 @@ void d2s_buffered(double f, char* result) {
     vr = mulPow5divPow2(mv, i, j);
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -386,12 +386,12 @@ void d2s_buffered(double f, char* result) {
       // <=> mv & ((1 << (q-1)) - 1) == 0
       // We also need to make sure that the left shift does not overflow.
       vrIsTrailingZeros = (mv & ((1ull << (q - 1)) - 1)) == 0;
-#if DEBUG
+#if DEBUG_RYU
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     }
   }
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("e10=%d\n", e10);
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("vm is trailing zeros=%s\n", vmIsTrailingZeros ? "true" : "false");
@@ -420,7 +420,7 @@ void d2s_buffered(double f, char* result) {
       vm /= 10;
       removed++;
     }
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
     printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
 #endif
@@ -436,7 +436,7 @@ void d2s_buffered(double f, char* result) {
         removed++;
       }
     }
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
@@ -457,7 +457,7 @@ void d2s_buffered(double f, char* result) {
       vm /= 10;
       removed++;
     }
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
@@ -466,7 +466,7 @@ void d2s_buffered(double f, char* result) {
   }
   // The average output length is 16.38 digits.
   int32_t olength = vplength - removed;
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("O=%" PRIu64 "\n", output);
   printf("OLEN=%d\n", olength);

@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define DEBUG
-#ifdef DEBUG
+//#define DEBUG_RYU
+#ifdef DEBUG_RYU
 #include <stdio.h>
 #endif
 
@@ -142,7 +142,7 @@ void f2s_buffered(float f, char* result) {
   uint32_t ieeeMantissa = bits & ((1 << mantissaBits) - 1);
   uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("IN=");
   for (int32_t bit = 31; bit >= 0; bit--) {
     printf("%d", (bits >> bit) & 1);
@@ -170,7 +170,7 @@ void f2s_buffered(float f, char* result) {
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
 
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("S=%s E=%d M=%u\n", sign ? "-" : "+", e2, m2);
 #endif
 
@@ -194,7 +194,7 @@ void f2s_buffered(float f, char* result) {
     vr = (uint32_t) mulPow5InvDivPow2(mv, q, i);
     vp = (uint32_t) mulPow5InvDivPow2(mp, q, i);
     vm = (uint32_t) mulPow5InvDivPow2(mm, q, i);
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("%d * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
 #endif
@@ -226,7 +226,7 @@ void f2s_buffered(float f, char* result) {
     vr = (uint32_t) mulPow5divPow2(mv, i, j);
     vp = (uint32_t) mulPow5divPow2(mp, i, j);
     vm = (uint32_t) mulPow5divPow2(mm, i, j);
-#ifdef DEBUG
+#ifdef DEBUG_RYU
     printf("%d * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
     printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
@@ -246,7 +246,7 @@ void f2s_buffered(float f, char* result) {
       vrIsTrailingZeros = (mv & ((1 << (q - 1)) - 1)) == 0;
     }
   }
-#ifdef DEBUG
+#ifdef DEBUG_RYU
   printf("e10=%d\n", e10);
   printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
   printf("vm is trailing zeros=%s\n", vmIsTrailingZeros ? "true" : "false");
