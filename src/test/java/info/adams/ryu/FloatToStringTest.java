@@ -77,6 +77,11 @@ public abstract class FloatToStringTest {
   }
 
   @Test
+  public void roundingEvenIfTied() {
+    assertF2sEquals("0.33007812", 0.33007812f);
+  }
+
+  @Test
   public void regressionTest() {
     assertF2sEquals("4.7223665E21", 4.7223665E21f);
     assertF2sEquals("8388608.0", 8388608.0f);

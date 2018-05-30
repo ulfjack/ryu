@@ -22,13 +22,15 @@ import info.adams.ryu.RoundingMode;
  * Implementation of Float and Double to String conversion.
  */
 public final class SlowConversion {
+  private static final BigInteger TWO = BigInteger.valueOf(2);
+
   private static boolean DEBUG = false;
   private static final boolean DEBUG_FLOAT = true;
 
   public static void main(String[] args) {
     DEBUG = true;
     if (DEBUG_FLOAT) {
-      float f = 7.038531E-26f;
+      float f = 0.33007812f;
       String result = floatToString(f);
       System.out.println(result + " " + f);
     } else {
@@ -144,6 +146,8 @@ public final class SlowConversion {
       vp = vp.subtract(BigInteger.ONE);
     }
     boolean vmIsTrailingZeros = true;
+    // Track if vr is tailing zeroes _after_ lastRemovedDigit.
+    boolean vrIsTrailingZeros = true;
     int removed = 0;
     int lastRemovedDigit = 0;
     while (!vp.divide(BigInteger.TEN).equals(vm.divide(BigInteger.TEN))) {
@@ -152,7 +156,8 @@ public final class SlowConversion {
         break;
       }
       vmIsTrailingZeros &= vm.mod(BigInteger.TEN).intValueExact() == 0;
-      lastRemovedDigit = vr.remainder(BigInteger.TEN).intValueExact();
+      vrIsTrailingZeros &= lastRemovedDigit == 0;
+      lastRemovedDigit = vr.mod(BigInteger.TEN).intValueExact();
       vp = vp.divide(BigInteger.TEN);
       vr = vr.divide(BigInteger.TEN);
       vm = vm.divide(BigInteger.TEN);
@@ -164,12 +169,17 @@ public final class SlowConversion {
           // Float/Double.toString semantics requires printing at least two digits.
           break;
         }
-        lastRemovedDigit = vr.remainder(BigInteger.TEN).intValueExact();
+        vrIsTrailingZeros &= lastRemovedDigit == 0;
+        lastRemovedDigit = vr.mod(BigInteger.TEN).intValueExact();
         vp = vp.divide(BigInteger.TEN);
         vr = vr.divide(BigInteger.TEN);
         vm = vm.divide(BigInteger.TEN);
         removed++;
       }
+    }
+    if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr.mod(TWO).intValueExact() == 0)) {
+      // Round down not up if the number ends in X50000 and the number is even.
+      lastRemovedDigit = 4;
     }
     String output = ((vr.compareTo(vm) > 0) ? (lastRemovedDigit >= 5 ? vr.add(BigInteger.ONE) : vr) : vp).toString();
     int olength = vpLength - removed;
