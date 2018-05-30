@@ -42,7 +42,7 @@ $ sed -i 's|cxx_builtin_include_directory: "/.*"|cxx_builtin_include_directory: 
 ```
 
 ### Tests
-You can run the tests with
+You can run both C and Java tests with
 ```
 $ bazel test //ryu/... //src/...
 ```
@@ -65,7 +65,7 @@ Add the `-128` and `-256` flags to also cover 128- and 256-bit numbers. This
 could take a while - 128-bit takes ~20 seconds on my machine while 256-bit takes
 a few hours. Add `-v` to get very verbose output.
 
-### Comparing All Possible 32-bit Values Exhaustively
+### Java: Comparing All Possible 32-bit Values Exhaustively
 You can check the slow vs. the fast implementation for all 32-bit floating point
 numbers using:
 ```
@@ -75,7 +75,7 @@ $ bazel run //src/main/java/info/adams/ryu/analysis:ExhaustiveFloatComparison
 This takes ~60 hours to run to completion on an
 Intel(R) Core(TM) i7-4770K with 3.50GHz.
 
-### Comparing All Possible 64-bit Values Exhaustively
+### Java: Comparing All Possible 64-bit Values Exhaustively
 You can check the slow vs. the fast implementation for all 64-bit floating point
 numbers using:
 ```
@@ -118,7 +118,7 @@ $ bazel build --jobs=1 //scripts:{c,java}-{float,double}.pdf
 
 The resulting files are `bazel-genfiles/scripts/{c,java}-{float,double}.pdf`.
 
-### Building without Bazel
+### Building without Bazel on Linux / MacOS
 You can build and run the C benchmark without using Bazel with the following shell
 command:
 ```
