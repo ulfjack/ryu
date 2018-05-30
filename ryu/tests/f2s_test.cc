@@ -45,10 +45,20 @@ TEST(F2sTest, MinAndMax) {
   ASSERT_STREQ("1E-45", f2s(int32Bits2Float(1)));
 }
 
-TEST(F2sTest, RoundingModeEven) {
+// Check that we return the exact boundary if it is the shortest
+// representation, but only if the original floating point number is even.
+TEST(F2sTest, BoundaryRoundEven) {
   ASSERT_STREQ("3.355445E7", f2s(3.355445E7f));
   ASSERT_STREQ("9E9", f2s(8.999999E9f));
   ASSERT_STREQ("3.436672E10", f2s(3.4366717E10f));
+}
+
+// If the exact value is exactly halfway between two shortest representations,
+// then we round to even. It seems like this only makes a difference if the
+// last two digits are ...2|5 or ...7|5, and we cut off the 5.
+TEST(F2sTest, ExactValueRoundEven) {
+  ASSERT_STREQ("3.0540412E5", f2s(3.0540412E5f));
+  ASSERT_STREQ("8.0990312E3", f2s(8.0990312E3f));
 }
 
 TEST(F2sTest, Regression) {

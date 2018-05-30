@@ -15,7 +15,6 @@
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
 
-// Compile with -DMATCH_GRISU3_OUTPUT to match Grisu3 output perfectly.
 // Compile with -DDEBUG to get very verbose debugging output to stdout.
 
 #include "ryu/ryu.h"
@@ -329,9 +328,7 @@ void d2s_buffered(double f, char* result) {
   uint64_t vr, vp, vm;
   int32_t e10;
   bool vmIsTrailingZeros = false;
-#ifdef MATCH_GRISU3_OUTPUT
   bool vrIsTrailingZeros = false;
-#endif
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
     int32_t q = max_uint32(0, ((int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
@@ -348,9 +345,7 @@ void d2s_buffered(double f, char* result) {
     if (q <= 21) {
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
-#ifdef MATCH_GRISU3_OUTPUT
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
-#endif
       } else {
         if (acceptBounds) {
           // Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
@@ -378,36 +373,29 @@ void d2s_buffered(double f, char* result) {
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
-#ifdef MATCH_GRISU3_OUTPUT
-      vrIsTrailingZeros = (mv & ((1ull << q) - 1)) == 0;
-#endif
+      vrIsTrailingZeros = (~mv & 1) >= q;
       if (acceptBounds) {
         vmIsTrailingZeros = (~mm & 1) >= q;
       } else {
         vp -= 1 >= q;
       }
-    } else {
-#ifdef MATCH_GRISU3_OUTPUT
-      // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q
-      // <=> ntz(mv) >= q  &&  pow5Factor(mv) - e2 >= q
-      // <=> ntz(mv) >= q
-      // <=> mv & ((1 << q) - 1) == 0
+    } else if (q < mantissaBits) {
+      // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
+      // <=> ntz(mv) >= q-1  &&  pow5Factor(mv) - e2 >= q-1
+      // <=> ntz(mv) >= q-1
+      // <=> mv & ((1 << (q-1)) - 1) == 0
       // We also need to make sure that the left shift does not overflow.
-      vrIsTrailingZeros =
-          ((q < mantissaBits) && ((mv & ((1ull << q) - 1)) == 0));
+      vrIsTrailingZeros = (mv & ((1ull << (q - 1)) - 1)) == 0;
 #if DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
-#endif
 #endif
     }
   }
 #ifdef DEBUG
   printf("e10=%d\n", e10);
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
-  printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
-#ifdef MATCH_GRISU3_OUTPUT
+  printf("vm is trailing zeros=%s\n", vmIsTrailingZeros ? "true" : "false");
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
-#endif
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
@@ -418,19 +406,13 @@ void d2s_buffered(double f, char* result) {
   int32_t lastRemovedDigit = 0;
   uint64_t output;
   // On average, we remove ~2 digits.
-  if (vmIsTrailingZeros
-#ifdef MATCH_GRISU3_OUTPUT
-      || vrIsTrailingZeros
-#endif
-      ) {
+  if (vmIsTrailingZeros || vrIsTrailingZeros) {
     // General case, which happens rarely (<1%).
     while (vp / 10 > vm / 10) {
       // The compiler does not realize that vm % 10 can be computed from vm / 10
       // as vm - (vm / 10) * 10.
       vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0; // vm % 10 == 0;
-#ifdef MATCH_GRISU3_OUTPUT
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-#endif
       uint64_t nvr = vr / 10;
       lastRemovedDigit = vr - 10 * nvr;
       vr = nvr;
@@ -445,9 +427,7 @@ void d2s_buffered(double f, char* result) {
     // Same as above; use vm % 10 == vm - (vm / 10) * 10.
     if (vmIsTrailingZeros) {
       while (vm - (vm / 10) * 10 == 0) {
-#ifdef MATCH_GRISU3_OUTPUT
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-#endif
         uint64_t nvr = vr / 10;
         lastRemovedDigit = vr - 10 * nvr;
         vr = nvr;
@@ -458,17 +438,12 @@ void d2s_buffered(double f, char* result) {
     }
 #ifdef DEBUG
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
-#ifdef MATCH_GRISU3_OUTPUT
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
-#endif
-#ifdef MATCH_GRISU3_OUTPUT
-    if (vrIsTrailingZeros && (lastRemovedDigit == 5)) {
-      if (vr % 10 != 7) {
-        lastRemovedDigit = 4;
-      }
+    if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
+      // Round down not up if the number ends in X50000.
+      lastRemovedDigit = 4;
     }
-#endif
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr +
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
@@ -484,9 +459,7 @@ void d2s_buffered(double f, char* result) {
     }
 #ifdef DEBUG
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
-#ifdef MATCH_GRISU3_OUTPUT
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
-#endif
 #endif
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));

@@ -90,6 +90,10 @@ static uint32_t pow5Factor(uint32_t value) {
   return 0;
 }
 
+static inline bool multipleOfPowerOf5(uint32_t value, int32_t p) {
+  return pow5Factor(value) >= p;
+}
+
 static inline uint32_t pow5bits(int32_t e) {
   return e == 0 ? 1 : (uint32_t) ((e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
 }
@@ -180,6 +184,7 @@ void f2s_buffered(float f, char* result) {
   uint32_t vp, vm;
   int32_t e10;
   bool vmIsTrailingZeros = false;
+  bool vrIsTrailingZeros = false;
   uint32_t lastRemovedDigit = 0;
   if (e2 >= 0) {
     int32_t q = (int32_t) ((e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR);
@@ -189,6 +194,10 @@ void f2s_buffered(float f, char* result) {
     vr = (uint32_t) mulPow5InvDivPow2(mv, q, i);
     vp = (uint32_t) mulPow5InvDivPow2(mp, q, i);
     vm = (uint32_t) mulPow5InvDivPow2(mm, q, i);
+#ifdef DEBUG
+    printf("%d * 2^%d / 10^%d\n", mv, e2, q);
+    printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
+#endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
       // We need to know one removed digit even if we are not going to loop below. We could use
       // q = X - 1 above, except that would require 33 bits for the result, and we've found that
@@ -197,10 +206,15 @@ void f2s_buffered(float f, char* result) {
       lastRemovedDigit = (uint32_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
-      if (acceptBounds) {
-        vmIsTrailingZeros = pow5Factor(mm) >= q;
+      // Only one of mp, mv, and mm can be a multiple of 5, if any.
+      if (mv % 5 == 0) {
+        vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
       } else {
-        vp -= pow5Factor(mp) >= q;
+        if (acceptBounds) {
+          vmIsTrailingZeros = multipleOfPowerOf5(mm, q);
+        } else {
+          vp -= multipleOfPowerOf5(mp, q);
+        }
       }
     }
   } else {
@@ -212,20 +226,31 @@ void f2s_buffered(float f, char* result) {
     vr = (uint32_t) mulPow5divPow2(mv, i, j);
     vp = (uint32_t) mulPow5divPow2(mp, i, j);
     vm = (uint32_t) mulPow5divPow2(mm, i, j);
+#ifdef DEBUG
+    printf("%d * 5^%d / 10^%d\n", mv, -e2, q);
+    printf("%d %d %d %d\n", q, i, k, j);
+    printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
+#endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
       j = q - 1 - (pow5bits(i + 1) - POW5_BITCOUNT);
       lastRemovedDigit = (uint32_t) (mulPow5divPow2(mv, i + 1, j) % 10);
     }
-    if (acceptBounds) {
-      vmIsTrailingZeros = (~mm & 1) >= q;
-    } else {
-      vp -= 1 >= q;
+    if (q <= 1) {
+      vrIsTrailingZeros = (~mv & 1) >= q;
+      if (acceptBounds) {
+        vmIsTrailingZeros = (~mm & 1) >= q;
+      } else {
+        vp -= 1 >= q;
+      }
+    } else if (q < mantissaBits) {
+      vrIsTrailingZeros = (mv & ((1 << (q - 1)) - 1)) == 0;
     }
   }
 #ifdef DEBUG
   printf("e10=%d\n", e10);
   printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
-  printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
+  printf("vm is trailing zeros=%s\n", vmIsTrailingZeros ? "true" : "false");
+  printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
@@ -233,10 +258,12 @@ void f2s_buffered(float f, char* result) {
   int32_t exp = e10 + vplength - 1;
 
   uint32_t removed = 0;
-  if (vmIsTrailingZeros) {
+  uint32_t output;
+  if (vmIsTrailingZeros || vrIsTrailingZeros) {
     // General case, which happens rarely.
     while (vp / 10 > vm / 10) {
       vmIsTrailingZeros &= vm % 10 == 0;
+      vrIsTrailingZeros &= lastRemovedDigit == 0;
       uint64_t nvr = vr / 10;
       lastRemovedDigit = vr - 10 * nvr;
       vr = nvr;
@@ -244,8 +271,9 @@ void f2s_buffered(float f, char* result) {
       vm /= 10;
       removed++;
     }
-    if (vmIsTrailingZeros && acceptBounds) {
+    if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
+        vrIsTrailingZeros &= lastRemovedDigit == 0;
         uint64_t nvr = vr / 10;
         lastRemovedDigit = vr - 10 * nvr;
         vr = nvr;
@@ -254,6 +282,13 @@ void f2s_buffered(float f, char* result) {
         removed++;
       }
     }
+    if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
+      // Round down not up if the number ends in X50000.
+      lastRemovedDigit = 4;
+    }
+    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    output = vr +
+        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
   } else {
     // Common case.
     while (vp / 10 > vm / 10) {
@@ -264,9 +299,9 @@ void f2s_buffered(float f, char* result) {
       vm /= 10;
       removed++;
     }
+    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  uint32_t output = vr +
-      ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
   uint32_t olength = vplength - removed;
 
   // Step 5: Print the decimal representation.

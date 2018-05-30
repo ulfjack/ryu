@@ -141,13 +141,10 @@ $ java -cp out info.adams.ryu.benchmark.BenchmarkMain
 
 ### Grisu3
 
-We have added a mode to more closely match Grisu3 output, which can be
-enabled by setting the `MATCH_GRISU3_OUTPUT` preprocessor symbol. This only
-applies to values that are exactly halfway between two shortest decimal numbers;
-the generated strings for all other numbers are unaffected. In this mode, the
-benchmark also verfies that the generated strings are identical.
+Ryu's output should exactly match Grisu3's output. Our benchmark verifies that
+the generated numbers are identical.
 ```
-$ bazel run -c opt --copt=-DMATCH_GRISU3_OUTPUT //ryu/benchmark -- -64
+$ bazel run -c opt //ryu/benchmark -- -64
     Average & Stddev Ryu  Average & Stddev Grisu3
 64:   29.806    3.182      103.060   98.717
 ```

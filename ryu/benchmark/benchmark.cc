@@ -137,8 +137,7 @@ static int bench32(int samples, int iterations, bool verbose) {
     if (throwaway == 12345) {
       printf("Argh!\n");
     }
-    if (strlen(own) != strlen(theirs)) {
-//    if (strcmp(own, theirs) != 0) {
+    if (strcmp(own, theirs) != 0) {
       printf("For %x %20s %20s\n", r, own, theirs);
     }
   }
@@ -184,11 +183,7 @@ static int bench64(int samples, int iterations, bool verbose) {
 
     char* own = bufferown;
     char* theirs = dcv(f);
-#ifdef MATCH_GRISU3_OUTPUT
     if (strcmp(own, theirs) != 0) {
-#else
-    if (strlen(own) != strlen(theirs)) {
-#endif
       printf("For %16" PRIX64 " %28s %28s\n", r, own, theirs);
     }
   }
