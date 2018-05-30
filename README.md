@@ -1,4 +1,4 @@
-# Ryu
+# Ryu [![Build Status](https://travis-ci.org/ulfjack/ryu.svg?branch=master)](https://travis-ci.org/ulfjack/ryu)
 
 This project contains a C and a Java implementation of Ryu, an algorithm to
 quickly convert floating point numbers to decimal strings. We have tested the
