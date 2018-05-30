@@ -1,8 +1,12 @@
 dist: trusty
+os:
+- linux
+- osx
 language: c
 before_install:
-- echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
-- curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
-- sudo apt-get update -qq
-- sudo apt-get install -qq pkg-config zip g++ zlib1g-dev unzip python openjdk-8-jdk bazel
-script: bazel test --conlyopt=-std=c99 -c opt //ryu/...
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add - ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get update -qq ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sudo apt-get install -qq pkg-config zip g++ zlib1g-dev unzip python openjdk-8-jdk bazel ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; brew install bazel ; fi
+script: bazel test --conlyopt=-std=c99 -c opt //ryu/... && bazel run --conlyopt=-std=c99 -c opt //ryu/benchmark
