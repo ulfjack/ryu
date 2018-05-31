@@ -415,7 +415,7 @@ void d2s_buffered(double f, char* result) {
       } else {
         vp -= 1 >= q;
       }
-    } else if (q < mantissaBits) {
+    } else if (q < 63) { // TODO(ulfjack): Use a tighter bound here.
       // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
       // <=> ntz(mv) >= q-1  &&  pow5Factor(mv) - e2 >= q-1
       // <=> ntz(mv) >= q-1
