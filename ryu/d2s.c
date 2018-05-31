@@ -16,6 +16,8 @@
 // KIND, either express or implied.
 
 // Compile with -DDEBUG_RYU to get very verbose debugging output to stdout.
+// Compile with -DONLY_64_BIT_OPS_RYU to avoid using uint128_t or 64-bit
+// intrinsics.
 
 #include "ryu/ryu.h"
 
@@ -34,14 +36,14 @@
 
 // ABSL avoids uint128_t on Win32 even if __SIZEOF_INT128__ is defined.
 // Let's do the same for now.
-#if defined(__SIZEOF_INT128__) && !defined(_WIN32)
+#if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU)
 
 #define HAS_UINT128
 typedef __uint128_t uint128_t;
 // FAST_POW5 requires uint128, so it's only available on non-Win32 platforms.
 #define FAST_POW5
 
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU)
 
 #define HAS_64_BIT_INTRINSICS
 // MSVC calls it __inline, not inline in C mode.
