@@ -28,11 +28,7 @@ static double int64Bits2Double(uint64_t bits) {
 
 TEST(D2sTest, Basic) {
   ASSERT_STREQ("0.0", d2s(0.0));
-  #ifndef _WIN32
   ASSERT_STREQ("-0.0", d2s(-0.0));
-  #else
-  ASSERT_STREQ("-0.0", d2s(int64Bits2Double(0x8000000000000000)));
-  #endif
   ASSERT_STREQ("1E0", d2s(1.0));
   ASSERT_STREQ("-1E0", d2s(-1.0));
   ASSERT_STREQ("NaN", d2s(NAN));
