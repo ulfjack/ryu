@@ -169,7 +169,7 @@ public final class RyuDouble {
     // -1077 = 1 - 1023 - 53 - 2 <= e_2 - 2 <= 2046 - 1023 - 53 - 2 = 968
     long dv, dp, dm;
     int e10;
-    boolean dpIsTrailingZeros = false, dmIsTrailingZeros = false;
+    boolean dmIsTrailingZeros = false;
     if (e2 >= 0) {
       int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
       // k = constant + floor(log_2(5^q))
@@ -196,8 +196,13 @@ public final class RyuDouble {
       }
 
       if (q <= 21) {
-        dpIsTrailingZeros = multipleOfPowerOf5(mp, q);
-        dmIsTrailingZeros = multipleOfPowerOf5(mm, q);
+        if (mm % 5 == 0) {
+          dmIsTrailingZeros = multipleOfPowerOf5(mm, q);
+        } else {
+          if (!roundingMode.acceptUpperBound(even)) {
+            mp--;
+          }
+        }
       }
     } else {
       int q = Math.max(0, (int) (-e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
@@ -212,8 +217,10 @@ public final class RyuDouble {
         System.out.println(mv + " * 5^" + (-e2) + " / 10^" + q);
       }
       if (q <= 1) {
-        dpIsTrailingZeros = true;
         dmIsTrailingZeros = (~mm & 1) >= q;
+        if (!roundingMode.acceptUpperBound(even)) {
+          dp--;
+        }
       }
     }
     if (DEBUG) {
@@ -221,7 +228,6 @@ public final class RyuDouble {
       System.out.println("d =" + dv);
       System.out.println("d-=" + dm);
       System.out.println("e10=" + e10);
-      System.out.println("d+10=" + dpIsTrailingZeros);
       System.out.println("d-10=" + dmIsTrailingZeros);
     }
 
@@ -240,9 +246,6 @@ public final class RyuDouble {
     boolean scientificNotation = !((exp >= -3) && (exp < 7));
 
     int removed = 0;
-    if (dpIsTrailingZeros && !roundingMode.acceptUpperBound(even)) {
-      dp--;
-    }
 
     int lastRemovedDigit = 0;
     long output;
