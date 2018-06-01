@@ -415,7 +415,7 @@ void d2s_buffered(double f, char* result) {
       if (acceptBounds) {
         vmIsTrailingZeros = (~(mv - 1 - mmShift) & 1) >= q;
       } else {
-        vp -= 1 >= q;
+        vp -= 1;
       }
     } else if (q < 63) { // TODO(ulfjack): Use a tighter bound here.
       // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
