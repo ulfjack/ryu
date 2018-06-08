@@ -122,7 +122,9 @@ static inline uint32_t pow5Factor(uint64_t value) {
   return 0;
 }
 
+// Returns true if value divides 5^p.
 static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
+  // I tried a case distinction on p, but there was no performance difference.
   return pow5Factor(value) >= p;
 }
 #endif // FAST_POW5
