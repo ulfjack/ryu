@@ -42,15 +42,12 @@
 #define HAS_UINT128
 typedef __uint128_t uint128_t;
 
-#elif defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU)
+#elif defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU) && defined(_M_X64) \
+  && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
 
 #define HAS_64_BIT_INTRINSICS
 // MSVC calls it __inline, not inline in C mode.
 #define inline __inline
-
-#else
-
-#define USE_MANUAL_64_BIT_MUL
 
 #endif
 
@@ -161,7 +158,6 @@ static inline uint64_t mulShiftAll(
 #elif defined(HAS_64_BIT_INTRINSICS)
 
 #include <intrin.h>
-#pragma intrinsic(_umul128,__shiftright128)
 #define umul128 _umul128
 #define shiftright128 __shiftright128
 
