@@ -40,8 +40,6 @@
 
 #define HAS_UINT128
 typedef __uint128_t uint128_t;
-// FAST_POW5 requires uint128, so it's only available on non-Win32 platforms.
-#define FAST_POW5
 
 #elif defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU)
 
@@ -84,34 +82,6 @@ static inline int32_t max_uint32(int32_t a, int32_t b) {
   return a > b ? a : b;
 }
 
-#ifdef FAST_POW5
-static uint64_t POW5[22] = {
-  1u, 5u, 25u, 125u, 625u, 3125u, 15625u, 78125u, 390625u, 1953125u, 9765625u,
-  48828125u, 244140625u, 1220703125u, 6103515625u, 30517578125u, 152587890625u,
-  762939453125u, 3814697265625u, 19073486328125u, 95367431640625u,
-  476837158203125u
-};
-
-// x / POW5[i] == (x * POW5_MUL[i]) >> (64 + POW5_SHR[i])
-static uint64_t POW5_MUL[22] = {
-0u, 3689348814741910374u, 737869762948382074u, 147573952589676414u,
-118059162071741131u, 94447329657392905u, 18889465931478581u, 60446290980731459u,
-48357032784585167u, 19342813113834067u, 30948500982134507u, 49517601571415211u,
-39614081257132169u, 126765060022822941u, 101412048018258353u, 40564819207303341u,
-32451855365842673u, 51922968585348277u, 83076749736557243u, 33230699894622897u,
-53169119831396635u, 10633823966279327u,
-};
-
-static uint64_t POW5_SHR[22] = {
-  0, 0, 0, 0, 2, 4, 4, 8, 10, 11, 14, 17, 19, 23, 25, 26, 28, 31, 34, 35, 38, 38,
-};
-
-static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
-  if (p == 0) return true;
-  uint64_t div = ((value * (uint128_t) POW5_MUL[p]) >> 64) >> POW5_SHR[p];
-  return (value - POW5[p] * div) == 0;
-}
-#else // FAST_POW5
 static inline uint32_t pow5Factor(uint64_t value) {
   for (uint32_t count = 0; value > 0; count++) {
     if (value - 5 * (value / 5) != 0) {
@@ -127,7 +97,6 @@ static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
   return pow5Factor(value) >= p;
 }
-#endif // FAST_POW5
 
 static inline uint32_t pow5bits(int32_t e) {
   return e == 0
