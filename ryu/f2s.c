@@ -30,6 +30,8 @@
 #define FLOAT_MANTISSA_BITS 23
 #define FLOAT_EXPONENT_BITS 8
 
+// These computations using these constants are only safe for the ranges
+// required by 32-bit floating point numbers.
 #define LOG10_2_DENOMINATOR 10000000u
 #define LOG10_2_NUMERATOR 3010299u // LOG10_2_DENOMINATOR * log_10(2)
 #define LOG10_5_DENOMINATOR 10000000u

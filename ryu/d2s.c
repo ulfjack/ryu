@@ -56,6 +56,8 @@ typedef __uint128_t uint128_t;
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
 
+// These have to be 64-bit constants in order for the computations to be safe
+// given the ranges they have to handle for 64-bit floating point numbers.
 #define LOG10_2_DENOMINATOR 10000000ull
 #define LOG10_2_NUMERATOR 3010299ull // LOG10_2_DENOMINATOR * log_10(2)
 #define LOG10_5_DENOMINATOR 10000000ull
