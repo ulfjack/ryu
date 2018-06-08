@@ -159,10 +159,10 @@ static inline uint32_t pow5bits(int32_t e) {
 //    x86-64 machines happen to have matching assembly instructions for
 //    64x64-bit multiplications and 128-bit shifts.
 //
-// 2. Second best case: the compiler exposes intrinsicts for the x86-64 assembly
+// 2. Second best case: the compiler exposes intrinsics for the x86-64 assembly
 //    instructions mentioned in 1.
 //
-// 3. We only have 64x64 bit instructions that return the lower 64 bit of
+// 3. We only have 64x64 bit instructions that return the lower 64 bits of
 //    the result, i.e., we have to use plain C.
 //    Our inputs are less than the full width, so we have three options:
 //    a. Ignore this fact and just implement the intrinsics manually
@@ -427,7 +427,7 @@ void d2s_buffered(double f, char* result) {
       // <=> mv & ((1 << (q-1)) - 1) == 0
       // We also need to make sure that the left shift does not overflow.
       vrIsTrailingZeros = (mv & ((1ull << (q - 1)) - 1)) == 0;
-#if DEBUG_RYU
+#ifdef DEBUG_RYU
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     }
