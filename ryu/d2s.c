@@ -58,12 +58,12 @@ typedef __uint128_t uint128_t;
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
 
-#define LOG10_2_DENOMINATOR 10000000L
-#define LOG10_2_NUMERATOR 3010299L // LOG10_2_DENOMINATOR * log_10(2)
-#define LOG10_5_DENOMINATOR 10000000L
-#define LOG10_5_NUMERATOR 6989700L // LOG10_5_DENOMINATOR * log_10(5)
-#define LOG2_5_DENOMINATOR 10000000L
-#define LOG2_5_NUMERATOR 23219280L // LOG2_5_DENOMINATOR * log_2(5)
+#define LOG10_2_DENOMINATOR 10000000ull
+#define LOG10_2_NUMERATOR 3010299ull // LOG10_2_DENOMINATOR * log_10(2)
+#define LOG10_5_DENOMINATOR 10000000ull
+#define LOG10_5_NUMERATOR 6989700ull // LOG10_5_DENOMINATOR * log_10(5)
+#define LOG2_5_DENOMINATOR 10000000ull
+#define LOG2_5_NUMERATOR 23219280ull // LOG2_5_DENOMINATOR * log_2(5)
 
 #ifndef NO_DIGIT_TABLE
 static const char DIGIT_TABLE[200] = {
@@ -128,7 +128,10 @@ static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
 #endif // FAST_POW5
 
 static inline uint32_t pow5bits(int32_t e) {
-  return e == 0 ? 1 : (uint32_t) (((uint64_t) e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
+  return e == 0
+      ? 1
+      // We need to round up in this case.
+      : (uint32_t) ((e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
 }
 
 // We need a 64x128 bit multiplication and a subsequent 128-bit shift.
@@ -373,7 +376,7 @@ void d2s_buffered(double f, char* result) {
   bool vrIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
-    int32_t q = max_uint32(0, ((int32_t) (((uint64_t) e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
+    int32_t q = max_uint32(0, ((int32_t) ((e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
     e10 = q;
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
@@ -399,7 +402,7 @@ void d2s_buffered(double f, char* result) {
       }
     }
   } else {
-    int32_t q = max_uint32(0, ((int32_t) (((uint64_t) -e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
+    int32_t q = max_uint32(0, ((int32_t) ((-e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
     e10 = q + e2;
     int32_t i = -e2 - q;
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
