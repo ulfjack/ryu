@@ -66,7 +66,7 @@ typedef __uint128_t uint128_t;
 #define LOG2_5_DENOMINATOR 10000000ull
 #define LOG2_5_NUMERATOR 23219280ull // LOG2_5_DENOMINATOR * log_2(5)
 
-static inline int32_t max_uint32(int32_t a, int32_t b) {
+static inline int32_t max_int32(int32_t a, int32_t b) {
   return a > b ? a : b;
 }
 
@@ -335,7 +335,7 @@ void d2s_buffered(double f, char* result) {
   bool vrIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
-    int32_t q = max_uint32(0, ((int32_t) ((e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
+    int32_t q = max_int32(0, ((int32_t) ((e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
     e10 = q;
     int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
@@ -361,7 +361,7 @@ void d2s_buffered(double f, char* result) {
       }
     }
   } else {
-    int32_t q = max_uint32(0, ((int32_t) ((-e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
+    int32_t q = max_int32(0, ((int32_t) ((-e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
     e10 = q + e2;
     int32_t i = -e2 - q;
     int32_t k = pow5bits(i) - POW5_BITCOUNT;
@@ -465,7 +465,7 @@ void d2s_buffered(double f, char* result) {
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
   // The average output length is 16.38 digits.
-  int32_t olength = vplength - removed;
+  uint32_t olength = vplength - removed;
 #ifdef DEBUG_RYU
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("O=%" PRIu64 "\n", output);
@@ -481,7 +481,7 @@ void d2s_buffered(double f, char* result) {
 
 #ifndef NO_DIGIT_TABLE
   // Print decimal digits after the decimal point.
-  int32_t i = 0;
+  uint32_t i = 0;
   while (output >= 10000) {
     uint32_t c = output - 10000 * (output / 10000); // output % 10000;
     output /= 10000;

@@ -304,7 +304,7 @@ void f2s_buffered(float f, char* result) {
 
 #ifndef NO_DIGIT_TABLE
   // Print decimal digits after the decimal point.
-  int32_t i = 0;
+  uint32_t i = 0;
   while (output >= 10000) {
     uint32_t c = output - 10000 * (output / 10000); // output % 10000;
     output /= 10000;
