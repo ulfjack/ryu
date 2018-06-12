@@ -80,7 +80,7 @@ static uint32_t pow5Factor(uint32_t value) {
 }
 
 static inline bool multipleOfPowerOf5(uint32_t value, int32_t p) {
-  return pow5Factor(value) >= p;
+  return pow5Factor(value) >= (uint32_t) p;
 }
 
 static inline uint32_t pow5bits(int32_t e) {
@@ -169,7 +169,7 @@ void f2s_buffered(float f, char* result) {
   // Step 2: Determine the interval of legal decimal representations.
   uint32_t mv = 4 * m2;
   uint32_t mp = 4 * m2 + 2;
-  uint32_t mm = 4 * m2 - (((m2 != (1 << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
+  uint32_t mm = 4 * m2 - (((m2 != (1u << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
   uint32_t vr;
@@ -195,7 +195,7 @@ void f2s_buffered(float f, char* result) {
       // q = X - 1 above, except that would require 33 bits for the result, and we've found that
       // 32-bit arithmetic is faster even on 64-bit machines.
       int32_t l = POW5_INV_BITCOUNT + pow5bits(q - 1) - 1;
-      lastRemovedDigit = (uint32_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
+      lastRemovedDigit = (uint8_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
@@ -225,12 +225,12 @@ void f2s_buffered(float f, char* result) {
 #endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
       j = q - 1 - (pow5bits(i + 1) - POW5_BITCOUNT);
-      lastRemovedDigit = (uint32_t) (mulPow5divPow2(mv, i + 1, j) % 10);
+      lastRemovedDigit = (uint8_t) (mulPow5divPow2(mv, i + 1, j) % 10);
     }
     if (q <= 1) {
-      vrIsTrailingZeros = (~mv & 1) >= q;
+      vrIsTrailingZeros = (~mv & 1) >= (uint32_t) q;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~mm & 1) >= q;
+        vmIsTrailingZeros = (~mm & 1) >= (uint32_t) q;
       } else {
         vp -= 1 >= q;
       }
@@ -257,8 +257,8 @@ void f2s_buffered(float f, char* result) {
       vmIsTrailingZeros &= vm % 10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
       uint64_t nvr = vr / 10;
-      lastRemovedDigit = vr - 10 * nvr;
-      vr = nvr;
+      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
+      vr = (uint32_t) nvr;
       vp /= 10;
       vm /= 10;
       removed++;
@@ -267,8 +267,8 @@ void f2s_buffered(float f, char* result) {
       while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
         uint64_t nvr = vr / 10;
-        lastRemovedDigit = vr - 10 * nvr;
-        vr = nvr;
+        lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
+        vr = (uint32_t) nvr;
         vp /= 10;
         vm /= 10;
         removed++;
@@ -285,8 +285,8 @@ void f2s_buffered(float f, char* result) {
     // Common case.
     while (vp / 10 > vm / 10) {
       uint64_t nvr = vr / 10;
-      lastRemovedDigit = vr - 10 * nvr;
-      vr = nvr;
+      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
+      vr = (uint32_t) nvr;
       vp /= 10;
       vm /= 10;
       removed++;
@@ -326,13 +326,13 @@ void f2s_buffered(float f, char* result) {
     result[index] = DIGIT_TABLE[c];
   } else {
     // Print the leading decimal digit.
-    result[index] = '0' + output;
+    result[index] = (char) ('0' + output);
   }
 #else
   // Print decimal digits after the decimal point.
   for (uint32_t i = 0; i < olength - 1; i++) {
     uint32_t c = output % 10; output /= 10;
-    result[index + olength - i] = '0' + c;
+    result[index + olength - i] = (char) ('0' + c);
   }
   // Print the leading decimal digit.
   result[index] = '0' + output % 10;
@@ -358,7 +358,7 @@ void f2s_buffered(float f, char* result) {
     memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
     index += 2;
   } else {
-    result[index++] = '0' + exp;
+    result[index++] = (char) ('0' + exp);
   }
 #else
   if (exp >= 10) {
