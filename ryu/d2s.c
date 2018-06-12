@@ -83,7 +83,7 @@ static inline uint32_t pow5Factor(uint64_t value) {
 // Returns true if value divides 5^p.
 static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
-  return pow5Factor(value) >= p;
+  return pow5Factor(value) >= (uint32_t) p;
 }
 
 static inline uint32_t pow5bits(int32_t e) {
@@ -173,7 +173,7 @@ static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
   umul128(m, mul[0], &high0);                 // 0
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
-  return shiftright128(sum, high1, j - 64);
+  return shiftright128(sum, high1, (unsigned char) (j - 64));
 }
 
 static inline uint64_t mulShiftAll(
@@ -373,9 +373,9 @@ void d2s_buffered(double f, char* result) {
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
-      vrIsTrailingZeros = (~mv & 1) >= q;
+      vrIsTrailingZeros = (~mv & 1) >= (uint64_t) q;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~(mv - 1 - mmShift) & 1) >= q;
+        vmIsTrailingZeros = (~(mv - 1 - mmShift) & 1) >= (uint64_t) q;
       } else {
         vp -= 1;
       }
@@ -414,7 +414,7 @@ void d2s_buffered(double f, char* result) {
       vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0; // vm % 10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
       uint64_t nvr = vr / 10;
-      lastRemovedDigit = vr - 10 * nvr;
+      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
       vr = nvr;
       vp /= 10;
       vm /= 10;
@@ -429,7 +429,7 @@ void d2s_buffered(double f, char* result) {
       while (vm - (vm / 10) * 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
         uint64_t nvr = vr / 10;
-        lastRemovedDigit = vr - 10 * nvr;
+        lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
         vr = nvr;
         vp /= 10;
         vm /= 10;
@@ -451,7 +451,7 @@ void d2s_buffered(double f, char* result) {
     // Specialized for the common case (>99%).
     while (vp / 10 > vm / 10) {
       uint64_t nvr = vr / 10;
-      lastRemovedDigit = vr - 10 * nvr;
+      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
       vr = nvr;
       vp /= 10;
       vm /= 10;
@@ -483,7 +483,7 @@ void d2s_buffered(double f, char* result) {
   // Print decimal digits after the decimal point.
   uint32_t i = 0;
   while (output >= 10000) {
-    uint32_t c = output - 10000 * (output / 10000); // output % 10000;
+    uint32_t c = (uint32_t) (output - 10000 * (output / 10000)); // output % 10000;
     output /= 10000;
     uint32_t c0 = (c % 100) << 1;
     uint32_t c1 = (c / 100) << 1;
@@ -492,24 +492,24 @@ void d2s_buffered(double f, char* result) {
     i += 4;
   }
   while (output >= 100) {
-    uint32_t c = (output - 100 * (output / 100)) << 1; // (output % 100) << 1;
+    uint32_t c = (uint32_t) ((output - 100 * (output / 100)) << 1); // (output % 100) << 1;
     output /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
   }
   if (output >= 10) {
-    uint32_t c = output << 1;
+    uint32_t c = (uint32_t) (output << 1);
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
     // Print the leading decimal digit.
-    result[index] = '0' + output;
+    result[index] = (char) ('0' + output);
   }
 #else
   // Print decimal digits after the decimal point.
   for (uint32_t i = 0; i < olength - 1; i++) {
     uint32_t c = output % 10; output /= 10;
-    result[index + olength - i] = '0' + c;
+    result[index + olength - i] = (char) ('0' + c);
   }
   // Print the leading decimal digit.
   result[index] = '0' + output % 10;
@@ -532,7 +532,7 @@ void d2s_buffered(double f, char* result) {
 
 #ifndef NO_DIGIT_TABLE
   if (exp >= 100) {
-    result[index++] = '0' + exp / 100;
+    result[index++] = (char) ('0' + exp / 100);
     exp = exp - 100 * (exp / 100);
     memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
     index += 2;
@@ -540,11 +540,11 @@ void d2s_buffered(double f, char* result) {
     memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
     index += 2;
   } else {
-    result[index++] = '0' + exp;
+    result[index++] = (char) ('0' + exp);
   }
 #else
   if (exp >= 100) {
-    result[index++] = '0' + exp / 100;
+    result[index++] = (char) ('0' + exp / 100);
   }
   if (exp >= 10) {
     result[index++] = '0' + (exp / 10) % 10;
