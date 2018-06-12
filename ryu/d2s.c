@@ -203,10 +203,10 @@ static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
 }
 
 static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
-  // shift hi-lo right by 0 <= dist <= 128
+  // shift hi-lo right by 0 < dist < 128
   return (dist >= 64)
       ? hi >> (dist - 64)
-      : (hi << (64 - dist)) + (lo >> dist);
+      : (hi << (64 - dist)) | (lo >> dist);
 }
 
 static inline uint64_t mulShiftAll(
