@@ -59,12 +59,12 @@ typedef __uint128_t uint128_t;
 
 // These have to be 64-bit constants in order for the computations to be safe
 // given the ranges they have to handle for 64-bit floating point numbers.
-#define LOG10_2_DENOMINATOR 10000000ull
-#define LOG10_2_NUMERATOR 3010299ull // LOG10_2_DENOMINATOR * log_10(2)
-#define LOG10_5_DENOMINATOR 10000000ull
-#define LOG10_5_NUMERATOR 6989700ull // LOG10_5_DENOMINATOR * log_10(5)
-#define LOG2_5_DENOMINATOR 10000000ull
-#define LOG2_5_NUMERATOR 23219280ull // LOG2_5_DENOMINATOR * log_2(5)
+#define DOUBLE_LOG10_2_DENOMINATOR 10000000ull
+#define DOUBLE_LOG10_2_NUMERATOR 3010299ull // DOUBLE_LOG10_2_DENOMINATOR * log_10(2)
+#define DOUBLE_LOG10_5_DENOMINATOR 10000000ull
+#define DOUBLE_LOG10_5_NUMERATOR 6989700ull // DOUBLE_LOG10_5_DENOMINATOR * log_10(5)
+#define DOUBLE_LOG2_5_DENOMINATOR 10000000ull
+#define DOUBLE_LOG2_5_NUMERATOR 23219280ull // DOUBLE_LOG2_5_DENOMINATOR * log_2(5)
 
 static inline int32_t max_int32(int32_t a, int32_t b) {
   return a > b ? a : b;
@@ -86,11 +86,11 @@ static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
   return pow5Factor(value) >= (uint32_t) p;
 }
 
-static inline uint32_t pow5bits(int32_t e) {
+static inline uint32_t double_pow5bits(int32_t e) {
   return e == 0
       ? 1
       // We need to round up in this case.
-      : (uint32_t) ((e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1) / LOG2_5_DENOMINATOR);
+      : (uint32_t) ((e * DOUBLE_LOG2_5_NUMERATOR + DOUBLE_LOG2_5_DENOMINATOR - 1) / DOUBLE_LOG2_5_DENOMINATOR);
 }
 
 // We need a 64x128 bit multiplication and a subsequent 128-bit shift.
@@ -335,11 +335,11 @@ void d2s_buffered(double f, char* result) {
   bool vrIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
-    int32_t q = max_int32(0, ((int32_t) ((e2 * LOG10_2_NUMERATOR) / LOG10_2_DENOMINATOR)) - 1);
+    int32_t q = max_int32(0, ((int32_t) ((e2 * DOUBLE_LOG10_2_NUMERATOR) / DOUBLE_LOG10_2_DENOMINATOR)) - 1);
     e10 = q;
-    int32_t k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
+    int32_t k = DOUBLE_POW5_INV_BITCOUNT + double_pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
-    vr = mulShiftAll(m2, POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
+    vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -361,12 +361,12 @@ void d2s_buffered(double f, char* result) {
       }
     }
   } else {
-    int32_t q = max_int32(0, ((int32_t) ((-e2 * LOG10_5_NUMERATOR) / LOG10_5_DENOMINATOR)) - 1);
+    int32_t q = max_int32(0, ((int32_t) ((-e2 * DOUBLE_LOG10_5_NUMERATOR) / DOUBLE_LOG10_5_DENOMINATOR)) - 1);
     e10 = q + e2;
     int32_t i = -e2 - q;
-    int32_t k = pow5bits(i) - POW5_BITCOUNT;
+    int32_t k = double_pow5bits(i) - DOUBLE_POW5_BITCOUNT;
     int32_t j = q - k;
-    vr = mulShiftAll(m2, POW5_SPLIT[i], j, &vp, &vm, mmShift);
+    vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT[i], j, &vp, &vm, mmShift);
 #ifdef DEBUG_RYU
     printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
