@@ -130,14 +130,14 @@ static inline uint32_t double_pow5bits(int32_t e) {
 #if defined(HAS_UINT128)
 
 // Best case: use 128-bit type.
-static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
+static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   uint128_t b0 = ((uint128_t) m) * mul[0];
   uint128_t b2 = ((uint128_t) m) * mul[1];
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
 
 static inline uint64_t mulShiftAll(
-    uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+    uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
 //  m <<= 2;
 //  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
 //  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
@@ -161,7 +161,7 @@ static inline uint64_t mulShiftAll(
 #define umul128 _umul128
 #define shiftright128 __shiftright128
 
-static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
+static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   // m is maximum 55 bits
   uint64_t high1;                             // 128
   uint64_t low1 = umul128(m, mul[1], &high1); // 64
@@ -173,7 +173,7 @@ static inline uint64_t mulShift(uint64_t m, uint64_t* mul, int32_t j) {
 }
 
 static inline uint64_t mulShiftAll(
-    uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+    uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
   *vp = mulShift(4 * m + 2, mul, j);
   *vm = mulShift(4 * m - 1 - mmShift, mul, j);
   return mulShift(4 * m, mul, j);
@@ -210,7 +210,7 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
 }
 
 static inline uint64_t mulShiftAll(
-    uint64_t m, uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+    uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
   m <<= 1;
   // m is maximum 55 bits
   uint64_t tmp;
