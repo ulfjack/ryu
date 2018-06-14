@@ -270,9 +270,9 @@ static inline uint32_t decimalLength(uint64_t v) {
 
 void d2s_buffered(double f, char* result) {
   // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
-  int32_t mantissaBits = DOUBLE_MANTISSA_BITS;
-  int32_t exponentBits = DOUBLE_EXPONENT_BITS;
-  int32_t offset = (1 << (exponentBits - 1)) - 1;
+  uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
+  uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
+  uint32_t offset = (1 << (exponentBits - 1)) - 1;
 
   uint64_t bits = 0;
   // This only works on little-endian architectures.
@@ -281,7 +281,7 @@ void d2s_buffered(double f, char* result) {
   // Decode bits into sign, mantissa, and exponent.
   bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
   uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
-  int32_t ieeeExponent = (int32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
+  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
 #ifdef DEBUG_RYU
   printf("IN=");
@@ -294,7 +294,7 @@ void d2s_buffered(double f, char* result) {
   int32_t e2;
   uint64_t m2;
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1 << exponentBits) - 1)) {
+  if (ieeeExponent == ((1u << exponentBits) - 1u)) {
     strcpy(result, (ieeeMantissa != 0) ? "NaN" : sign ? "-Infinity" : "Infinity");
     return;
   } else if (ieeeExponent == 0) {
@@ -395,7 +395,7 @@ void d2s_buffered(double f, char* result) {
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  int32_t vplength = decimalLength(vp);
+  uint32_t vplength = decimalLength(vp);
   int32_t exp = e10 + vplength - 1;
 
   uint32_t removed = 0;
