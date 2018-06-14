@@ -114,7 +114,7 @@ static int bench32(int samples, int iterations, bool verbose) {
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     for (int j = 0; j < iterations; j++) {
       f2s_buffered(f, bufferown);
-      throwaway += strlen(bufferown);
+      throwaway += (int) strlen(bufferown);
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
@@ -123,7 +123,7 @@ static int bench32(int samples, int iterations, bool verbose) {
     t1 = high_resolution_clock::now();
     for (int j = 0; j < iterations; j++) {
       fcv(f);
-      throwaway += strlen(buffer);
+      throwaway += (int) strlen(buffer);
     }
     t2 = high_resolution_clock::now();
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
