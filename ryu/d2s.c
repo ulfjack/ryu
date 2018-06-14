@@ -299,7 +299,7 @@ void d2s_buffered(double f, char* result) {
     return;
   } else if (ieeeExponent == 0) {
     if (ieeeMantissa == 0) {
-      strcpy(result, sign ? "-0.0" : "0.0");
+      strcpy(result, sign ? "-0E0" : "0E0");
       return;
     }
     // We subtract 2 so that the bounds computation has 2 additional bits.

@@ -27,8 +27,8 @@ static double int64Bits2Double(uint64_t bits) {
 }
 
 TEST(D2sTest, Basic) {
-  ASSERT_STREQ("0.0", d2s(0.0));
-  ASSERT_STREQ("-0.0", d2s(-0.0));
+  ASSERT_STREQ("0E0", d2s(0.0));
+  ASSERT_STREQ("-0E0", d2s(-0.0));
   ASSERT_STREQ("1E0", d2s(1.0));
   ASSERT_STREQ("-1E0", d2s(-1.0));
   ASSERT_STREQ("NaN", d2s(NAN));
