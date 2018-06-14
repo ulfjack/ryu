@@ -232,7 +232,7 @@ void f2s_buffered(float f, char* result) {
       if (acceptBounds) {
         vmIsTrailingZeros = (~mm & 1) >= (uint32_t) q;
       } else {
-        vp -= 1 >= q;
+        vp -= 1;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
       vrIsTrailingZeros = (mv & ((1 << (q - 1)) - 1)) == 0;
