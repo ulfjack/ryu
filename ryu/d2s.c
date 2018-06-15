@@ -365,9 +365,9 @@ void d2s_buffered(double f, char* result) {
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
-      vrIsTrailingZeros = (~mv & 1) >= (uint64_t) q;
+      vrIsTrailingZeros = (~((uint32_t) mv) & 1) >= (uint32_t) q;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~(mv - 1 - mmShift) & 1) >= (uint64_t) q;
+        vmIsTrailingZeros = (~((uint32_t) (mv - 1 - mmShift)) & 1) >= (uint32_t) q;
       } else {
         vp -= 1;
       }
