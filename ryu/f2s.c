@@ -15,6 +15,8 @@
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
 
+// Compile with -DDEBUG_RYU to get very verbose debugging output to stdout.
+
 #include "ryu/ryu.h"
 
 #include <stdbool.h>
@@ -79,6 +81,7 @@ static inline uint32_t pow5Factor(uint32_t value) {
   return 0;
 }
 
+// Returns true if value divides 5^p.
 static inline bool multipleOfPowerOf5(uint32_t value, int32_t p) {
   return pow5Factor(value) >= (uint32_t) p;
 }
@@ -153,6 +156,7 @@ void f2s_buffered(float f, char* result) {
       strcpy(result, sign ? "-0E0" : "0E0");
       return;
     }
+    // We subtract 2 so that the bounds computation has 2 additional bits.
     e2 = 1 - offset - mantissaBits - 2;
     m2 = ieeeMantissa;
   } else {
@@ -232,7 +236,7 @@ void f2s_buffered(float f, char* result) {
       if (acceptBounds) {
         vmIsTrailingZeros = (~mm & 1) >= (uint32_t) q;
       } else {
-        vp -= 1 >= q;
+        vp -= 1;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
       vrIsTrailingZeros = (mv & ((1 << (q - 1)) - 1)) == 0;

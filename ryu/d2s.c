@@ -158,18 +158,16 @@ static inline uint64_t mulShiftAll(
 #elif defined(HAS_64_BIT_INTRINSICS)
 
 #include <intrin.h>
-#define umul128 _umul128
-#define shiftright128 __shiftright128
 
 static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   // m is maximum 55 bits
-  uint64_t high1;                             // 128
-  uint64_t low1 = umul128(m, mul[1], &high1); // 64
-  uint64_t high0;                             // 64
-  umul128(m, mul[0], &high0);                 // 0
+  uint64_t high1;                              // 128
+  uint64_t low1 = _umul128(m, mul[1], &high1); // 64
+  uint64_t high0;                              // 64
+  _umul128(m, mul[0], &high0);                 // 0
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
-  return shiftright128(sum, high1, (unsigned char) (j - 64));
+  return __shiftright128(sum, high1, (unsigned char) (j - 64));
 }
 
 static inline uint64_t mulShiftAll(
@@ -270,9 +268,9 @@ static inline uint32_t decimalLength(uint64_t v) {
 
 void d2s_buffered(double f, char* result) {
   // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
-  int32_t mantissaBits = DOUBLE_MANTISSA_BITS;
-  int32_t exponentBits = DOUBLE_EXPONENT_BITS;
-  int32_t offset = (1 << (exponentBits - 1)) - 1;
+  uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
+  uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
+  uint32_t offset = (1 << (exponentBits - 1)) - 1;
 
   uint64_t bits = 0;
   // This only works on little-endian architectures.
@@ -281,7 +279,7 @@ void d2s_buffered(double f, char* result) {
   // Decode bits into sign, mantissa, and exponent.
   bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
   uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
-  int32_t ieeeExponent = (int32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
+  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
 
 #ifdef DEBUG_RYU
   printf("IN=");
@@ -294,12 +292,12 @@ void d2s_buffered(double f, char* result) {
   int32_t e2;
   uint64_t m2;
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1 << exponentBits) - 1)) {
+  if (ieeeExponent == ((1u << exponentBits) - 1u)) {
     strcpy(result, (ieeeMantissa != 0) ? "NaN" : sign ? "-Infinity" : "Infinity");
     return;
   } else if (ieeeExponent == 0) {
     if (ieeeMantissa == 0) {
-      strcpy(result, sign ? "-0.0" : "0.0");
+      strcpy(result, sign ? "-0E0" : "0E0");
       return;
     }
     // We subtract 2 so that the bounds computation has 2 additional bits.
@@ -369,9 +367,9 @@ void d2s_buffered(double f, char* result) {
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
-      vrIsTrailingZeros = (~mv & 1) >= (uint64_t) q;
+      vrIsTrailingZeros = (~((uint32_t) mv) & 1) >= (uint32_t) q;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~(mv - 1 - mmShift) & 1) >= (uint64_t) q;
+        vmIsTrailingZeros = (~((uint32_t) (mv - 1 - mmShift)) & 1) >= (uint32_t) q;
       } else {
         vp -= 1;
       }
@@ -395,7 +393,7 @@ void d2s_buffered(double f, char* result) {
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  int32_t vplength = decimalLength(vp);
+  uint32_t vplength = decimalLength(vp);
   int32_t exp = e10 + vplength - 1;
 
   uint32_t removed = 0;
