@@ -73,8 +73,8 @@ static const uint64_t FLOAT_POW5_SPLIT[47] = {
  1292469707114105741u, 1615587133892632177u, 2019483917365790221u
 };
 
-static inline uint32_t pow5Factor(uint32_t value) {
-  for (uint32_t count = 0; value > 0; count++) {
+static inline int32_t pow5Factor(uint32_t value) {
+  for (int32_t count = 0; value > 0; count++) {
     if (value - 5 * (value / 5) != 0) {
       return count;
     }
@@ -85,7 +85,7 @@ static inline uint32_t pow5Factor(uint32_t value) {
 
 // Returns true if value divides 5^p.
 static inline bool multipleOfPowerOf5(uint32_t value, int32_t p) {
-  return pow5Factor(value) >= (uint32_t) p;
+  return pow5Factor(value) >= p;
 }
 
 static inline uint32_t float_pow5bits(int32_t e) {
