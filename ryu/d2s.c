@@ -201,6 +201,8 @@ static inline uint64_t mulShiftAll(
 static inline uint32_t decimalLength(uint64_t v) {
   // This is slightly faster than a loop. For a random set of numbers, the
   // average length is 17.4 digits, so we check high-to-low.
+  // 2^63 - 1 is 19 decimal digits, while 2^64 - 1 is 20 decimal digits.
+  // Function precondition: v is not a 20-digit number.
   if (v >= 1000000000000000000L) { return 19; }
   if (v >= 100000000000000000L) { return 18; }
   if (v >= 10000000000000000L) { return 17; }
