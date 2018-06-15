@@ -46,6 +46,8 @@ typedef __uint128_t uint128_t;
   && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
 
 #define HAS_64_BIT_INTRINSICS
+// MSVC calls it __inline, not inline in C mode.
+#define inline __inline
 
 #endif
 
