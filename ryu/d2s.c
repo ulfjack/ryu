@@ -58,8 +58,8 @@ static inline int32_t max_int32(int32_t a, int32_t b) {
   return a > b ? a : b;
 }
 
-static inline uint32_t pow5Factor(uint64_t value) {
-  for (uint32_t count = 0; value > 0; count++) {
+static inline int32_t pow5Factor(uint64_t value) {
+  for (int32_t count = 0; value > 0; count++) {
     if (value - 5 * (value / 5) != 0) {
       return count;
     }
@@ -71,7 +71,7 @@ static inline uint32_t pow5Factor(uint64_t value) {
 // Returns true if value divides 5^p.
 static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
-  return pow5Factor(value) >= (uint32_t) p;
+  return pow5Factor(value) >= p;
 }
 
 // We need a 64x128 bit multiplication and a subsequent 128-bit shift.
