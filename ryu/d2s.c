@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ryu/dtable.h"
 #include "ryu/digit_table.h"
 
 #ifdef RYU_DEBUG
@@ -55,19 +54,13 @@ typedef __uint128_t uint128_t;
 #include <intrin.h>
 #define HAS_64_BIT_INTRINSICS
 
+#else
+
+#include "ryu/mulshift128.h"
+
 #endif
 
-#define DOUBLE_MANTISSA_BITS 52
-#define DOUBLE_EXPONENT_BITS 11
-
-// These have to be 64-bit constants in order for the computations to be safe
-// given the ranges they have to handle for 64-bit floating point numbers.
-#define DOUBLE_LOG10_2_DENOMINATOR 10000000ull
-#define DOUBLE_LOG10_2_NUMERATOR 3010299ull // DOUBLE_LOG10_2_DENOMINATOR * log_10(2)
-#define DOUBLE_LOG10_5_DENOMINATOR 10000000ull
-#define DOUBLE_LOG10_5_NUMERATOR 6989700ull // DOUBLE_LOG10_5_DENOMINATOR * log_10(5)
-#define DOUBLE_LOG2_5_DENOMINATOR 10000000ull
-#define DOUBLE_LOG2_5_NUMERATOR 23219280ull // DOUBLE_LOG2_5_DENOMINATOR * log_2(5)
+#include "ryu/d2s.h"
 
 static inline int32_t max_int32(int32_t a, int32_t b) {
   return a > b ? a : b;
@@ -87,13 +80,6 @@ static inline uint32_t pow5Factor(uint64_t value) {
 static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
   return pow5Factor(value) >= (uint32_t) p;
-}
-
-static inline uint32_t double_pow5bits(int32_t e) {
-  return e == 0
-      ? 1
-      // We need to round up in this case.
-      : (uint32_t) ((e * DOUBLE_LOG2_5_NUMERATOR + DOUBLE_LOG2_5_DENOMINATOR - 1) / DOUBLE_LOG2_5_DENOMINATOR);
 }
 
 // We need a 64x128 bit multiplication and a subsequent 128-bit shift.
@@ -182,34 +168,6 @@ static inline uint64_t mulShiftAll(
 }
 
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
-
-static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
-  uint64_t aLo = a & 0xffffffff;
-  uint64_t aHi = a >> 32;
-  uint64_t bLo = b & 0xffffffff;
-  uint64_t bHi = b >> 32;
-
-  uint64_t b00 = aLo * bLo;
-  uint64_t b01 = aLo * bHi;
-  uint64_t b10 = aHi * bLo;
-  uint64_t b11 = aHi * bHi;
-
-  uint64_t midSum = b01 + b10;
-  uint64_t midCarry = midSum < b01;
-
-  uint64_t productLo = b00 + (midSum << 32);
-  uint64_t productLoCarry = productLo < b00;
-
-  *productHi = b11 + (midSum >> 32) + (midCarry << 32) + productLoCarry;
-  return productLo;
-}
-
-static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
-  // shift hi-lo right by 0 < dist < 128
-  return (dist >= 64)
-      ? hi >> (dist - 64)
-      : (hi << (64 - dist)) | (lo >> dist);
-}
 
 static inline uint64_t mulShiftAll(
     uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
