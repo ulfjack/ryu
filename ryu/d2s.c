@@ -59,7 +59,7 @@ static inline int32_t max_int32(int32_t a, int32_t b) {
 }
 
 static inline int32_t pow5Factor(uint64_t value) {
-  for (int32_t count = 0; value > 0; count++) {
+  for (int32_t count = 0; value > 0; ++count) {
     if (value - 5 * (value / 5) != 0) {
       return count;
     }
@@ -148,7 +148,7 @@ static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   uint64_t high0;                             // 64
   umul128(m, mul[0], &high0);                 // 0
   uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
+  if (sum < high0) ++high1; // overflow into high1
   return shiftright128(sum, high1, j - 64);
 }
 
@@ -237,7 +237,7 @@ void d2s_buffered(double f, char* result) {
 
 #ifdef RYU_DEBUG
   printf("IN=");
-  for (int32_t bit = 63; bit >= 0; bit--) {
+  for (int32_t bit = 63; bit >= 0; --bit) {
     printf("%d", (int) ((bits >> bit) & 1));
   }
   printf("\n");
@@ -337,7 +337,7 @@ void d2s_buffered(double f, char* result) {
       if (acceptBounds) {
         vmIsTrailingZeros = (~((uint32_t) (mv - 1 - mmShift)) & 1) >= (uint32_t) q;
       } else {
-        vp -= 1;
+        --vp;
       }
     } else if (q < 63) { // TODO(ulfjack): Use a tighter bound here.
       // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
@@ -378,7 +378,7 @@ void d2s_buffered(double f, char* result) {
       vr = nvr;
       vp /= 10;
       vm /= 10;
-      removed++;
+      ++removed;
     }
 #ifdef RYU_DEBUG
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -393,7 +393,7 @@ void d2s_buffered(double f, char* result) {
         vr = nvr;
         vp /= 10;
         vm /= 10;
-        removed++;
+        ++removed;
       }
     }
 #ifdef RYU_DEBUG
@@ -415,7 +415,7 @@ void d2s_buffered(double f, char* result) {
       vr = nvr;
       vp /= 10;
       vm /= 10;
-      removed++;
+      ++removed;
     }
 #ifdef RYU_DEBUG
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
@@ -496,7 +496,7 @@ void d2s_buffered(double f, char* result) {
   }
 #else
   // Print decimal digits after the decimal point.
-  for (uint32_t i = 0; i < olength - 1; i++) {
+  for (uint32_t i = 0; i < olength - 1; ++i) {
     uint32_t c = output % 10; output /= 10;
     result[index + olength - i] = (char) ('0' + c);
   }
@@ -509,7 +509,7 @@ void d2s_buffered(double f, char* result) {
     result[index + 1] = '.';
     index += olength + 1;
   } else {
-    index++;
+    ++index;
   }
 
   // Print the exponent.
