@@ -172,7 +172,7 @@ static inline void double_computePow5(uint32_t i, uint64_t* result) {
   uint64_t high0;
   uint64_t low0 = umul128(m, mul[0], &high0);
   uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
+  if (sum < high0) ++high1; // overflow into high1
   // high1 | sum | low0
   uint32_t delta = double_pow5bits(i) - double_pow5bits(base2);
   result[0] = shiftright128(low0, sum, delta) + ((POW5_OFFSETS[base] >> offset) & 1);
@@ -196,7 +196,7 @@ static inline void double_computeInvPow5(uint32_t i, uint64_t* result) {
   uint64_t high0;
   uint64_t low0 = umul128(m, mul[0] - 1, &high0);
   uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
+  if (sum < high0) ++high1; // overflow into high1
   // high1 | sum | low0
   uint32_t delta = double_pow5bits(base2) - double_pow5bits(i);
   result[0] = shiftright128(low0, sum, delta) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);

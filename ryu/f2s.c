@@ -74,7 +74,7 @@ static const uint64_t FLOAT_POW5_SPLIT[47] = {
 };
 
 static inline int32_t pow5Factor(uint32_t value) {
-  for (int32_t count = 0; value > 0; count++) {
+  for (int32_t count = 0; value > 0; ++count) {
     if (value - 5 * (value / 5) != 0) {
       return count;
     }
@@ -141,7 +141,7 @@ void f2s_buffered(float f, char* result) {
 
 #ifdef RYU_DEBUG
   printf("IN=");
-  for (int32_t bit = 31; bit >= 0; bit--) {
+  for (int32_t bit = 31; bit >= 0; --bit) {
     printf("%d", (bits >> bit) & 1);
   }
   printf("\n");
@@ -238,7 +238,7 @@ void f2s_buffered(float f, char* result) {
       if (acceptBounds) {
         vmIsTrailingZeros = (~mm & 1) >= (uint32_t) q;
       } else {
-        vp -= 1;
+        --vp;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
       vrIsTrailingZeros = (mv & ((1u << (q - 1)) - 1)) == 0;
@@ -267,7 +267,7 @@ void f2s_buffered(float f, char* result) {
       vr = (uint32_t) nvr;
       vp /= 10;
       vm /= 10;
-      removed++;
+      ++removed;
     }
     if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
@@ -277,7 +277,7 @@ void f2s_buffered(float f, char* result) {
         vr = (uint32_t) nvr;
         vp /= 10;
         vm /= 10;
-        removed++;
+        ++removed;
       }
     }
     if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
@@ -295,7 +295,7 @@ void f2s_buffered(float f, char* result) {
       vr = (uint32_t) nvr;
       vp /= 10;
       vm /= 10;
-      removed++;
+      ++removed;
     }
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
@@ -336,7 +336,7 @@ void f2s_buffered(float f, char* result) {
   }
 #else
   // Print decimal digits after the decimal point.
-  for (uint32_t i = 0; i < olength - 1; i++) {
+  for (uint32_t i = 0; i < olength - 1; ++i) {
     uint32_t c = output % 10; output /= 10;
     result[index + olength - i] = (char) ('0' + c);
   }
@@ -349,7 +349,7 @@ void f2s_buffered(float f, char* result) {
     result[index + 1] = '.';
     index += olength + 1;
   } else {
-    index++;
+    ++index;
   }
 
   // Print the exponent.
