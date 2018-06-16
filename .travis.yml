@@ -2,9 +2,6 @@ dist: trusty
 os:
 - linux
 - osx
-cache:
-  directories:
-  - $HOME/.cache/bazel/
 language: c
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list ; fi
