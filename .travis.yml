@@ -9,7 +9,10 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq pkg-config zip g++ zlib1g-dev unzip python openjdk-8-jdk bazel ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bazel ; fi
+- mkdir -p "$HOME/.cache/bazel/"
 - bazel version
+- echo "build --conlyopt=-std=c99 -c opt" > $HOME/.bazelrc
+- echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
 script:
 - bazel test --conlyopt=-std=c99 -c opt //ryu/... //src/...
 - bazel run --conlyopt=-std=c99 -c opt //ryu/benchmark
