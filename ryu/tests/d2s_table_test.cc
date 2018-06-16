@@ -30,6 +30,10 @@
 #define HAS_64_BIT_INTRINSICS
 #include "ryu/mulshift128.h"
 
+#else
+
+#include "ryu/mulshift128.h"
+
 #endif
 
 // #define DOUBLE_LOG10_2_DENOMINATOR 10000000ull
