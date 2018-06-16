@@ -30,6 +30,10 @@
 #define HAS_64_BIT_INTRINSICS
 #include "ryu/mulshift128.h"
 
+#else
+
+#include "ryu/mulshift128.h"
+
 #endif
 
 // #define DOUBLE_LOG10_2_DENOMINATOR 10000000ull
@@ -247,6 +251,11 @@ static inline void getMultiplicand(uint32_t index, uint64_t* result) {
   uint32_t base2 = base * POW5_TABLE_SIZE;
   uint32_t offset = index - base2;
   const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
+  if (offset == 0) {
+    result[0] = mul[0];
+    result[1] = mul[1];
+    return;
+  }
   uint64_t m = DOUBLE_POW5_TABLE[offset];
   uint64_t high1;
   uint64_t low1 = umul128(m, mul[1], &high1);
