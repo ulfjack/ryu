@@ -61,6 +61,6 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
       : (hi << (64 - dist)) | (lo >> dist);
 }
 
-#endif
+#endif // defined(HAS_64_BIT_INTRINSICS)
 
 #endif // RYU_MULSHIFT128
