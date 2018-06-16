@@ -148,7 +148,9 @@ static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   uint64_t high0;                             // 64
   umul128(m, mul[0], &high0);                 // 0
   uint64_t sum = high0 + low1;
-  if (sum < high0) ++high1; // overflow into high1
+  if (sum < high0) {
+    ++high1; // overflow into high1
+  }
   return shiftright128(sum, high1, j - 64);
 }
 
@@ -199,24 +201,24 @@ static inline uint64_t mulShiftAll(
 static inline uint32_t decimalLength(uint64_t v) {
   // This is slightly faster than a loop. For a random set of numbers, the
   // average length is 17.4 digits, so we check high-to-low.
-  if (v >= 1000000000000000000L) return 19;
-  if (v >= 100000000000000000L) return 18;
-  if (v >= 10000000000000000L) return 17;
-  if (v >= 1000000000000000L) return 16;
-  if (v >= 100000000000000L) return 15;
-  if (v >= 10000000000000L) return 14;
-  if (v >= 1000000000000L) return 13;
-  if (v >= 100000000000L) return 12;
-  if (v >= 10000000000L) return 11;
-  if (v >= 1000000000L) return 10;
-  if (v >= 100000000L) return 9;
-  if (v >= 10000000L) return 8;
-  if (v >= 1000000L) return 7;
-  if (v >= 100000L) return 6;
-  if (v >= 10000L) return 5;
-  if (v >= 1000L) return 4;
-  if (v >= 100L) return 3;
-  if (v >= 10L) return 2;
+  if (v >= 1000000000000000000L) { return 19; }
+  if (v >= 100000000000000000L) { return 18; }
+  if (v >= 10000000000000000L) { return 17; }
+  if (v >= 1000000000000000L) { return 16; }
+  if (v >= 100000000000000L) { return 15; }
+  if (v >= 10000000000000L) { return 14; }
+  if (v >= 1000000000000L) { return 13; }
+  if (v >= 100000000000L) { return 12; }
+  if (v >= 10000000000L) { return 11; }
+  if (v >= 1000000000L) { return 10; }
+  if (v >= 100000000L) { return 9; }
+  if (v >= 10000000L) { return 8; }
+  if (v >= 1000000L) { return 7; }
+  if (v >= 100000L) { return 6; }
+  if (v >= 10000L) { return 5; }
+  if (v >= 1000L) { return 4; }
+  if (v >= 100L) { return 3; }
+  if (v >= 10L) { return 2; }
   return 1;
 }
 
