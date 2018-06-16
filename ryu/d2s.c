@@ -23,8 +23,9 @@
 //
 // -DRYU_OPTIMIZE_SIZE Use smaller lookup tables. Instead of storing every
 //     required power of 5, only store every 26th entry, and compute
-//     intermediate values with a multiplication. Slower. Currently requires
-//     MSVC intrinsics.
+//     intermediate values with a multiplication. This reduces the lookup table
+//     size by about 10x (only one case, and only double) at the cost of some
+//     performance. Currently requires MSVC intrinsics.
 
 #include "ryu/ryu.h"
 

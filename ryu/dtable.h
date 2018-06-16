@@ -198,15 +198,18 @@ static const uint64_t DOUBLE_POW5_SPLIT2[13][2] = {
  {  9264989777501460624u,    75715339914673581u },
  { 17074144231291089770u,    97859783203563123u },
 };
+// Unfortunately, the results are sometimes off by one. We use an additional
+// lookup table to store those cases and adjust the result.
 static const uint32_t POW5_OFFSETS[13] = {
 0x00000000, 0x00000000, 0x00000000, 0x033c55be, 0x03db77d8, 0x0265ffb2,
 0x00000800, 0x01a8ff56, 0x00000000, 0x0037a200, 0x00004000, 0x03fffffc,
 0x00003ffe,
 };
-static inline void double_computePow5(uint32_t index, uint64_t* result) {
-  uint32_t base = index / POW5_TABLE_SIZE;
+// Computes 5^i in the form required by Ryu, and stores it in the given pointer.
+static inline void double_computePow5(uint32_t i, uint64_t* result) {
+  uint32_t base = i / POW5_TABLE_SIZE;
   uint32_t base2 = base * POW5_TABLE_SIZE;
-  uint32_t offset = index - base2;
+  uint32_t offset = i - base2;
   const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
   uint64_t m = DOUBLE_POW5_TABLE[offset];
   uint64_t high1;
