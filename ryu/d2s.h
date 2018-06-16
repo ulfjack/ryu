@@ -235,12 +235,17 @@ static inline void double_computePow5(uint32_t i, uint64_t* result) {
   uint32_t base = i / POW5_TABLE_SIZE;
   uint32_t base2 = base * POW5_TABLE_SIZE;
   uint32_t offset = i - base2;
-  uint64_t m = DOUBLE_POW5_TABLE[offset];
   const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
+  if (offset == 0) {
+    result[0] = mul[0];
+    result[1] = mul[1];
+    return;
+  }
+  uint64_t m = DOUBLE_POW5_TABLE[offset];
   uint128_t b0 = ((uint128_t) m) * mul[0];
   uint128_t b2 = ((uint128_t) m) * mul[1];
   uint32_t delta = double_pow5bits(base2 + offset) - double_pow5bits(base2);
-  uint128_t shiftedSum = (b0 >> delta) + (b2 << (64 - delta) + ((POW5_OFFSETS[base] >> offset) & 1);
+  uint128_t shiftedSum = (b0 >> delta) + (b2 << (64 - delta)) + ((POW5_OFFSETS[base] >> offset) & 1);
   result[0] = (uint64_t) shiftedSum;
   result[1] = (uint64_t) (shiftedSum >> 64);
 }
@@ -253,6 +258,11 @@ static inline void double_computePow5(uint32_t i, uint64_t* result) {
   uint32_t base2 = base * POW5_TABLE_SIZE;
   uint32_t offset = i - base2;
   const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
+  if (offset == 0) {
+    result[0] = mul[0];
+    result[1] = mul[1];
+    return;
+  }
   uint64_t m = DOUBLE_POW5_TABLE[offset];
   uint64_t high1;
   uint64_t low1 = umul128(m, mul[1], &high1);
