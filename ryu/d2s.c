@@ -45,6 +45,7 @@ typedef __uint128_t uint128_t;
 #elif defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU) && defined(_M_X64) \
   && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
 
+#include <intrin.h>
 #define HAS_64_BIT_INTRINSICS
 
 #endif
@@ -154,8 +155,6 @@ static inline uint64_t mulShiftAll(
 }
 
 #elif defined(HAS_64_BIT_INTRINSICS)
-
-#include <intrin.h>
 
 static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   // m is maximum 55 bits
