@@ -112,15 +112,15 @@ static inline uint64_t mulPow5divPow2(uint32_t m, uint32_t i, int32_t j) {
 }
 
 static inline uint32_t decimalLength(uint32_t v) {
-  if (v >= 1000000000) return 10;
-  if (v >= 100000000) return 9;
-  if (v >= 10000000) return 8;
-  if (v >= 1000000) return 7;
-  if (v >= 100000) return 6;
-  if (v >= 10000) return 5;
-  if (v >= 1000) return 4;
-  if (v >= 100) return 3;
-  if (v >= 10) return 2;
+  if (v >= 1000000000) { return 10; }
+  if (v >= 100000000) { return 9; }
+  if (v >= 10000000) { return 8; }
+  if (v >= 1000000) { return 7; }
+  if (v >= 100000) { return 6; }
+  if (v >= 10000) { return 5; }
+  if (v >= 1000) { return 4; }
+  if (v >= 100) { return 3; }
+  if (v >= 10) { return 2; }
   return 1;
 }
 
