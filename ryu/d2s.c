@@ -20,6 +20,11 @@
 //
 // -DRYU_ONLY_64_BIT_OPS Avoid using uint128_t or 64-bit intrinsics. Slower,
 //     depending on your compiler.
+//
+// -DRYU_OPTIMIZE_SIZE Use smaller lookup tables. Instead of storing every
+//     required power of 5, only store every 26th entry, and compute
+//     intermediate values with a multiplication. Slower. Currently requires
+//     MSVC intrinsics.
 
 #include "ryu/ryu.h"
 
@@ -358,6 +363,11 @@ void d2s_buffered(double f, char* result) {
     int32_t i = -e2 - q;
     int32_t k = double_pow5bits(i) - DOUBLE_POW5_BITCOUNT;
     int32_t j = q - k;
+#ifdef RYU_OPTIMIZE_SIZE
+    uint64_t pow5[2];
+    double_computePow5(i, pow5);
+    vr = mulShiftAll(m2, pow5, j, &vp, &vm, mmShift);
+#else
     vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT[i], j, &vp, &vm, mmShift);
 #endif
 #ifdef RYU_DEBUG
