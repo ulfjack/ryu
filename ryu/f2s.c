@@ -128,7 +128,7 @@ void f2s_buffered(float f, char* result) {
   // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
   uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
   uint32_t exponentBits = FLOAT_EXPONENT_BITS;
-  uint32_t offset = (1 << (exponentBits - 1)) - 1;
+  uint32_t offset = (1u << (exponentBits - 1)) - 1;
 
   uint32_t bits = 0;
   // This only works on little-endian architectures.
@@ -136,8 +136,8 @@ void f2s_buffered(float f, char* result) {
 
   // Decode bits into sign, mantissa, and exponent.
   bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  uint32_t ieeeMantissa = bits & ((1 << mantissaBits) - 1);
-  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
+  uint32_t ieeeMantissa = bits & ((1u << mantissaBits) - 1);
+  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
 
 #ifdef RYU_DEBUG
   printf("IN=");
@@ -163,7 +163,7 @@ void f2s_buffered(float f, char* result) {
     m2 = ieeeMantissa;
   } else {
     e2 = ieeeExponent - offset - mantissaBits - 2;
-    m2 = (1 << mantissaBits) | ieeeMantissa;
+    m2 = (1u << mantissaBits) | ieeeMantissa;
   }
   bool even = (m2 & 1) == 0;
   bool acceptBounds = even;
@@ -241,7 +241,7 @@ void f2s_buffered(float f, char* result) {
         vp -= 1;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
-      vrIsTrailingZeros = (mv & ((1 << (q - 1)) - 1)) == 0;
+      vrIsTrailingZeros = (mv & ((1u << (q - 1)) - 1)) == 0;
     }
   }
 #ifdef RYU_DEBUG

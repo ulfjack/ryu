@@ -224,7 +224,7 @@ void d2s_buffered(double f, char* result) {
   // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
   uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
   uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
-  uint32_t offset = (1 << (exponentBits - 1)) - 1;
+  uint32_t offset = (1u << (exponentBits - 1)) - 1;
 
   uint64_t bits = 0;
   // This only works on little-endian architectures.
@@ -233,7 +233,7 @@ void d2s_buffered(double f, char* result) {
   // Decode bits into sign, mantissa, and exponent.
   bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
   uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
-  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1 << exponentBits) - 1));
+  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
 
 #ifdef RYU_DEBUG
   printf("IN=");
