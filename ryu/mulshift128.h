@@ -28,7 +28,7 @@ static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
 }
 
 static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
-  return __shiftright128(lo, hi, dist);
+  return __shiftright128(lo, hi, (unsigned char) dist);
 }
 
 #else // defined(HAS_64_BIT_INTRINSICS)

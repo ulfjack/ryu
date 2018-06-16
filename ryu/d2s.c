@@ -147,7 +147,7 @@ static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   umul128(m, mul[0], &high0);                 // 0
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
-  return shiftright128(sum, high1, (unsigned char) (j - 64));
+  return shiftright128(sum, high1, j - 64);
 }
 
 static inline uint64_t mulShiftAll(
