@@ -51,8 +51,8 @@ typedef __uint128_t uint128_t;
 #elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64) \
   && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
 
-#include <intrin.h>
 #define HAS_64_BIT_INTRINSICS
+#include "ryu/mulshift128.h"
 
 #else
 
@@ -151,13 +151,13 @@ static inline uint64_t mulShiftAll(
 
 static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
   // m is maximum 55 bits
-  uint64_t high1;                              // 128
-  uint64_t low1 = _umul128(m, mul[1], &high1); // 64
-  uint64_t high0;                              // 64
-  _umul128(m, mul[0], &high0);                 // 0
+  uint64_t high1;                             // 128
+  uint64_t low1 = umul128(m, mul[1], &high1); // 64
+  uint64_t high0;                             // 64
+  umul128(m, mul[0], &high0);                 // 0
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
-  return __shiftright128(sum, high1, (unsigned char) (j - 64));
+  return shiftright128(sum, high1, (unsigned char) (j - 64));
 }
 
 static inline uint64_t mulShiftAll(

@@ -18,6 +18,9 @@
 #define RYU_DTABLE
 
 #include <inttypes.h>
+#if !defined(HAS_UINT128)
+#include "ryu/mulshift128.h"
+#endif
 
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
@@ -227,30 +230,22 @@ static const uint32_t POW5_OFFSETS[13] = {
 
 #if defined(HAS_UINT128)
 
-#error "Only works with MSVC intrinsics right now"
-
-#elif defined(HAS_64_BIT_INTRINSICS)
-
 // Computes 5^i in the form required by Ryu, and stores it in the given pointer.
 static inline void double_computePow5(uint32_t i, uint64_t* result) {
   uint32_t base = i / POW5_TABLE_SIZE;
   uint32_t base2 = base * POW5_TABLE_SIZE;
   uint32_t offset = i - base2;
-  const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
   uint64_t m = DOUBLE_POW5_TABLE[offset];
-  uint64_t high1;
-  uint64_t low1 = _umul128(m, mul[1], &high1);
-  uint64_t high0;
-  uint64_t low0 = _umul128(m, mul[0], &high0);
-  uint64_t sum = high0 + low1;
-  if (sum < high0) high1++; // overflow into high1
-  // high1 | sum | low0
+  const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
+  uint128_t b0 = ((uint128_t) m) * mul[0];
+  uint128_t b2 = ((uint128_t) m) * mul[1];
   uint32_t delta = double_pow5bits(base2 + offset) - double_pow5bits(base2);
-  result[0] = __shiftright128(low0, sum, delta) + ((POW5_OFFSETS[base] >> offset) & 1);
-  result[1] = __shiftright128(sum, high1, delta);
+  uint128_t shiftedSum = (b0 >> delta) + (b2 << (64 - delta) + ((POW5_OFFSETS[base] >> offset) & 1);
+  result[0] = (uint64_t) shiftedSum;
+  result[1] = (uint64_t) (shiftedSum >> 64);
 }
 
-#else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
+#else
 
 // Computes 5^i in the form required by Ryu, and stores it in the given pointer.
 static inline void double_computePow5(uint32_t i, uint64_t* result) {

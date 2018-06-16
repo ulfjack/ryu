@@ -19,6 +19,20 @@
 
 #include <inttypes.h>
 
+#if defined(HAS_64_BIT_INTRINSICS)
+
+#include <intrin.h>
+
+static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
+  return _umul128(a, b, productHi);
+}
+
+static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
+  return __shiftright128(lo, hi, dist);
+}
+
+#else // defined(HAS_64_BIT_INTRINSICS)
+
 static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
   uint64_t aLo = a & 0xffffffff;
   uint64_t aHi = a >> 32;
@@ -46,5 +60,7 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
       ? hi >> (dist - 64)
       : (hi << (64 - dist)) | (lo >> dist);
 }
+
+#endif
 
 #endif // RYU_MULSHIFT128

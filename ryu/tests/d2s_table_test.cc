@@ -22,14 +22,13 @@
 
 #if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU)
 
-#define HAS_UINT128
-typedef __uint128_t uint128_t;
+#include "ryu/mulshift128.h"
 
 #elif defined(_MSC_VER) && !defined(ONLY_64_BIT_OPS_RYU) && defined(_M_X64) \
   && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
 
-#include <intrin.h>
 #define HAS_64_BIT_INTRINSICS
+#include "ryu/mulshift128.h"
 
 #endif
 
@@ -250,15 +249,15 @@ static inline void getMultiplicand(uint32_t index, uint64_t* result) {
   const uint64_t* mul = DOUBLE_POW5_SPLIT2[base];
   uint64_t m = DOUBLE_POW5_TABLE[offset];
   uint64_t high1;
-  uint64_t low1 = _umul128(m, mul[1], &high1);
+  uint64_t low1 = umul128(m, mul[1], &high1);
   uint64_t high0;
-  uint64_t low0 = _umul128(m, mul[0], &high0);
+  uint64_t low0 = umul128(m, mul[0], &high0);
   uint64_t sum = high0 + low1;
   if (sum < high0) high1++; // overflow into high1
   // high1 | sum | low0
   uint32_t delta = double_pow5bits(base2 + offset) - double_pow5bits(base2);
-  result[0] = __shiftright128(low0, sum, delta) + ((POW5_OFFSETS[base] >> offset) & 1);
-  result[1] = __shiftright128(sum, high1, delta);
+  result[0] = shiftright128(low0, sum, delta) + ((POW5_OFFSETS[base] >> offset) & 1);
+  result[1] = shiftright128(sum, high1, delta);
 }
 
 TEST(D2sTableTest, GetMultiplicand) {
