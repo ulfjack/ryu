@@ -2,6 +2,9 @@ dist: trusty
 os:
 - linux
 - osx
+cache:
+  directories:
+  - $HOME/.cache/bazel/
 language: c
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list ; fi
@@ -13,6 +16,7 @@ before_install:
 - bazel version
 - echo "build --conlyopt=-std=c99 --compilation_mode=opt" > $HOME/.bazelrc
 - echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
+- echo "build --announce_rc" >> $HOME/.bazelrc
 script:
 - bazel test //ryu/... //src/...
 - bazel run //ryu/benchmark
