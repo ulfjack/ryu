@@ -34,7 +34,7 @@ typedef __uint128_t uint128_t;
 #define DOUBLE_EXPONENT_BITS 11
 
 // These have to be 64-bit constants in order for the computations to be safe
-// given the ranges they have to handle for 64-bit floating point numbers.
+// given the ranges they have to handle for 64-bit floating-point numbers.
 #define DOUBLE_LOG10_2_DENOMINATOR 10000000ull
 #define DOUBLE_LOG10_2_NUMERATOR 3010299ull // DOUBLE_LOG10_2_DENOMINATOR * log_10(2)
 #define DOUBLE_LOG10_5_DENOMINATOR 10000000ull

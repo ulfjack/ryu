@@ -37,7 +37,7 @@
 #define FLOAT_EXPONENT_BITS 8
 
 // These computations using these constants are only safe for the ranges
-// required by 32-bit floating point numbers.
+// required by 32-bit floating-point numbers.
 #define FLOAT_LOG10_2_DENOMINATOR 10000000u
 #define FLOAT_LOG10_2_NUMERATOR 3010299u // FLOAT_LOG10_2_DENOMINATOR * log_10(2)
 #define FLOAT_LOG10_5_DENOMINATOR 10000000u
@@ -125,7 +125,7 @@ static inline uint32_t decimalLength(uint32_t v) {
 }
 
 void f2s_buffered(float f, char* result) {
-  // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
   uint32_t exponentBits = FLOAT_EXPONENT_BITS;
   uint32_t offset = (1u << (exponentBits - 1)) - 1;

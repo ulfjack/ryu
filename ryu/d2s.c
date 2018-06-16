@@ -221,7 +221,7 @@ static inline uint32_t decimalLength(uint64_t v) {
 }
 
 void d2s_buffered(double f, char* result) {
-  // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
   uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
   uint32_t offset = (1u << (exponentBits - 1)) - 1;
