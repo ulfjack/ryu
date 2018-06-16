@@ -285,7 +285,13 @@ void d2s_buffered(double f, char* result) {
     e10 = q;
     int32_t k = DOUBLE_POW5_INV_BITCOUNT + double_pow5bits(q) - 1;
     int32_t i = -e2 + q + k;
+#if defined(RYU_OPTIMIZE_SIZE)
+    uint64_t pow5[2];
+    double_computeInvPow5(q, pow5);
+    vr = mulShiftAll(m2, pow5, i, &vp, &vm, mmShift);
+#else
     vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
+#endif
 #ifdef RYU_DEBUG
     printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -312,7 +318,7 @@ void d2s_buffered(double f, char* result) {
     int32_t i = -e2 - q;
     int32_t k = double_pow5bits(i) - DOUBLE_POW5_BITCOUNT;
     int32_t j = q - k;
-#ifdef RYU_OPTIMIZE_SIZE
+#if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computePow5(i, pow5);
     vr = mulShiftAll(m2, pow5, j, &vp, &vm, mmShift);
