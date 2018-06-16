@@ -2,6 +2,9 @@ dist: trusty
 os:
 - linux
 - osx
+cache:
+  directories:
+  - $HOME/.cache/bazel/
 language: c
 before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list ; fi
@@ -9,13 +12,17 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq pkg-config zip g++ zlib1g-dev unzip python openjdk-8-jdk bazel ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bazel ; fi
+- mkdir -p "$HOME/.cache/bazel/"
 - bazel version
+- echo "build --conlyopt=-std=c99 --compilation_mode=opt" > $HOME/.bazelrc
+- echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
+- echo "build --announce_rc" >> $HOME/.bazelrc
 script:
-- bazel test --conlyopt=-std=c99 -c opt //ryu/... //src/...
-- bazel run --conlyopt=-std=c99 -c opt //ryu/benchmark
-- bazel test --conlyopt=-std=c99 -c opt --copt=-DONLY_64_BIT_OPS_RYU //ryu/...
-- bazel run --conlyopt=-std=c99 -c opt --copt=-DONLY_64_BIT_OPS_RYU //ryu/benchmark
-- bazel test --conlyopt=-std=c99 -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/... //src/...
-- bazel run --conlyopt=-std=c99 -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark
-- bazel test --conlyopt=-std=c99 -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DONLY_64_BIT_OPS_RYU //ryu/...
-- bazel run --conlyopt=-std=c99 -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DONLY_64_BIT_OPS_RYU //ryu/benchmark
+- bazel test //ryu/... //src/...
+- bazel run //ryu/benchmark
+- bazel test --copt=-DONLY_64_BIT_OPS_RYU //ryu/...
+- bazel run --copt=-DONLY_64_BIT_OPS_RYU //ryu/benchmark
+- bazel test --copt=-DRYU_OPTIMIZE_SIZE //ryu/... //src/...
+- bazel run --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark
+- bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DONLY_64_BIT_OPS_RYU //ryu/...
+- bazel run --copt=-DRYU_OPTIMIZE_SIZE --copt=-DONLY_64_BIT_OPS_RYU //ryu/benchmark
