@@ -17,7 +17,7 @@
 #ifndef RYU_D2S_H
 #define RYU_D2S_H
 
-#include <inttypes.h>
+#include <stdint.h>
 
 // Only include the full table if we're not optimizing for size.
 #if !defined(RYU_OPTIMIZE_SIZE)

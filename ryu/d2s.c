@@ -29,7 +29,6 @@
 
 #include "ryu/ryu.h"
 
-#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -38,6 +37,7 @@
 #include "ryu/digit_table.h"
 
 #ifdef RYU_DEBUG
+#include <inttypes.h>
 #include <stdio.h>
 #endif
 
