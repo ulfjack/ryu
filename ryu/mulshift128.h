@@ -17,7 +17,7 @@
 #ifndef RYU_MULSHIFT128_H
 #define RYU_MULSHIFT128_H
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #if defined(HAS_64_BIT_INTRINSICS)
 
