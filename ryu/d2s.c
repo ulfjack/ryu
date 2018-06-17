@@ -449,7 +449,7 @@ void d2s_buffered(double f, char* result) {
     memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
     i += 4;
   }
-  while (output >= 100) {
+  if (output >= 100) {
     uint32_t c = (uint32_t) ((output - 100 * (output / 100)) << 1); // (output % 100) << 1;
     output /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
