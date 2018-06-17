@@ -25,7 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef NO_DIGIT_TABLE
 #include "ryu/digit_table.h"
+#endif
 
 #ifdef RYU_DEBUG
 #include <stdio.h>
