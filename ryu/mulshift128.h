@@ -14,8 +14,8 @@
 // Unless required by applicable law or agreed to in writing, this software
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
-#ifndef RYU_MULSHIFT128
-#define RYU_MULSHIFT128
+#ifndef RYU_MULSHIFT128_H
+#define RYU_MULSHIFT128_H
 
 #include <inttypes.h>
 
@@ -63,4 +63,4 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
 
 #endif // defined(HAS_64_BIT_INTRINSICS)
 
-#endif // RYU_MULSHIFT128
+#endif // RYU_MULSHIFT128_H

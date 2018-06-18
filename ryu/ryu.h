@@ -14,9 +14,8 @@
 // Unless required by applicable law or agreed to in writing, this software
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
-
-#ifndef __RYU
-#define __RYU
+#ifndef RYU_H
+#define RYU_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,4 +31,4 @@ char* f2s(float f);
 }
 #endif
 
-#endif // __RYU
+#endif // RYU_H
