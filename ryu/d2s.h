@@ -14,8 +14,8 @@
 // Unless required by applicable law or agreed to in writing, this software
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
-#ifndef RYU_DTABLE
-#define RYU_DTABLE
+#ifndef RYU_D2S_H
+#define RYU_D2S_H
 
 #include <inttypes.h>
 
@@ -207,4 +207,4 @@ static inline void double_computeInvPow5(uint32_t i, uint64_t* result) {
 
 #endif // defined(RYU_OPTIMIZE_SIZE)
 
-#endif // RYU_DTABLE
+#endif // RYU_D2S_H
