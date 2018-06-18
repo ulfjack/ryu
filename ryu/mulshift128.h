@@ -34,9 +34,9 @@ static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
 #else // defined(HAS_64_BIT_INTRINSICS)
 
 static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
-  uint64_t aLo = a & 0xffffffff;
+  uint64_t aLo = a & 0xffffffffu;
   uint64_t aHi = a >> 32;
-  uint64_t bLo = b & 0xffffffff;
+  uint64_t bLo = b & 0xffffffffu;
   uint64_t bHi = b >> 32;
 
   uint64_t b00 = aLo * bLo;

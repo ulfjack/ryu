@@ -99,14 +99,14 @@ static inline uint32_t float_pow5bits(int32_t e) {
 // generated code for uint128_t looks slightly nicer.
 static inline uint64_t mulPow5InvDivPow2(uint32_t m, uint32_t q, int32_t j) {
   uint64_t factor = FLOAT_POW5_INV_SPLIT[q];
-  uint64_t bits0 = m * (factor & 0xffffffff);
+  uint64_t bits0 = m * (factor & 0xffffffffu);
   uint64_t bits1 = m * (factor >> 32);
   return ((bits0 >> 32) + bits1) >> (j - 32);
 }
 
 static inline uint64_t mulPow5divPow2(uint32_t m, uint32_t i, int32_t j) {
   uint64_t factor = FLOAT_POW5_SPLIT[i];
-  uint64_t bits0 = m * (factor & 0xffffffff);
+  uint64_t bits0 = m * (factor & 0xffffffffu);
   uint64_t bits1 = m * (factor >> 32);
   return ((bits0 >> 32) + bits1) >> (j - 32);
 }
