@@ -1,8 +1,8 @@
 set title ""
 set datafile separator ","
-set linetype 1 lc rgb '#000000'
-set linetype 2 lc rgb '#555555'
-set linetype 3 lc rgb '#CCCCCC'
+set linetype 1 lc rgb '#396AB1'
+set linetype 2 lc rgb '#DA7C30'
+set linetype 3 lc rgb '#3E9651'
 set term pdf size 25cm, 15cm
 set key above left horizontal Left reverse samplen 0.1
 set ylabel "Time in ns"
