@@ -80,6 +80,16 @@ static inline bool multipleOfPowerOf5(const uint32_t value, const int32_t p) {
   return pow5Factor(value) >= p;
 }
 
+// static const uint64_t MASK[7] = {
+//   0x004000000ull,
+//   0x00C000000ull,
+//   0x01C000000ull,
+//   0x03C000000ull,
+//   0x07C000000ull,
+//   0x0fC000000ull,
+//   0x1fC000000ull,
+// };
+
 // It seems to be slightly faster to avoid uint128_t here, although the
 // generated code for uint128_t looks slightly nicer.
 static inline uint32_t mulShift(const uint32_t m, const uint64_t factor, const int32_t shift) {
@@ -89,8 +99,20 @@ static inline uint32_t mulShift(const uint32_t m, const uint64_t factor, const i
   // function.
   const uint32_t factorLo = (uint32_t)(factor);
   const uint32_t factorHi = (uint32_t)(factor >> 32);
-  const uint64_t bits0 = (uint64_t)m * factorLo;
   const uint64_t bits1 = (uint64_t)m * factorHi;
+  if (shift > 58) {
+    // m has at most 26 bits, and we multiply with a 32-bit number. Therefore,
+    // m * factorLo is at most 58 bits. If we shift by more than 58 bits, then
+    // we there is a gap between 58 and shift - if there is at least one 0 bit
+    // inside the gap, then adding the lower bits cannot affect the result, so
+    // we can skip it.
+    uint32_t gap = ((~(uint32_t) bits1) >> 26) & ((1u << (shift - 58)) - 1);
+    // uint64_t gap = ~bits1 & MASK[shift - 59];
+    if (gap != 0) {
+      return bits1 >> (shift - 32);
+    }
+  }
+  const uint64_t bits0 = (uint64_t)m * factorLo;
 
 #if defined(_M_IX86) || defined(_M_ARM)
   // On 32-bit platforms we can avoid a 64-bit shift-right since we only
