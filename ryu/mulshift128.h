@@ -27,7 +27,7 @@ static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
   return _umul128(a, b, productHi);
 }
 
-static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
+static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint32_t dist) {
   return __shiftright128(lo, hi, (unsigned char) dist);
 }
 
@@ -54,7 +54,7 @@ static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
   return productLo;
 }
 
-static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint64_t dist) {
+static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint32_t dist) {
   // shift hi-lo right by 0 < dist < 128
   return (dist >= 64)
       ? hi >> (dist - 64)
