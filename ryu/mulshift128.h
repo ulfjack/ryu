@@ -23,38 +23,38 @@
 
 #include <intrin.h>
 
-static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
+static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* const productHi) {
   return _umul128(a, b, productHi);
 }
 
-static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint32_t dist) {
+static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
   return __shiftright128(lo, hi, (unsigned char) dist);
 }
 
 #else // defined(HAS_64_BIT_INTRINSICS)
 
-static inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* productHi) {
-  uint64_t aLo = a & 0xffffffffu;
-  uint64_t aHi = a >> 32;
-  uint64_t bLo = b & 0xffffffffu;
-  uint64_t bHi = b >> 32;
+static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* const productHi) {
+  const uint64_t aLo = a & 0xffffffffu;
+  const uint64_t aHi = a >> 32;
+  const uint64_t bLo = b & 0xffffffffu;
+  const uint64_t bHi = b >> 32;
 
-  uint64_t b00 = aLo * bLo;
-  uint64_t b01 = aLo * bHi;
-  uint64_t b10 = aHi * bLo;
-  uint64_t b11 = aHi * bHi;
+  const uint64_t b00 = aLo * bLo;
+  const uint64_t b01 = aLo * bHi;
+  const uint64_t b10 = aHi * bLo;
+  const uint64_t b11 = aHi * bHi;
 
-  uint64_t midSum = b01 + b10;
-  uint64_t midCarry = midSum < b01;
+  const uint64_t midSum = b01 + b10;
+  const uint64_t midCarry = midSum < b01;
 
-  uint64_t productLo = b00 + (midSum << 32);
-  uint64_t productLoCarry = productLo < b00;
+  const uint64_t productLo = b00 + (midSum << 32);
+  const uint64_t productLoCarry = productLo < b00;
 
   *productHi = b11 + (midSum >> 32) + (midCarry << 32) + productLoCarry;
   return productLo;
 }
 
-static inline uint64_t shiftright128(uint64_t lo, uint64_t hi, uint32_t dist) {
+static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
   // shift hi-lo right by 0 < dist < 128
   return (dist >= 64)
       ? hi >> (dist - 64)
