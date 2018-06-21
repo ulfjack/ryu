@@ -440,28 +440,57 @@ void d2s_buffered(double f, char* result) {
 #ifndef NO_DIGIT_TABLE
   // Print decimal digits after the decimal point.
   uint32_t i = 0;
-  while (output >= 10000) {
-    uint32_t c = (uint32_t) (output - 10000 * (output / 10000)); // output % 10000;
-    output /= 10000;
+#if defined(_M_IX86) || defined(_M_ARM)
+  // 64-bit division is inefficient on 32-bit platforms.
+  uint32_t output2;
+  while ((output >> 32) != 0) {
+    // Expensive 64-bit division.
+    output2 = (uint32_t) (output - 1000000000 * (output / 1000000000)); // output % 1000000000
+    output /= 1000000000;
+
+    // Cheap 32-bit divisions.
+    uint32_t c = output2 - 10000 * (output2 / 10000); // output2 % 10000;
+    output2 /= 10000;
+    uint32_t d = output2 - 10000 * (output2 / 10000); // output2 % 10000;
+    output2 /= 10000;
+    uint32_t c0 = (c % 100) << 1;
+    uint32_t c1 = (c / 100) << 1;
+    uint32_t d0 = (d % 100) << 1;
+    uint32_t d1 = (d / 100) << 1;
+    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
+    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
+    memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
+    memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
+    result[index + olength - i - 8] = (char) ('0' + output2);
+    i += 9;
+  }
+  output2 = (uint32_t) output;
+#else // ^^^ known 32-bit platforms ^^^ / vvv other platforms vvv
+  // 64-bit division is efficient on 64-bit platforms.
+  uint64_t output2 = output;
+#endif // ^^^ other platforms ^^^
+  while (output2 >= 10000) {
+    uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000)); // output2 % 10000;
+    output2 /= 10000;
     uint32_t c0 = (c % 100) << 1;
     uint32_t c1 = (c / 100) << 1;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
     memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
     i += 4;
   }
-  while (output >= 100) {
-    uint32_t c = (uint32_t) ((output - 100 * (output / 100)) << 1); // (output % 100) << 1;
-    output /= 100;
+  if (output2 >= 100) {
+    uint32_t c = (uint32_t) ((output2 - 100 * (output2 / 100)) << 1); // (output2 % 100) << 1;
+    output2 /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
   }
-  if (output >= 10) {
-    uint32_t c = (uint32_t) (output << 1);
+  if (output2 >= 10) {
+    uint32_t c = (uint32_t) (output2 << 1);
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
     // Print the leading decimal digit.
-    result[index] = (char) ('0' + output);
+    result[index] = (char) ('0' + output2);
   }
 #else
   // Print decimal digits after the decimal point.
