@@ -84,11 +84,11 @@ static inline int32_t pow5Factor(uint32_t value) {
 }
 
 // Returns true if value divides 5^p.
-static inline bool multipleOfPowerOf5(uint32_t value, int32_t p) {
+static inline bool multipleOfPowerOf5(const uint32_t value, const int32_t p) {
   return pow5Factor(value) >= p;
 }
 
-static inline uint32_t float_pow5bits(int32_t e) {
+static inline uint32_t float_pow5bits(const int32_t e) {
   return e == 0
       ? 1
       // We need to round up in this case.
@@ -97,21 +97,21 @@ static inline uint32_t float_pow5bits(int32_t e) {
 
 // It seems to be slightly faster to avoid uint128_t here, although the
 // generated code for uint128_t looks slightly nicer.
-static inline uint64_t mulPow5InvDivPow2(uint32_t m, uint32_t q, int32_t j) {
-  uint64_t factor = FLOAT_POW5_INV_SPLIT[q];
-  uint64_t bits0 = m * (factor & 0xffffffffu);
-  uint64_t bits1 = m * (factor >> 32);
+static inline uint64_t mulPow5InvDivPow2(const uint32_t m, const uint32_t q, const int32_t j) {
+  const uint64_t factor = FLOAT_POW5_INV_SPLIT[q];
+  const uint64_t bits0 = m * (factor & 0xffffffffu);
+  const uint64_t bits1 = m * (factor >> 32);
   return ((bits0 >> 32) + bits1) >> (j - 32);
 }
 
-static inline uint64_t mulPow5divPow2(uint32_t m, uint32_t i, int32_t j) {
-  uint64_t factor = FLOAT_POW5_SPLIT[i];
-  uint64_t bits0 = m * (factor & 0xffffffffu);
-  uint64_t bits1 = m * (factor >> 32);
+static inline uint64_t mulPow5divPow2(const uint32_t m, const uint32_t i, const int32_t j) {
+  const uint64_t factor = FLOAT_POW5_SPLIT[i];
+  const uint64_t bits0 = m * (factor & 0xffffffffu);
+  const uint64_t bits1 = m * (factor >> 32);
   return ((bits0 >> 32) + bits1) >> (j - 32);
 }
 
-static inline uint32_t decimalLength(uint32_t v) {
+static inline uint32_t decimalLength(const uint32_t v) {
   if (v >= 1000000000) { return 10; }
   if (v >= 100000000) { return 9; }
   if (v >= 10000000) { return 8; }
@@ -126,18 +126,18 @@ static inline uint32_t decimalLength(uint32_t v) {
 
 void f2s_buffered(float f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
-  uint32_t exponentBits = FLOAT_EXPONENT_BITS;
-  uint32_t offset = (1u << (exponentBits - 1)) - 1;
+  const uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
+  const uint32_t exponentBits = FLOAT_EXPONENT_BITS;
+  const uint32_t offset = (1u << (exponentBits - 1)) - 1;
 
   uint32_t bits = 0;
   // This only works on little-endian architectures.
   memcpy(&bits, &f, sizeof(float));
 
   // Decode bits into sign, mantissa, and exponent.
-  bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  uint32_t ieeeMantissa = bits & ((1u << mantissaBits) - 1);
-  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
+  const bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
+  const uint32_t ieeeMantissa = bits & ((1u << mantissaBits) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
 
 #ifdef RYU_DEBUG
   printf("IN=");
@@ -165,17 +165,17 @@ void f2s_buffered(float f, char* result) {
     e2 = ieeeExponent - offset - mantissaBits - 2;
     m2 = (1u << mantissaBits) | ieeeMantissa;
   }
-  bool even = (m2 & 1) == 0;
-  bool acceptBounds = even;
+  const bool even = (m2 & 1) == 0;
+  const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
   printf("S=%s E=%d M=%u\n", sign ? "-" : "+", e2, m2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
-  uint32_t mv = 4 * m2;
-  uint32_t mp = 4 * m2 + 2;
-  uint32_t mm = 4 * m2 - (((m2 != (1u << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
+  const uint32_t mv = 4 * m2;
+  const uint32_t mp = 4 * m2 + 2;
+  const uint32_t mm = 4 * m2 - (((m2 != (1u << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
   uint32_t vr;
@@ -185,10 +185,10 @@ void f2s_buffered(float f, char* result) {
   bool vrIsTrailingZeros = false;
   uint8_t lastRemovedDigit = 0;
   if (e2 >= 0) {
-    int32_t q = (int32_t) ((e2 * FLOAT_LOG10_2_NUMERATOR) / FLOAT_LOG10_2_DENOMINATOR);
+    const int32_t q = (int32_t) ((e2 * FLOAT_LOG10_2_NUMERATOR) / FLOAT_LOG10_2_DENOMINATOR);
     e10 = q;
-    int32_t k = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q) - 1;
-    int32_t i = -e2 + q + k;
+    const int32_t k = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q) - 1;
+    const int32_t i = -e2 + q + k;
     vr = (uint32_t) mulPow5InvDivPow2(mv, q, i);
     vp = (uint32_t) mulPow5InvDivPow2(mp, q, i);
     vm = (uint32_t) mulPow5InvDivPow2(mm, q, i);
@@ -200,7 +200,7 @@ void f2s_buffered(float f, char* result) {
       // We need to know one removed digit even if we are not going to loop below. We could use
       // q = X - 1 above, except that would require 33 bits for the result, and we've found that
       // 32-bit arithmetic is faster even on 64-bit machines.
-      int32_t l = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q - 1) - 1;
+      const int32_t l = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q - 1) - 1;
       lastRemovedDigit = (uint8_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
@@ -216,10 +216,10 @@ void f2s_buffered(float f, char* result) {
       }
     }
   } else {
-    int32_t q = (int32_t) ((-e2 * FLOAT_LOG10_5_NUMERATOR) / FLOAT_LOG10_5_DENOMINATOR);
+    const int32_t q = (int32_t) ((-e2 * FLOAT_LOG10_5_NUMERATOR) / FLOAT_LOG10_5_DENOMINATOR);
     e10 = q + e2;
-    int32_t i = -e2 - q;
-    int32_t k = float_pow5bits(i) - FLOAT_POW5_BITCOUNT;
+    const int32_t i = -e2 - q;
+    const int32_t k = float_pow5bits(i) - FLOAT_POW5_BITCOUNT;
     int32_t j = q - k;
     vr = (uint32_t) mulPow5divPow2(mv, i, j);
     vp = (uint32_t) mulPow5divPow2(mp, i, j);
@@ -252,7 +252,7 @@ void f2s_buffered(float f, char* result) {
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  uint32_t vplength = decimalLength(vp);
+  const uint32_t vplength = decimalLength(vp);
   int32_t exp = e10 + vplength - 1;
 
   uint32_t removed = 0;
@@ -262,7 +262,7 @@ void f2s_buffered(float f, char* result) {
     while (vp / 10 > vm / 10) {
       vmIsTrailingZeros &= vm % 10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-      uint64_t nvr = vr / 10;
+      const uint64_t nvr = vr / 10;
       lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
       vr = (uint32_t) nvr;
       vp /= 10;
@@ -272,7 +272,7 @@ void f2s_buffered(float f, char* result) {
     if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-        uint64_t nvr = vr / 10;
+        const uint64_t nvr = vr / 10;
         lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
         vr = (uint32_t) nvr;
         vp /= 10;
@@ -290,7 +290,7 @@ void f2s_buffered(float f, char* result) {
   } else {
     // Common case.
     while (vp / 10 > vm / 10) {
-      uint64_t nvr = vr / 10;
+      const uint64_t nvr = vr / 10;
       lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
       vr = (uint32_t) nvr;
       vp /= 10;
@@ -300,7 +300,7 @@ void f2s_buffered(float f, char* result) {
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  uint32_t olength = vplength - removed;
+  const uint32_t olength = vplength - removed;
 
   // Step 5: Print the decimal representation.
   int index = 0;
@@ -312,22 +312,22 @@ void f2s_buffered(float f, char* result) {
   // Print decimal digits after the decimal point.
   uint32_t i = 0;
   while (output >= 10000) {
-    uint32_t c = output - 10000 * (output / 10000); // output % 10000;
+    const uint32_t c = output - 10000 * (output / 10000); // output % 10000;
     output /= 10000;
-    uint32_t c0 = (c % 100) << 1;
-    uint32_t c1 = (c / 100) << 1;
+    const uint32_t c0 = (c % 100) << 1;
+    const uint32_t c1 = (c / 100) << 1;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
     memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
     i += 4;
   }
   if (output >= 100) {
-    uint32_t c = (output - 100 * (output / 100)) << 1; // (output % 100) << 1;
+    const uint32_t c = (output - 100 * (output / 100)) << 1; // (output % 100) << 1;
     output /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
   }
   if (output >= 10) {
-    uint32_t c = output << 1;
+    const uint32_t c = output << 1;
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
@@ -337,7 +337,7 @@ void f2s_buffered(float f, char* result) {
 #else
   // Print decimal digits after the decimal point.
   for (uint32_t i = 0; i < olength - 1; ++i) {
-    uint32_t c = output % 10; output /= 10;
+    const uint32_t c = output % 10; output /= 10;
     result[index + olength - i] = (char) ('0' + c);
   }
   // Print the leading decimal digit.
@@ -378,7 +378,7 @@ void f2s_buffered(float f, char* result) {
 }
 
 char* f2s(float f) {
-  char* result = (char*) calloc(16, sizeof(char));
+  char* const result = (char*) calloc(16, sizeof(char));
   f2s_buffered(f, result);
   return result;
 }

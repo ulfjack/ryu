@@ -54,7 +54,7 @@
 
 #include "ryu/d2s.h"
 
-static inline int32_t max_int32(int32_t a, int32_t b) {
+static inline int32_t max_int32(const int32_t a, const int32_t b) {
   return a > b ? a : b;
 }
 
@@ -69,7 +69,7 @@ static inline int32_t pow5Factor(uint64_t value) {
 }
 
 // Returns true if value divides 5^p.
-static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
+static inline bool multipleOfPowerOf5(const uint64_t value, const int32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
   return pow5Factor(value) >= p;
 }
@@ -114,14 +114,14 @@ static inline bool multipleOfPowerOf5(uint64_t value, int32_t p) {
 #if defined(HAS_UINT128)
 
 // Best case: use 128-bit type.
-static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
-  uint128_t b0 = ((uint128_t) m) * mul[0];
-  uint128_t b2 = ((uint128_t) m) * mul[1];
+static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+  const uint128_t b0 = ((uint128_t) m) * mul[0];
+  const uint128_t b2 = ((uint128_t) m) * mul[1];
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
 
 static inline uint64_t mulShiftAll(
-    uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+    const uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
 //  m <<= 2;
 //  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
 //  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
@@ -141,13 +141,13 @@ static inline uint64_t mulShiftAll(
 
 #elif defined(HAS_64_BIT_INTRINSICS)
 
-static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
+static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   // m is maximum 55 bits
-  uint64_t high1;                             // 128
-  uint64_t low1 = umul128(m, mul[1], &high1); // 64
-  uint64_t high0;                             // 64
-  umul128(m, mul[0], &high0);                 // 0
-  uint64_t sum = high0 + low1;
+  uint64_t high1;                                   // 128
+  const uint64_t low1 = umul128(m, mul[1], &high1); // 64
+  uint64_t high0;                                   // 64
+  umul128(m, mul[0], &high0);                       // 0
+  const uint64_t sum = high0 + low1;
   if (sum < high0) {
     ++high1; // overflow into high1
   }
@@ -155,7 +155,7 @@ static inline uint64_t mulShift(uint64_t m, const uint64_t* mul, int32_t j) {
 }
 
 static inline uint64_t mulShiftAll(
-    uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+    const uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   *vp = mulShift(4 * m + 2, mul, j);
   *vm = mulShift(4 * m - 1 - mmShift, mul, j);
   return mulShift(4 * m, mul, j);
@@ -164,32 +164,32 @@ static inline uint64_t mulShiftAll(
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
 static inline uint64_t mulShiftAll(
-    uint64_t m, const uint64_t* mul, int32_t j, uint64_t* vp, uint64_t* vm, uint32_t mmShift) {
+    uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   m <<= 1;
   // m is maximum 55 bits
   uint64_t tmp;
-  uint64_t lo = umul128(m, mul[0], &tmp);
+  const uint64_t lo = umul128(m, mul[0], &tmp);
   uint64_t hi;
-  uint64_t mid = tmp + umul128(m, mul[1], &hi);
+  const uint64_t mid = tmp + umul128(m, mul[1], &hi);
   hi += mid < tmp; // overflow into hi
 
-  uint64_t lo2 = lo + mul[0];
-  uint64_t mid2 = mid + mul[1] + (lo2 < lo);
-  uint64_t hi2 = hi + (mid2 < mid);
+  const uint64_t lo2 = lo + mul[0];
+  const uint64_t mid2 = mid + mul[1] + (lo2 < lo);
+  const uint64_t hi2 = hi + (mid2 < mid);
   *vp = shiftright128(mid2, hi2, j - 64 - 1);
 
   if (mmShift == 1) {
-    uint64_t lo3 = lo - mul[0];
-    uint64_t mid3 = mid - mul[1] - (lo3 > lo);
-    uint64_t hi3 = hi - (mid3 > mid);
+    const uint64_t lo3 = lo - mul[0];
+    const uint64_t mid3 = mid - mul[1] - (lo3 > lo);
+    const uint64_t hi3 = hi - (mid3 > mid);
     *vm = shiftright128(mid3, hi3, j - 64 - 1);
   } else {
-    uint64_t lo3 = lo + lo;
-    uint64_t mid3 = mid + mid + (lo3 < lo);
-    uint64_t hi3 = hi + hi + (mid3 < mid);
-    uint64_t lo4 = lo3 - mul[0];
-    uint64_t mid4 = mid3 - mul[1] - (lo4 > lo3);
-    uint64_t hi4 = hi3 - (mid4 > mid3);
+    const uint64_t lo3 = lo + lo;
+    const uint64_t mid3 = mid + mid + (lo3 < lo);
+    const uint64_t hi3 = hi + hi + (mid3 < mid);
+    const uint64_t lo4 = lo3 - mul[0];
+    const uint64_t mid4 = mid3 - mul[1] - (lo4 > lo3);
+    const uint64_t hi4 = hi3 - (mid4 > mid3);
     *vm = shiftright128(mid4, hi4, j - 64);
   }
 
@@ -198,7 +198,7 @@ static inline uint64_t mulShiftAll(
 
 #endif // HAS_64_BIT_INTRINSICS
 
-static inline uint32_t decimalLength(uint64_t v) {
+static inline uint32_t decimalLength(const uint64_t v) {
   // This is slightly faster than a loop. For a random set of numbers, the
   // average length is 17.4 digits, so we check high-to-low.
   // 2^63 - 1 is 19 decimal digits, while 2^64 - 1 is 20 decimal digits.
@@ -226,18 +226,18 @@ static inline uint32_t decimalLength(uint64_t v) {
 
 void d2s_buffered(double f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
-  uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
-  uint32_t offset = (1u << (exponentBits - 1)) - 1;
+  const uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
+  const uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
+  const uint32_t offset = (1u << (exponentBits - 1)) - 1;
 
   uint64_t bits = 0;
   // This only works on little-endian architectures.
   memcpy(&bits, &f, sizeof(double));
 
   // Decode bits into sign, mantissa, and exponent.
-  bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
-  uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
+  const bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
 
 #ifdef RYU_DEBUG
   printf("IN=");
@@ -265,17 +265,17 @@ void d2s_buffered(double f, char* result) {
     e2 = ieeeExponent - offset - mantissaBits - 2;
     m2 = (1ull << mantissaBits) | ieeeMantissa;
   }
-  bool even = (m2 & 1) == 0;
-  bool acceptBounds = even;
+  const bool even = (m2 & 1) == 0;
+  const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
   printf("S=%s E=%d M=%" PRIu64 "\n", sign ? "-" : "+", e2 + 2, m2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
-  uint64_t mv = 4 * m2;
+  const uint64_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  uint32_t mmShift = (m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1);
+  const uint32_t mmShift = (m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1);
   // We would compute mp and mm like this:
 //  uint64_t mp = 4 * m2 + 2;
 //  uint64_t mm = mv - 1 - mmShift;
@@ -287,10 +287,10 @@ void d2s_buffered(double f, char* result) {
   bool vrIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
-    int32_t q = max_int32(0, ((int32_t) ((e2 * DOUBLE_LOG10_2_NUMERATOR) / DOUBLE_LOG10_2_DENOMINATOR)) - 1);
+    const int32_t q = max_int32(0, ((int32_t) ((e2 * DOUBLE_LOG10_2_NUMERATOR) / DOUBLE_LOG10_2_DENOMINATOR)) - 1);
     e10 = q;
-    int32_t k = DOUBLE_POW5_INV_BITCOUNT + double_pow5bits(q) - 1;
-    int32_t i = -e2 + q + k;
+    const int32_t k = DOUBLE_POW5_INV_BITCOUNT + double_pow5bits(q) - 1;
+    const int32_t i = -e2 + q + k;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computeInvPow5(q, pow5);
@@ -319,11 +319,11 @@ void d2s_buffered(double f, char* result) {
       }
     }
   } else {
-    int32_t q = max_int32(0, ((int32_t) ((-e2 * DOUBLE_LOG10_5_NUMERATOR) / DOUBLE_LOG10_5_DENOMINATOR)) - 1);
+    const int32_t q = max_int32(0, ((int32_t) ((-e2 * DOUBLE_LOG10_5_NUMERATOR) / DOUBLE_LOG10_5_DENOMINATOR)) - 1);
     e10 = q + e2;
-    int32_t i = -e2 - q;
-    int32_t k = double_pow5bits(i) - DOUBLE_POW5_BITCOUNT;
-    int32_t j = q - k;
+    const int32_t i = -e2 - q;
+    const int32_t k = double_pow5bits(i) - DOUBLE_POW5_BITCOUNT;
+    const int32_t j = q - k;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computePow5(i, pow5);
@@ -363,7 +363,7 @@ void d2s_buffered(double f, char* result) {
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  uint32_t vplength = decimalLength(vp);
+  const uint32_t vplength = decimalLength(vp);
   int32_t exp = e10 + vplength - 1;
 
   uint32_t removed = 0;
@@ -377,7 +377,7 @@ void d2s_buffered(double f, char* result) {
       // as vm - (vm / 10) * 10.
       vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0; // vm % 10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-      uint64_t nvr = vr / 10;
+      const uint64_t nvr = vr / 10;
       lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
       vr = nvr;
       vp /= 10;
@@ -392,7 +392,7 @@ void d2s_buffered(double f, char* result) {
     if (vmIsTrailingZeros) {
       while (vm - (vm / 10) * 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-        uint64_t nvr = vr / 10;
+        const uint64_t nvr = vr / 10;
         lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
         vr = nvr;
         vp /= 10;
@@ -414,7 +414,7 @@ void d2s_buffered(double f, char* result) {
   } else {
     // Specialized for the common case (>99%).
     while (vp / 10 > vm / 10) {
-      uint64_t nvr = vr / 10;
+      const uint64_t nvr = vr / 10;
       lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
       vr = nvr;
       vp /= 10;
@@ -429,7 +429,7 @@ void d2s_buffered(double f, char* result) {
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
   // The average output length is 16.38 digits.
-  uint32_t olength = vplength - removed;
+  const uint32_t olength = vplength - removed;
 #ifdef RYU_DEBUG
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("O=%" PRIu64 "\n", output);
@@ -455,14 +455,14 @@ void d2s_buffered(double f, char* result) {
     output /= 1000000000;
 
     // Cheap 32-bit divisions.
-    uint32_t c = output2 - 10000 * (output2 / 10000); // output2 % 10000;
+    const uint32_t c = output2 - 10000 * (output2 / 10000); // output2 % 10000;
     output2 /= 10000;
-    uint32_t d = output2 - 10000 * (output2 / 10000); // output2 % 10000;
+    const uint32_t d = output2 - 10000 * (output2 / 10000); // output2 % 10000;
     output2 /= 10000;
-    uint32_t c0 = (c % 100) << 1;
-    uint32_t c1 = (c / 100) << 1;
-    uint32_t d0 = (d % 100) << 1;
-    uint32_t d1 = (d / 100) << 1;
+    const uint32_t c0 = (c % 100) << 1;
+    const uint32_t c1 = (c / 100) << 1;
+    const uint32_t d0 = (d % 100) << 1;
+    const uint32_t d1 = (d / 100) << 1;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
     memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
     memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
@@ -476,22 +476,22 @@ void d2s_buffered(double f, char* result) {
   uint64_t output2 = output;
 #endif // ^^^ other platforms ^^^
   while (output2 >= 10000) {
-    uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000)); // output2 % 10000;
+    const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000)); // output2 % 10000;
     output2 /= 10000;
-    uint32_t c0 = (c % 100) << 1;
-    uint32_t c1 = (c / 100) << 1;
+    const uint32_t c0 = (c % 100) << 1;
+    const uint32_t c1 = (c / 100) << 1;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
     memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
     i += 4;
   }
   if (output2 >= 100) {
-    uint32_t c = (uint32_t) ((output2 - 100 * (output2 / 100)) << 1); // (output2 % 100) << 1;
+    const uint32_t c = (uint32_t) ((output2 - 100 * (output2 / 100)) << 1); // (output2 % 100) << 1;
     output2 /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
   }
   if (output2 >= 10) {
-    uint32_t c = (uint32_t) (output2 << 1);
+    const uint32_t c = (uint32_t) (output2 << 1);
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
@@ -501,7 +501,7 @@ void d2s_buffered(double f, char* result) {
 #else
   // Print decimal digits after the decimal point.
   for (uint32_t i = 0; i < olength - 1; ++i) {
-    uint32_t c = output % 10; output /= 10;
+    const uint32_t c = output % 10; output /= 10;
     result[index + olength - i] = (char) ('0' + c);
   }
   // Print the leading decimal digit.
@@ -550,7 +550,7 @@ void d2s_buffered(double f, char* result) {
 }
 
 char* d2s(double f) {
-  char* result = (char*) calloc(25, sizeof(char));
+  char* const result = (char*) calloc(25, sizeof(char));
   d2s_buffered(f, result);
   return result;
 }
