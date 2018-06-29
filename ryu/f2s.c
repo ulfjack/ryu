@@ -262,9 +262,9 @@ void f2s_buffered(float f, char* result) {
     while (vp / 10 > vm / 10) {
       vmIsTrailingZeros &= vm % 10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-      const uint64_t nvr = vr / 10;
+      const uint32_t nvr = vr / 10;
       lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-      vr = (uint32_t) nvr;
+      vr = nvr;
       vp /= 10;
       vm /= 10;
       ++removed;
@@ -272,9 +272,9 @@ void f2s_buffered(float f, char* result) {
     if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-        const uint64_t nvr = vr / 10;
+        const uint32_t nvr = vr / 10;
         lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-        vr = (uint32_t) nvr;
+        vr = nvr;
         vp /= 10;
         vm /= 10;
         ++removed;
@@ -290,9 +290,9 @@ void f2s_buffered(float f, char* result) {
   } else {
     // Common case.
     while (vp / 10 > vm / 10) {
-      const uint64_t nvr = vr / 10;
+      const uint32_t nvr = vr / 10;
       lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-      vr = (uint32_t) nvr;
+      vr = nvr;
       vp /= 10;
       vm /= 10;
       ++removed;
