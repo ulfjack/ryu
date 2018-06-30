@@ -75,7 +75,7 @@ static const uint64_t FLOAT_POW5_SPLIT[47] = {
 
 static inline int32_t pow5Factor(uint32_t value) {
   for (int32_t count = 0; value > 0; ++count) {
-    if (value - 5 * (value / 5) != 0) {
+    if (value % 5 != 0) {
       return count;
     }
     value /= 5;
@@ -262,9 +262,8 @@ void f2s_buffered(float f, char* result) {
     while (vp / 10 > vm / 10) {
       vmIsTrailingZeros &= vm % 10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-      const uint32_t nvr = vr / 10;
-      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-      vr = nvr;
+      lastRemovedDigit = (uint8_t) (vr % 10);
+      vr /= 10;
       vp /= 10;
       vm /= 10;
       ++removed;
@@ -272,9 +271,8 @@ void f2s_buffered(float f, char* result) {
     if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-        const uint32_t nvr = vr / 10;
-        lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-        vr = nvr;
+        lastRemovedDigit = (uint8_t) (vr % 10);
+        vr /= 10;
         vp /= 10;
         vm /= 10;
         ++removed;
@@ -290,9 +288,8 @@ void f2s_buffered(float f, char* result) {
   } else {
     // Common case.
     while (vp / 10 > vm / 10) {
-      const uint32_t nvr = vr / 10;
-      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-      vr = nvr;
+      lastRemovedDigit = (uint8_t) (vr % 10);
+      vr /= 10;
       vp /= 10;
       vm /= 10;
       ++removed;
@@ -312,7 +309,11 @@ void f2s_buffered(float f, char* result) {
   // Print decimal digits after the decimal point.
   uint32_t i = 0;
   while (output >= 10000) {
-    const uint32_t c = output - 10000 * (output / 10000); // output % 10000;
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
+    const uint32_t c = output - 10000 * (output / 10000);
+#else
+    const uint32_t c = output % 10000;
+#endif
     output /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
@@ -321,7 +322,7 @@ void f2s_buffered(float f, char* result) {
     i += 4;
   }
   if (output >= 100) {
-    const uint32_t c = (output - 100 * (output / 100)) << 1; // (output % 100) << 1;
+    const uint32_t c = (output % 100) << 1;
     output /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
