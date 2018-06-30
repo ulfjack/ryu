@@ -60,7 +60,7 @@ static inline int32_t max_int32(const int32_t a, const int32_t b) {
 
 static inline int32_t pow5Factor(uint64_t value) {
   for (int32_t count = 0; value > 0; ++count) {
-    if (value - 5 * (value / 5) != 0) {
+    if (value % 5 != 0) {
       return count;
     }
     value /= 5;
@@ -373,13 +373,16 @@ void d2s_buffered(double f, char* result) {
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
     // General case, which happens rarely (<1%).
     while (vp / 10 > vm / 10) {
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
       // The compiler does not realize that vm % 10 can be computed from vm / 10
       // as vm - (vm / 10) * 10.
-      vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0; // vm % 10 == 0;
+      vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0;
+#else
+      vmIsTrailingZeros &= vm % 10 == 0;
+#endif
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-      const uint64_t nvr = vr / 10;
-      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-      vr = nvr;
+      lastRemovedDigit = (uint8_t) (vr % 10);
+      vr /= 10;
       vp /= 10;
       vm /= 10;
       ++removed;
@@ -388,13 +391,11 @@ void d2s_buffered(double f, char* result) {
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
     printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
 #endif
-    // Same as above; use vm % 10 == vm - (vm / 10) * 10.
     if (vmIsTrailingZeros) {
-      while (vm - (vm / 10) * 10 == 0) {
+      while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-        const uint64_t nvr = vr / 10;
-        lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-        vr = nvr;
+        lastRemovedDigit = (uint8_t) (vr % 10);
+        vr /= 10;
         vp /= 10;
         vm /= 10;
         ++removed;
@@ -414,9 +415,8 @@ void d2s_buffered(double f, char* result) {
   } else {
     // Specialized for the common case (>99%).
     while (vp / 10 > vm / 10) {
-      const uint64_t nvr = vr / 10;
-      lastRemovedDigit = (uint8_t) (vr - 10 * nvr);
-      vr = nvr;
+      lastRemovedDigit = (uint8_t) (vr % 10);
+      vr /= 10;
       vp /= 10;
       vm /= 10;
       ++removed;
@@ -451,13 +451,13 @@ void d2s_buffered(double f, char* result) {
   uint32_t output2;
   while ((output >> 32) != 0) {
     // Expensive 64-bit division.
-    output2 = (uint32_t) (output - 1000000000 * (output / 1000000000)); // output % 1000000000
+    output2 = (uint32_t) (output % 1000000000);
     output /= 1000000000;
 
     // Cheap 32-bit divisions.
-    const uint32_t c = output2 - 10000 * (output2 / 10000); // output2 % 10000;
+    const uint32_t c = output2 % 10000;
     output2 /= 10000;
-    const uint32_t d = output2 - 10000 * (output2 / 10000); // output2 % 10000;
+    const uint32_t d = output2 % 10000;
     output2 /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
@@ -476,7 +476,11 @@ void d2s_buffered(double f, char* result) {
   uint64_t output2 = output;
 #endif // ^^^ other platforms ^^^
   while (output2 >= 10000) {
-    const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000)); // output2 % 10000;
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
+    const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000));
+#else
+    const uint32_t c = (uint32_t) (output2 % 10000);
+#endif
     output2 /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
@@ -485,7 +489,7 @@ void d2s_buffered(double f, char* result) {
     i += 4;
   }
   if (output2 >= 100) {
-    const uint32_t c = (uint32_t) ((output2 - 100 * (output2 / 100)) << 1); // (output2 % 100) << 1;
+    const uint32_t c = (uint32_t) ((output2 % 100) << 1);
     output2 /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
@@ -525,10 +529,10 @@ void d2s_buffered(double f, char* result) {
 
 #ifndef NO_DIGIT_TABLE
   if (exp >= 100) {
-    result[index++] = (char) ('0' + exp / 100);
-    exp = exp - 100 * (exp / 100);
-    memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
-    index += 2;
+    const int32_t c = exp % 10;
+    memcpy(result + index, DIGIT_TABLE + (2 * (exp / 10)), 2);
+    result[index + 2] = (char) ('0' + c);
+    index += 3;
   } else if (exp >= 10) {
     memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
     index += 2;
