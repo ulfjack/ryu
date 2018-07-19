@@ -476,7 +476,7 @@ void d2s_buffered(double f, char* result) {
   uint64_t output2 = output;
 #endif // ^^^ other platforms ^^^
   while (output2 >= 10000) {
-#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000));
 #else
     const uint32_t c = (uint32_t) (output2 % 10000);
