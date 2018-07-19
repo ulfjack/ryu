@@ -309,7 +309,7 @@ void f2s_buffered(float f, char* result) {
   // Print decimal digits after the decimal point.
   uint32_t i = 0;
   while (output >= 10000) {
-#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = output - 10000 * (output / 10000);
 #else
     const uint32_t c = output % 10000;
