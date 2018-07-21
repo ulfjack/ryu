@@ -68,13 +68,13 @@ static inline int32_t pow5Factor(uint64_t value) {
   return 0;
 }
 
-// Returns true if value divides 5^p.
+// Returns true if value is divisible by 5^p.
 static inline bool multipleOfPowerOf5(const uint64_t value, const int32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
   return pow5Factor(value) >= p;
 }
 
-// We need a 64x128 bit multiplication and a subsequent 128-bit shift.
+// We need a 64x128-bit multiplication and a subsequent 128-bit shift.
 // Multiplication:
 //   The 64-bit factor is variable and passed in, the 128-bit factor comes
 //   from a lookup table. We know that the 64-bit factor only has 55
@@ -89,7 +89,7 @@ static inline bool multipleOfPowerOf5(const uint64_t value, const int32_t p) {
 //   the 64x128-bit multiplication.
 //
 // There are several ways to do this:
-// 1. Best case: the compiler exposes a 128-bit type
+// 1. Best case: the compiler exposes a 128-bit type.
 //    We perform two 64x64-bit multiplications, add the higher 64 bits of the
 //    lower result to the higher result, and shift by j-64 bits.
 //
@@ -105,7 +105,7 @@ static inline bool multipleOfPowerOf5(const uint64_t value, const int32_t p) {
 // 3. We only have 64x64 bit instructions that return the lower 64 bits of
 //    the result, i.e., we have to use plain C.
 //    Our inputs are less than the full width, so we have three options:
-//    a. Ignore this fact and just implement the intrinsics manually
+//    a. Ignore this fact and just implement the intrinsics manually.
 //    b. Split both into 31-bit pieces, which guarantees no internal overflow,
 //       but requires extra work upfront (unless we change the lookup table).
 //    c. Split only the first factor into 31-bit pieces, which also guarantees
