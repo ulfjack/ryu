@@ -83,7 +83,7 @@ static inline int32_t pow5Factor(uint32_t value) {
   return 0;
 }
 
-// Returns true if value divides 5^p.
+// Returns true if value is divisible by 5^p.
 static inline bool multipleOfPowerOf5(const uint32_t value, const int32_t p) {
   return pow5Factor(value) >= p;
 }

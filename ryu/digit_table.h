@@ -17,7 +17,7 @@
 #ifndef RYU_DIGIT_TABLE_H
 #define RYU_DIGIT_TABLE_H
 
-// A table of all two digit numbers. This is used to speed up decimal digit
+// A table of all two-digit numbers. This is used to speed up decimal digit
 // generation by copying pairs of digits into the final output.
 static const char DIGIT_TABLE[200] = {
   '0','0','0','1','0','2','0','3','0','4','0','5','0','6','0','7','0','8','0','9',
