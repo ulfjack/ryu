@@ -102,10 +102,10 @@ static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
 //    We explicitly cast from 64-bit to 128-bit, so the compiler can tell
 //    that these are only 64-bit inputs, and can map these to the best
 //    possible sequence of assembly instructions.
-//    x86-64 machines happen to have matching assembly instructions for
+//    x64 machines happen to have matching assembly instructions for
 //    64x64-bit multiplications and 128-bit shifts.
 //
-// 2. Second best case: the compiler exposes intrinsics for the x86-64 assembly
+// 2. Second best case: the compiler exposes intrinsics for the x64 assembly
 //    instructions mentioned in 1.
 //
 // 3. We only have 64x64 bit instructions that return the lower 64 bits of
