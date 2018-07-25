@@ -201,10 +201,8 @@ static inline uint64_t mulShiftAll(
 static inline uint32_t decimalLength(const uint64_t v) {
   // This is slightly faster than a loop. For a random set of numbers, the
   // average length is 17.4 digits, so we check high-to-low.
-  // 2^63 - 1 is 19 decimal digits, while 2^64 - 1 is 20 decimal digits.
-  // Function precondition: v is not a 20-digit number.
-  if (v >= 1000000000000000000L) { return 19; }
-  if (v >= 100000000000000000L) { return 18; }
+  // Function precondition: v is not an 18, 19, or 20-digit number.
+  // (17 digits are sufficient for round-tripping.)
   if (v >= 10000000000000000L) { return 17; }
   if (v >= 1000000000000000L) { return 16; }
   if (v >= 100000000000000L) { return 15; }
@@ -363,9 +361,6 @@ void d2s_buffered(double f, char* result) {
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  const uint32_t vplength = decimalLength(vp);
-  int32_t exp = e10 + vplength - 1;
-
   uint32_t removed = 0;
   uint8_t lastRemovedDigit = 0;
   uint64_t output;
@@ -429,7 +424,10 @@ void d2s_buffered(double f, char* result) {
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
   // The average output length is 16.38 digits.
-  const uint32_t olength = vplength - removed;
+  const uint32_t olength = decimalLength(output);
+  const uint32_t vplength = olength + removed;
+  int32_t exp = e10 + vplength - 1;
+
 #ifdef RYU_DEBUG
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("O=%" PRIu64 "\n", output);
