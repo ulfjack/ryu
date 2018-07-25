@@ -54,8 +54,20 @@
 
 #include "ryu/d2s.h"
 
-static inline int32_t max_int32(const int32_t a, const int32_t b) {
-  return a > b ? a : b;
+// Returns floor(log_10(2^e)).
+static inline int32_t log10Pow2(const int32_t e) {
+  // This function has only been tested for 0 <= e <= 1500.
+  assert(e >= 0);
+  assert(e <= 1500);
+  return (int32_t) ((((uint32_t) e) * 78913) >> 18);
+}
+
+// Returns floor(log_10(5^e)).
+static inline int32_t log10Pow5(const int32_t e) {
+  // This function has only been tested for 0 <= e <= 1500.
+  assert(e >= 0);
+  assert(e <= 1500);
+  return (int32_t) ((((uint32_t) e) * 732923) >> 20);
 }
 
 static inline int32_t pow5Factor(uint64_t value) {
@@ -287,7 +299,8 @@ void d2s_buffered(double f, char* result) {
   bool vrIsTrailingZeros = false;
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
-    const int32_t q = max_int32(0, ((int32_t) ((e2 * DOUBLE_LOG10_2_NUMERATOR) / DOUBLE_LOG10_2_DENOMINATOR)) - 1);
+    // This expression is slightly faster than max(0, log10Pow2(e2) - 1).
+    const int32_t q = log10Pow2(e2) - (e2 > 3);
     e10 = q;
     const int32_t k = DOUBLE_POW5_INV_BITCOUNT + double_pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
@@ -319,7 +332,8 @@ void d2s_buffered(double f, char* result) {
       }
     }
   } else {
-    const int32_t q = max_int32(0, ((int32_t) ((-e2 * DOUBLE_LOG10_5_NUMERATOR) / DOUBLE_LOG10_5_DENOMINATOR)) - 1);
+    // This expression is slightly faster than max(0, log10Pow5(-e2) - 1)
+    const int32_t q = log10Pow5(-e2) - (-e2 > 1);
     e10 = q + e2;
     const int32_t i = -e2 - q;
     const int32_t k = double_pow5bits(i) - DOUBLE_POW5_BITCOUNT;

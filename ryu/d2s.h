@@ -17,6 +17,7 @@
 #ifndef RYU_D2S_H
 #define RYU_D2S_H
 
+#include <assert.h>
 #include <stdint.h>
 
 // Only include the full table if we're not optimizing for size.
@@ -33,20 +34,12 @@ typedef __uint128_t uint128_t;
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
 
-// These have to be 64-bit constants in order for the computations to be safe
-// given the ranges they have to handle for 64-bit floating-point numbers.
-#define DOUBLE_LOG10_2_DENOMINATOR 10000000ull
-#define DOUBLE_LOG10_2_NUMERATOR 3010299ull // DOUBLE_LOG10_2_DENOMINATOR * log_10(2)
-#define DOUBLE_LOG10_5_DENOMINATOR 10000000ull
-#define DOUBLE_LOG10_5_NUMERATOR 6989700ull // DOUBLE_LOG10_5_DENOMINATOR * log_10(5)
-#define DOUBLE_LOG2_5_DENOMINATOR 10000000ull
-#define DOUBLE_LOG2_5_NUMERATOR 23219280ull // DOUBLE_LOG2_5_DENOMINATOR * log_2(5)
-
+// Returns e == 0 ? 1 : ceil(log_2(5^e)).
 static inline uint32_t double_pow5bits(const int32_t e) {
-  return e == 0
-      ? 1
-      // We need to round up in this case.
-      : (uint32_t) ((e * DOUBLE_LOG2_5_NUMERATOR + DOUBLE_LOG2_5_DENOMINATOR - 1) / DOUBLE_LOG2_5_DENOMINATOR);
+  // This function has only been tested for 0 <= e <= 1500.
+  assert(e >= 0);
+  assert(e <= 1500);
+  return ((((uint32_t) e) * 1217359) >> 19) + 1;
 }
 
 #define DOUBLE_POW5_INV_BITCOUNT 122
