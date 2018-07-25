@@ -112,7 +112,8 @@ static inline uint64_t mulPow5divPow2(const uint32_t m, const uint32_t i, const 
 }
 
 static inline uint32_t decimalLength(const uint32_t v) {
-  if (v >= 1000000000) { return 10; }
+  // Function precondition: v is not a 10-digit number.
+  // (9 digits are sufficient for round-tripping.)
   if (v >= 100000000) { return 9; }
   if (v >= 10000000) { return 8; }
   if (v >= 1000000) { return 7; }
@@ -252,9 +253,6 @@ void f2s_buffered(float f, char* result) {
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  const uint32_t vplength = decimalLength(vp);
-  int32_t exp = e10 + vplength - 1;
-
   uint32_t removed = 0;
   uint32_t output;
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
@@ -297,7 +295,9 @@ void f2s_buffered(float f, char* result) {
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  const uint32_t olength = vplength - removed;
+  const uint32_t olength = decimalLength(output);
+  const uint32_t vplength = olength + removed;
+  int32_t exp = e10 + vplength - 1;
 
   // Step 5: Print the decimal representation.
   int index = 0;
