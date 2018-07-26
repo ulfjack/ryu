@@ -17,6 +17,7 @@
 #ifndef RYU_MULSHIFT128_H
 #define RYU_MULSHIFT128_H
 
+#include <assert.h>
 #include <stdint.h>
 
 #if defined(HAS_64_BIT_INTRINSICS)
@@ -28,6 +29,15 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
 }
 
 static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
+  // For the __shiftright128 intrinsic, the shift value is always
+  // modulo 64.
+  // In the current implementation of the double-precision version
+  // of Ryu, the shift value is always < 64. (In the case
+  // RYU_OPTIMIZE_SIZE == 0, the shift value is in the range [50,58].
+  // Otherwise in the range [2,59].)
+  // Check this here in case a future change requires larger shift
+  // values. In this case this function needs to be adjusted.
+  assert(dist < 64);
   return __shiftright128(lo, hi, (unsigned char) dist);
 }
 
@@ -55,10 +65,9 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
 }
 
 static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
-  // shift hi-lo right by 0 < dist < 128
-  return (dist >= 64)
-      ? hi >> (dist - 64)
-      : (hi << (64 - dist)) | (lo >> dist);
+  // We don't need to handle the case dist > 64 here (see above).
+  assert(dist < 64);
+  return (hi << (64 - dist)) | (lo >> dist);
 }
 
 #endif // defined(HAS_64_BIT_INTRINSICS)
