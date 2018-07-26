@@ -109,8 +109,12 @@ static inline int32_t log10Pow5(const int32_t e) {
 // generated code for uint128_t looks slightly nicer.
 static inline uint32_t mulPow5InvDivPow2(const uint32_t m, const uint32_t q, const int32_t j) {
   const uint64_t factor = FLOAT_POW5_INV_SPLIT[q];
-  const uint64_t bits0 = m * (factor & 0xffffffffu);
-  const uint64_t bits1 = m * (factor >> 32);
+  // The casts here help MSVC to avoid calls to the __allmul library
+  // function.
+  const uint32_t factorLo = (uint32_t)(factor);
+  const uint32_t factorHi = (uint32_t)(factor >> 32);
+  const uint64_t bits0 = (uint64_t)m * factorLo;
+  const uint64_t bits1 = (uint64_t)m * factorHi;
   const uint64_t sum = (bits0 >> 32) + bits1;
   assert(j >= 32);
   const uint64_t shiftedSum = sum >> (j - 32);
@@ -120,8 +124,12 @@ static inline uint32_t mulPow5InvDivPow2(const uint32_t m, const uint32_t q, con
 
 static inline uint32_t mulPow5divPow2(const uint32_t m, const uint32_t i, const int32_t j) {
   const uint64_t factor = FLOAT_POW5_SPLIT[i];
-  const uint64_t bits0 = m * (factor & 0xffffffffu);
-  const uint64_t bits1 = m * (factor >> 32);
+  // The casts here help MSVC to avoid calls to the __allmul library
+  // function.
+  const uint32_t factorLo = (uint32_t)(factor);
+  const uint32_t factorHi = (uint32_t)(factor >> 32);
+  const uint64_t bits0 = (uint64_t)m * factorLo;
+  const uint64_t bits1 = (uint64_t)m * factorHi;
   const uint64_t sum = (bits0 >> 32) + bits1;
   assert(j >= 32);
   const uint64_t shiftedSum = sum >> (j - 32);
