@@ -117,10 +117,22 @@ static inline uint32_t mulShift(const uint32_t m, const uint64_t factor, const i
   const uint64_t bits0 = (uint64_t)m * factorLo;
   const uint64_t bits1 = (uint64_t)m * factorHi;
 
+#if defined(_M_IX86) || defined(_M_ARM)
+  // On 32-bit platforms we can avoid a 64-bit shift-right since we only
+  // need the upper 32-bits of the result and the shift value is >= 32.
+  const uint32_t bits0Hi = (uint32_t)(bits0 >> 32);
+  uint32_t bits1Lo = (uint32_t)(bits1);
+  uint32_t bits1Hi = (uint32_t)(bits1 >> 32);
+  bits1Lo += bits0Hi;
+  bits1Hi += (bits1Lo < bits0Hi);
+  const int32_t s = shift - 32;
+  return (bits1Hi << (32 - s)) | (bits1Lo >> s);
+#else
   const uint64_t sum = (bits0 >> 32) + bits1;
   const uint64_t shiftedSum = sum >> (shift - 32);
   assert(shiftedSum <= UINT32_MAX);
   return (uint32_t) shiftedSum;
+#endif
 }
 
 static inline uint32_t mulPow5InvDivPow2(const uint32_t m, const uint32_t q, const int32_t j) {
