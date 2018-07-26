@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #ifndef NO_DIGIT_TABLE
 #include "ryu/digit_table.h"
@@ -106,18 +107,26 @@ static inline int32_t log10Pow5(const int32_t e) {
 
 // It seems to be slightly faster to avoid uint128_t here, although the
 // generated code for uint128_t looks slightly nicer.
-static inline uint64_t mulPow5InvDivPow2(const uint32_t m, const uint32_t q, const int32_t j) {
+static inline uint32_t mulPow5InvDivPow2(const uint32_t m, const uint32_t q, const int32_t j) {
   const uint64_t factor = FLOAT_POW5_INV_SPLIT[q];
   const uint64_t bits0 = m * (factor & 0xffffffffu);
   const uint64_t bits1 = m * (factor >> 32);
-  return ((bits0 >> 32) + bits1) >> (j - 32);
+  const uint64_t sum = (bits0 >> 32) + bits1;
+  assert(j >= 32);
+  const uint64_t shiftedSum = sum >> (j - 32);
+  assert(shiftedSum <= UINT32_MAX);
+  return (uint32_t) shiftedSum;
 }
 
-static inline uint64_t mulPow5divPow2(const uint32_t m, const uint32_t i, const int32_t j) {
+static inline uint32_t mulPow5divPow2(const uint32_t m, const uint32_t i, const int32_t j) {
   const uint64_t factor = FLOAT_POW5_SPLIT[i];
   const uint64_t bits0 = m * (factor & 0xffffffffu);
   const uint64_t bits1 = m * (factor >> 32);
-  return ((bits0 >> 32) + bits1) >> (j - 32);
+  const uint64_t sum = (bits0 >> 32) + bits1;
+  assert(j >= 32);
+  const uint64_t shiftedSum = sum >> (j - 32);
+  assert(shiftedSum <= UINT32_MAX);
+  return (uint32_t) shiftedSum;
 }
 
 static inline uint32_t decimalLength(const uint32_t v) {
@@ -199,9 +208,9 @@ void f2s_buffered(float f, char* result) {
     e10 = q;
     const int32_t k = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
-    vr = (uint32_t) mulPow5InvDivPow2(mv, q, i);
-    vp = (uint32_t) mulPow5InvDivPow2(mp, q, i);
-    vm = (uint32_t) mulPow5InvDivPow2(mm, q, i);
+    vr = mulPow5InvDivPow2(mv, q, i);
+    vp = mulPow5InvDivPow2(mp, q, i);
+    vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef RYU_DEBUG
     printf("%d * 2^%d / 10^%d\n", mv, e2, q);
     printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
@@ -231,9 +240,9 @@ void f2s_buffered(float f, char* result) {
     const int32_t i = -e2 - q;
     const int32_t k = float_pow5bits(i) - FLOAT_POW5_BITCOUNT;
     int32_t j = q - k;
-    vr = (uint32_t) mulPow5divPow2(mv, i, j);
-    vp = (uint32_t) mulPow5divPow2(mp, i, j);
-    vm = (uint32_t) mulPow5divPow2(mm, i, j);
+    vr = mulPow5divPow2(mv, i, j);
+    vp = mulPow5divPow2(mp, i, j);
+    vm = mulPow5divPow2(mm, i, j);
 #ifdef RYU_DEBUG
     printf("%d * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
