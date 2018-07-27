@@ -108,7 +108,7 @@ static inline int32_t log10Pow5(const int32_t e) {
 // It seems to be slightly faster to avoid uint128_t here, although the
 // generated code for uint128_t looks slightly nicer.
 static inline uint32_t mulShift(const uint32_t m, const uint64_t factor, const int32_t shift) {
-  assert(shift >= 32);
+  assert(shift > 32);
 
   // The casts here help MSVC to avoid calls to the __allmul library
   // function.
@@ -119,7 +119,7 @@ static inline uint32_t mulShift(const uint32_t m, const uint64_t factor, const i
 
 #if defined(_M_IX86) || defined(_M_ARM)
   // On 32-bit platforms we can avoid a 64-bit shift-right since we only
-  // need the upper 32-bits of the result and the shift value is >= 32.
+  // need the upper 32 bits of the result and the shift value is > 32.
   const uint32_t bits0Hi = (uint32_t)(bits0 >> 32);
   uint32_t bits1Lo = (uint32_t)(bits1);
   uint32_t bits1Hi = (uint32_t)(bits1 >> 32);
@@ -146,6 +146,7 @@ static inline uint32_t mulPow5divPow2(const uint32_t m, const uint32_t i, const 
 static inline uint32_t decimalLength(const uint32_t v) {
   // Function precondition: v is not a 10-digit number.
   // (9 digits are sufficient for round-tripping.)
+  assert(v < 1000000000);
   if (v >= 100000000) { return 9; }
   if (v >= 10000000) { return 8; }
   if (v >= 1000000) { return 7; }

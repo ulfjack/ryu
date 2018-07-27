@@ -66,7 +66,8 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
 }
 
 static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
-  // We don't need to handle the case dist > 64 here (see above).
+  // We don't need to handle the case dist >= 64 here (see above).
+  assert(dist > 0);
   assert(dist < 64);
   return (hi << (64 - dist)) | (lo >> dist);
 }
