@@ -9,6 +9,7 @@ cc_library(
     "d2s_full_table.h",
     "digit_table.h",
     "mulshift128.h",
+    "common.h",
   ],
   hdrs = ["ryu.h"],
 )
