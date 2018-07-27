@@ -23,23 +23,13 @@ MacOS, or MSVC on Windows).
 You can select a custom C++ compiler by setting the CC environment variable
 (e.g., on Ubuntu, run `export CC=clang-3.9`).
 
-As of this writing, Bazel does not work with some compilers due to
-https://github.com/bazelbuild/bazel/issues/3977 (for example, it does not work
-with clang-4.0 or clang-5.0 on Ubuntu 17.10). As a workaround, you can take the
-following steps:
-
- 1. set the CC variable to the compiler you want to use
- 2. run bazel build once
- 3. edit the file pointed at by bazel-ryu/external/local_config_cc/CROSSTOOL
- 4. add or replace the cxx_builtin_include_directory directives
-
-For example, for clang-4.0, use these steps:
+For example, use these steps to build with clang-4.0:
 ```
 $ export CC=clang-4.0
 $ bazel build //ryu
-$ sed -i 's|cxx_builtin_include_directory: "/.*"|cxx_builtin_include_directory: "/"|' \
-    $(readlink -f bazel-$(basename $PWD)/external/local_config_cc/CROSSTOOL)
 ```
+Note that older Bazel versions (< 0.14) did not work with all compilers
+(https://github.com/bazelbuild/bazel/issues/3977).
 
 ### Tests
 You can run both C and Java tests with
