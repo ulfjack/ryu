@@ -29,6 +29,7 @@
 
 #include "ryu/ryu.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -211,10 +212,11 @@ static inline uint64_t mulShiftAll(
 #endif // HAS_64_BIT_INTRINSICS
 
 static inline uint32_t decimalLength(const uint64_t v) {
-  // This is slightly faster than a loop. For a random set of numbers, the
-  // average length is 17.4 digits, so we check high-to-low.
+  // This is slightly faster than a loop.
+  // The average output length is 16.38 digits, so we check high-to-low.
   // Function precondition: v is not an 18, 19, or 20-digit number.
   // (17 digits are sufficient for round-tripping.)
+  assert(v < 100000000000000000L);
   if (v >= 10000000000000000L) { return 17; }
   if (v >= 1000000000000000L) { return 16; }
   if (v >= 100000000000000L) { return 15; }
@@ -330,7 +332,7 @@ void d2s_buffered(double f, char* result) {
       }
     }
   } else {
-    // This expression is slightly faster than max(0, log10Pow5(-e2) - 1)
+    // This expression is slightly faster than max(0, log10Pow5(-e2) - 1).
     const int32_t q = log10Pow5(-e2) - (-e2 > 1);
     e10 = q + e2;
     const int32_t i = -e2 - q;
@@ -359,7 +361,7 @@ void d2s_buffered(double f, char* result) {
       // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
       // <=> ntz(mv) >= q-1  &&  pow5Factor(mv) - e2 >= q-1
       // <=> ntz(mv) >= q-1
-      // <=> mv & ((1 << (q-1)) - 1) == 0
+      // <=> (mv & ((1 << (q-1)) - 1)) == 0
       // We also need to make sure that the left shift does not overflow.
       vrIsTrailingZeros = (mv & ((1ull << (q - 1)) - 1)) == 0;
 #ifdef RYU_DEBUG
