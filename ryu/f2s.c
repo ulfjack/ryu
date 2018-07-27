@@ -27,6 +27,8 @@
 #include <string.h>
 #include <limits.h>
 
+#include "ryu/common.h"
+
 #ifndef NO_DIGIT_TABLE
 #include "ryu/digit_table.h"
 #endif
@@ -79,30 +81,6 @@ static inline int32_t pow5Factor(uint32_t value) {
 // Returns true if value is divisible by 5^p.
 static inline bool multipleOfPowerOf5(const uint32_t value, const int32_t p) {
   return pow5Factor(value) >= p;
-}
-
-// Returns e == 0 ? 1 : ceil(log_2(5^e)).
-static inline uint32_t float_pow5bits(const int32_t e) {
-  // This function has only been tested for 0 <= e <= 1500.
-  assert(e >= 0);
-  assert(e <= 1500);
-  return ((((uint32_t) e) * 1217359) >> 19) + 1;
-}
-
-// Returns floor(log_10(2^e)).
-static inline int32_t log10Pow2(const int32_t e) {
-  // This function has only been tested for 0 <= e <= 1500.
-  assert(e >= 0);
-  assert(e <= 1500);
-  return (int32_t) ((((uint32_t) e) * 78913) >> 18);
-}
-
-// Returns floor(log_10(5^e)).
-static inline int32_t log10Pow5(const int32_t e) {
-  // This function has only been tested for 0 <= e <= 1500.
-  assert(e >= 0);
-  assert(e <= 1500);
-  return (int32_t) ((((uint32_t) e) * 732923) >> 20);
 }
 
 // It seems to be slightly faster to avoid uint128_t here, although the
@@ -221,7 +199,7 @@ void f2s_buffered(float f, char* result) {
   if (e2 >= 0) {
     const int32_t q = log10Pow2(e2);
     e10 = q;
-    const int32_t k = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q) - 1;
+    const int32_t k = FLOAT_POW5_INV_BITCOUNT + pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
     vr = mulPow5InvDivPow2(mv, q, i);
     vp = mulPow5InvDivPow2(mp, q, i);
@@ -234,7 +212,7 @@ void f2s_buffered(float f, char* result) {
       // We need to know one removed digit even if we are not going to loop below. We could use
       // q = X - 1 above, except that would require 33 bits for the result, and we've found that
       // 32-bit arithmetic is faster even on 64-bit machines.
-      const int32_t l = FLOAT_POW5_INV_BITCOUNT + float_pow5bits(q - 1) - 1;
+      const int32_t l = FLOAT_POW5_INV_BITCOUNT + pow5bits(q - 1) - 1;
       lastRemovedDigit = (uint8_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
@@ -253,7 +231,7 @@ void f2s_buffered(float f, char* result) {
     const int32_t q = log10Pow5(-e2);
     e10 = q + e2;
     const int32_t i = -e2 - q;
-    const int32_t k = float_pow5bits(i) - FLOAT_POW5_BITCOUNT;
+    const int32_t k = pow5bits(i) - FLOAT_POW5_BITCOUNT;
     int32_t j = q - k;
     vr = mulPow5divPow2(mv, i, j);
     vp = mulPow5divPow2(mp, i, j);
@@ -264,7 +242,7 @@ void f2s_buffered(float f, char* result) {
     printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
 #endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
-      j = q - 1 - (float_pow5bits(i + 1) - FLOAT_POW5_BITCOUNT);
+      j = q - 1 - (pow5bits(i + 1) - FLOAT_POW5_BITCOUNT);
       lastRemovedDigit = (uint8_t) (mulPow5divPow2(mv, i + 1, j) % 10);
     }
     if (q <= 1) {
