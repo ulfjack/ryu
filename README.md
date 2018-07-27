@@ -82,8 +82,8 @@ Enable optimization by adding "-c opt" on the command line:
 ```
 $ bazel run -c opt //ryu/benchmark --
     Average & Stddev Ryu  Average & Stddev Grisu3
-32:   23.625    1.618       91.647   44.685
-64:   29.724    1.650      100.062   83.147
+32:   22.515    1.578       90.981   41.455
+64:   27.545    1.677       98.981   80.797
 
 $ bazel run //src/main/java/info/adams/ryu/benchmark --
     Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
