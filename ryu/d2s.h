@@ -20,6 +20,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "ryu/common.h"
+
 // Only include the full table if we're not optimizing for size.
 #if !defined(RYU_OPTIMIZE_SIZE)
 #include "ryu/d2s_full_table.h"
@@ -33,14 +35,6 @@ typedef __uint128_t uint128_t;
 
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
-
-// Returns e == 0 ? 1 : ceil(log_2(5^e)).
-static inline uint32_t double_pow5bits(const int32_t e) {
-  // This function has only been tested for 0 <= e <= 1500.
-  assert(e >= 0);
-  assert(e <= 1500);
-  return ((((uint32_t) e) * 1217359) >> 19) + 1;
-}
 
 #define DOUBLE_POW5_INV_BITCOUNT 122
 #define DOUBLE_POW5_BITCOUNT 121
@@ -119,7 +113,7 @@ static inline void double_computePow5(const uint32_t i, uint64_t* const result) 
   const uint64_t m = DOUBLE_POW5_TABLE[offset];
   const uint128_t b0 = ((uint128_t) m) * mul[0];
   const uint128_t b2 = ((uint128_t) m) * mul[1];
-  const uint32_t delta = double_pow5bits(i) - double_pow5bits(base2);
+  const uint32_t delta = pow5bits(i) - pow5bits(base2);
   const uint128_t shiftedSum = (b0 >> delta) + (b2 << (64 - delta)) + ((POW5_OFFSETS[base] >> offset) & 1);
   result[0] = (uint64_t) shiftedSum;
   result[1] = (uint64_t) (shiftedSum >> 64);
@@ -139,7 +133,7 @@ static inline void double_computeInvPow5(const uint32_t i, uint64_t* const resul
   const uint64_t m = DOUBLE_POW5_TABLE[offset]; // 5^offset
   const uint128_t b0 = ((uint128_t) m) * (mul[0] - 1);
   const uint128_t b2 = ((uint128_t) m) * mul[1]; // 1/5^base2 * 5^offset = 1/5^(base2-offset) = 1/5^i
-  const uint32_t delta = double_pow5bits(base2) - double_pow5bits(i);
+  const uint32_t delta = pow5bits(base2) - pow5bits(i);
   const uint128_t shiftedSum =
     ((b0 >> delta) + (b2 << (64 - delta))) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);
   result[0] = (uint64_t) shiftedSum;
@@ -169,7 +163,7 @@ static inline void double_computePow5(const uint32_t i, uint64_t* const result) 
     ++high1; // overflow into high1
   }
   // high1 | sum | low0
-  const uint32_t delta = double_pow5bits(i) - double_pow5bits(base2);
+  const uint32_t delta = pow5bits(i) - pow5bits(base2);
   result[0] = shiftright128(low0, sum, delta) + ((POW5_OFFSETS[base] >> offset) & 1);
   result[1] = shiftright128(sum, high1, delta);
 }
@@ -195,7 +189,7 @@ static inline void double_computeInvPow5(const uint32_t i, uint64_t* const resul
     ++high1; // overflow into high1
   }
   // high1 | sum | low0
-  const uint32_t delta = double_pow5bits(base2) - double_pow5bits(i);
+  const uint32_t delta = pow5bits(base2) - pow5bits(i);
   result[0] = shiftright128(low0, sum, delta) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);
   result[1] = shiftright128(sum, high1, delta);
 }
