@@ -135,9 +135,9 @@ public final class RyuDouble {
 
     // Step 2: Determine the interval of legal decimal representations.
     boolean even = (m2 & 1) == 0;
-    long mv = 4 * m2;
-    long mp = 4 * m2 + 2;
-    long mm = 4 * m2 - (((m2 != (1L << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 2 : 1);
+    final long mv = 4 * m2;
+    final long mp = 4 * m2 + 2;
+    final long mm = 4 * m2 - (((m2 != (1L << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 2 : 1);
     e2 -= 2;
 
     if (DEBUG) {
@@ -168,13 +168,13 @@ public final class RyuDouble {
     // Step 3: Convert to a decimal power base using 128-bit arithmetic.
     // -1077 = 1 - 1023 - 53 - 2 <= e_2 - 2 <= 2046 - 1023 - 53 - 2 = 968
     long dv, dp, dm;
-    int e10;
+    final int e10;
     boolean dmIsTrailingZeros = false;
     if (e2 >= 0) {
-      int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
+      final int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
       // k = constant + floor(log_2(5^q))
-      int k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
-      int i = -e2 + q + k;
+      final int k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
+      final int i = -e2 + q + k;
       dv = mulPow5InvDivPow2(mv, q, i);
       dp = mulPow5InvDivPow2(mp, q, i);
       dm = mulPow5InvDivPow2(mm, q, i);
@@ -200,15 +200,15 @@ public final class RyuDouble {
           dmIsTrailingZeros = multipleOfPowerOf5(mm, q);
         } else {
           if (!roundingMode.acceptUpperBound(even)) {
-            mp--;
+            dp--;
           }
         }
       }
     } else {
-      int q = Math.max(0, (int) (-e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
-      int i = -e2 - q;
-      int k = pow5bits(i) - POW5_BITCOUNT;
-      int j = q - k;
+      final int q = Math.max(0, (int) (-e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
+      final int i = -e2 - q;
+      final int k = pow5bits(i) - POW5_BITCOUNT;
+      final int j = q - k;
       dv = mulPow5divPow2(mv, i, j);
       dp = mulPow5divPow2(mp, i, j);
       dm = mulPow5divPow2(mm, i, j);
@@ -229,6 +229,8 @@ public final class RyuDouble {
       System.out.println("d-=" + dm);
       System.out.println("e10=" + e10);
       System.out.println("d-10=" + dmIsTrailingZeros);
+      System.out.println("Accept upper=" + roundingMode.acceptUpperBound(even));
+      System.out.println("Accept lower=" + roundingMode.acceptLowerBound(even));
     }
 
     // Step 4: Find the shortest decimal representation in the interval of legal representations.
@@ -239,7 +241,7 @@ public final class RyuDouble {
     //
     // Above, we moved the decimal dot all the way to the right, so now we need to count digits to
     // figure out the correct exponent for scientific notation.
-    int vplength = decimalLength(dp);
+    final int vplength = decimalLength(dp);
     int exp = e10 + vplength - 1;
 
     // Double.toString semantics requires using scientific notation if and only if outside this range.
