@@ -24,28 +24,27 @@
 extern "C" {
 #endif
 
-struct dparts {
+// Represents (-1)^sign * value * 10^exp10.
+struct exp10double {
   bool sign;
-  int16_t exp;
-  uint64_t output;
+  int16_t exp10;
+  uint64_t value;
+};
+struct exp10float {
+  bool sign;
+  int16_t exp10;
+  uint32_t value;
 };
 
-struct fparts {
-  bool sign;
-  int16_t exp;
-  uint32_t output;
-};
+// Convert a float/double to a representation with a 10-based exponent.
+struct exp10double d2exp10(double f);
+struct exp10float f2exp10(float f);
 
-// Calculate the shortest representation of a double/float,
-// but do not convert to a decimal representation yet.
-struct dparts d2parts(double f);
-struct fparts f2parts(float f);
-
-// Convert the result of the above functions to a deicmal representation.
+// Convert the result of the above function to a decimal representation.
 // The result is written to `result`, and the number of written characters is returned.
 // The result is not zero-terminated.
-int dparts2s_buffered_n(struct dparts parts, char* result); // Writes max 24 chars.
-int fparts2s_buffered_n(struct fparts parts, char* result); // Writes max 15 chars.
+int exp10d_to_string(struct exp10double value, char* result); // Writes max 24 chars.
+int exp10f_to_string(struct exp10float value, char* result); // Writes max 15 chars.
 
 // Does both steps at once.
 int d2s_buffered_n(double f, char* result);

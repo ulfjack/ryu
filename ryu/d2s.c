@@ -46,20 +46,20 @@ static inline int decimalLength(const uint64_t v) {
   return 1;
 }
 
-int dparts2s_buffered_n(struct dparts parts, char* result) {
+int exp10d_to_string(struct exp10double f, char* result) {
   // Step 5: Print the decimal representation.
 
-  if (parts.exp == INT16_MAX || (parts.output == 0 && parts.exp == 0)) {
-    return copy_special_str(result, parts.sign, parts.exp, parts.output);
+  if (f.exp10 == INT16_MAX || (f.value == 0 && f.exp10 == 0)) {
+    return copy_special_str(result, f.sign, f.exp10, f.value);
   }
 
   int index = 0;
-  if (parts.sign) {
+  if (f.sign) {
     result[index++] = '-';
   }
 
-  int olength = decimalLength(parts.output);
-  char first_digit = u64_to_decimal_rtl(parts.output, result + index + olength);
+  int olength = decimalLength(f.value);
+  char first_digit = u64_to_decimal_rtl(f.value, result + index + olength);
   result[index++] = first_digit;
 
   // Print decimal point if needed.
@@ -69,19 +69,19 @@ int dparts2s_buffered_n(struct dparts parts, char* result) {
   }
 
   // Print the exponent.
-  parts.exp += olength - 1;
+  f.exp10 += olength - 1;
   result[index++] = 'E';
-  if (parts.exp < 0) {
+  if (f.exp10 < 0) {
     result[index++] = '-';
-    parts.exp = -parts.exp;
+    f.exp10 = -f.exp10;
   }
-  index += below1000_to_decimal(parts.exp, result + index);
+  index += below1000_to_decimal(f.exp10, result + index);
 
   return index;
 }
 
 int d2s_buffered_n(double f, char* result) {
-  return dparts2s_buffered_n(d2parts(f), result);
+  return exp10d_to_string(d2exp10(f), result);
 }
 
 void d2s_buffered(double f, char* result) {

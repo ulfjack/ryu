@@ -121,7 +121,7 @@ static inline uint32_t mulPow5divPow2(const uint32_t m, const uint32_t i, const 
   return mulShift(m, FLOAT_POW5_SPLIT[i], j);
 }
 
-struct fparts f2parts(float f) {
+struct exp10float f2exp10(float f) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
   const uint32_t exponentBits = FLOAT_EXPONENT_BITS;
@@ -148,10 +148,10 @@ struct fparts f2parts(float f) {
   uint32_t m2;
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return (struct fparts) {
+    return (struct exp10float) {
       .sign = sign,
-      .exp = ieeeExponent ? INT16_MAX : 0,
-      .output = ieeeMantissa,
+      .exp10 = ieeeExponent ? INT16_MAX : 0,
+      .value = ieeeMantissa,
     };
   } else if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
@@ -290,10 +290,10 @@ struct fparts f2parts(float f) {
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  struct fparts parts;
-  parts.sign = sign;
-  parts.output = output;
-  parts.exp = e10 + removed;
 
-  return parts;
+  return (struct exp10float) {
+    .sign = sign,
+    .value = output,
+    .exp10 = e10 + removed
+  };
 }

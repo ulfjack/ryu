@@ -197,7 +197,7 @@ static inline uint64_t mulShiftAll(
 
 #endif // HAS_64_BIT_INTRINSICS
 
-struct dparts d2parts(double f) {
+struct exp10double d2exp10(double f) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
   const uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
@@ -224,10 +224,10 @@ struct dparts d2parts(double f) {
   uint64_t m2;
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return (struct dparts) {
+    return (struct exp10double) {
       .sign = sign,
-      .exp = ieeeExponent ? INT16_MAX : 0,
-      .output = ieeeMantissa,
+      .exp10 = ieeeExponent ? INT16_MAX : 0,
+      .value = ieeeMantissa,
     };
   } else if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
@@ -399,17 +399,18 @@ struct dparts d2parts(double f) {
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  // The average output length is 16.38 digits.
-  struct dparts parts;
-  parts.sign = sign;
-  parts.output = output;
-  parts.exp = e10 + removed;
+
+  struct exp10double result = {
+    .sign = sign,
+    .value = output,
+    .exp10 = e10 + removed
+  };
 
 #ifdef RYU_DEBUG
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
   printf("O=%" PRIu64 "\n", output);
-  printf("EXP=%d\n", parts.exp);
+  printf("EXP=%d\n", result.exp);
 #endif
 
-  return parts;
+  return result;
 }

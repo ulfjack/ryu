@@ -3,9 +3,9 @@ package(default_visibility=["//visibility:public"])
 cc_library(
   name = "ryu",
   srcs = [
-    "f2parts.c",
+    "f2exp10.c",
     "f2s.c",
-    "d2parts.c",
+    "d2exp10.c",
     "d2s.c",
     "d2s.h",
     "d2s_full_table.h",
