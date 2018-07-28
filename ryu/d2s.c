@@ -221,6 +221,35 @@ static inline uint32_t decimalLength(const uint64_t v) {
   return 1;
 }
 
+static inline uint32_t decimalLength2(const uint64_t v) {
+  static const uint64_t table[18] = {
+    0ull,
+    9ull,
+    99ull,
+    999ull,
+    9999ull,
+    99999ull,
+    999999ull,
+    9999999ull,
+    99999999ull,
+    999999999ull,
+    9999999999ull,
+    99999999999ull,
+    999999999999ull,
+    9999999999999ull,
+    99999999999999ull,
+    999999999999999ull,
+    9999999999999999ull,
+    99999999999999999ull,
+  };
+  unsigned long tmp;
+  _BitScanReverse64(&tmp, v);
+  //uint32_t lz = 63 - tmp;
+  uint32_t y = (19 * tmp) >> 6;
+  y += (table[y + 1] - v) >> 63;
+  return y + 1;
+}
+
 int d2s_buffered_n(double f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;

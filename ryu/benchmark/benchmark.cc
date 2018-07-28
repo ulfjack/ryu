@@ -157,12 +157,16 @@ static int bench64(int samples, int iterations, bool verbose) {
   init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; i++) {
-    uint64_t r = RandomU64();
-    double f = int64Bits2Double(r);
+    iterations = 1000;
+    double s[1000];
+    for (int j = 0; j < iterations; j++) {
+      uint64_t r = RandomU64();
+      s[j] = int64Bits2Double(r);
+    }
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     for (int j = 0; j < iterations; j++) {
-      d2s_buffered(f, bufferown);
+      d2s_buffered(s[j], bufferown);
       throwaway += bufferown[2];
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
@@ -171,21 +175,21 @@ static int bench64(int samples, int iterations, bool verbose) {
 
     t1 = high_resolution_clock::now();
     for (int j = 0; j < iterations; j++) {
-      dcv(f);
+      dcv(s[j]);
       throwaway += buffer[2];
     }
     t2 = high_resolution_clock::now();
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
     if (verbose) {
-      printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
+      printf("%" PRIu64 ",%lf,%lf\n", 1, delta1, delta2);
     }
 
-    char* own = bufferown;
-    char* theirs = dcv(f);
-    if (strcmp(own, theirs) != 0) {
-      printf("For %16" PRIX64 " %28s %28s\n", r, own, theirs);
-    }
+    // char* own = bufferown;
+    // char* theirs = dcv(s[j]);
+    // if (strcmp(own, theirs) != 0) {
+    //   printf("For %16" PRIX64 " %28s %28s\n", 1, own, theirs);
+    // }
   }
   if (!verbose) {
     printf("64: %8.3f %8.3f     %8.3f %8.3f\n",
