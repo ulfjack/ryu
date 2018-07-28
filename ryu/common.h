@@ -1,4 +1,4 @@
-// Copyright 2018 Ulf Adams
+// Copyright 2018 Ulf Adams and contributors
 //
 // The contents of this file may be used under the terms of the Apache License,
 // Version 2.0.
@@ -18,7 +18,9 @@
 #define RYU_COMMON_H
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 // Returns e == 0 ? 1 : ceil(log_2(5^e)).
 static inline uint32_t pow5bits(const int32_t e) {
