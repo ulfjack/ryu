@@ -21,9 +21,11 @@
 extern "C" {
 #endif
 
+int d2s_buffered_n(double f, char* result);
 void d2s_buffered(double f, char* result);
 char* d2s(double f);
 
+int f2s_buffered_n(float f, char* result);
 void f2s_buffered(float f, char* result);
 char* f2s(float f);
 

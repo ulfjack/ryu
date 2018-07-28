@@ -221,7 +221,7 @@ static inline uint32_t decimalLength(const uint64_t v) {
   return 1;
 }
 
-void d2s_buffered(double f, char* result) {
+int d2s_buffered_n(double f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
   const uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
@@ -247,14 +247,9 @@ void d2s_buffered(double f, char* result) {
   int32_t e2;
   uint64_t m2;
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << exponentBits) - 1u)) {
-    strcpy(result, (ieeeMantissa != 0) ? "NaN" : sign ? "-Infinity" : "Infinity");
-    return;
+  if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
   } else if (ieeeExponent == 0) {
-    if (ieeeMantissa == 0) {
-      strcpy(result, sign ? "-0E0" : "0E0");
-      return;
-    }
     // We subtract 2 so that the bounds computation has 2 additional bits.
     e2 = 1 - offset - mantissaBits - 2;
     m2 = ieeeMantissa;
@@ -548,8 +543,14 @@ void d2s_buffered(double f, char* result) {
   result[index++] = '0' + exp % 10;
 #endif // NO_DIGIT_TABLE
 
+  return index;
+}
+
+void d2s_buffered(double f, char* result) {
+  int index = d2s_buffered_n(f, result);
+
   // Terminate the string.
-  result[index++] = '\0';
+  result[index] = '\0';
 }
 
 char* d2s(double f) {

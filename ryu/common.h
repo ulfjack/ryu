@@ -44,4 +44,20 @@ static inline int32_t log10Pow5(const int32_t e) {
   return (int32_t) ((((uint32_t) e) * 732923) >> 20);
 }
 
+static inline int copy_special_str(char * result, bool sign, bool exponent, bool mantissa) {
+  if (mantissa) {
+    memcpy(result, "NaN", 3);
+    return 3;
+  }
+  if (sign) {
+    result[0] = '-';
+  }
+  if (exponent) {
+    memcpy(result + sign, "Infinity", 8);
+    return sign + 8;
+  }
+  memcpy(result + sign, "0E0", 3);
+  return sign + 3;
+}
+
 #endif // RYU_COMMON_H
