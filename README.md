@@ -112,7 +112,7 @@ The resulting files are `bazel-genfiles/scripts/{c,java}-{float,double}.pdf`.
 You can build and run the C benchmark without using Bazel with the following shell
 command:
 ```
-$ gcc -o benchmark -I. -O2 -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
+$ gcc -o benchmark -I. -O2 -l m -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
     third_party/double-conversion/double-conversion/*.cc \
     third_party/mersenne/*.c
 $ ./benchmark
