@@ -199,7 +199,7 @@ public final class RyuDouble {
         if (mm % 5 == 0) {
           dmIsTrailingZeros = multipleOfPowerOf5(mm, q);
         } else {
-          if (!roundingMode.acceptUpperBound(even)) {
+          if (multipleOfPowerOf5(mp, q) && !roundingMode.acceptUpperBound(even)) {
             dp--;
           }
         }
