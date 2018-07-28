@@ -12,9 +12,9 @@ All code outside of third_party/ is Copyright Ulf Adams, and may be used in
 accordance with the Apache 2.0 license. Alternatively, the files in the ryu/
 directory may be used in accordance with the Boost 1.0 license.
 
-A complete correctness proof of the algorithm can be found in the paper:
-https://dl.acm.org/citation.cfm?id=3192369, available under a creative commons
-license (CC-BY-SA).
+My PLDI'18 paper includes a complete correctness proof of the algorithm:
+https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
+CC-BY-SA license.
 
 Andriy Plokhotnyuk developed a scala implementation that is available here:
 https://github.com/plokhotnyuk/jsoniter-scala
