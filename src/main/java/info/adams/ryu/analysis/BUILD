@@ -49,3 +49,8 @@ java_binary(
   name = "SlowConversion",
   runtime_deps = [":analysis"],
 )
+
+java_binary(
+  name = "RandomizedDoubleComparison",
+  runtime_deps = [":analysis"],
+)
