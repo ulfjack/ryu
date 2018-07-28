@@ -22,6 +22,8 @@ https://github.com/plokhotnyuk/jsoniter-scala
 Mara Bos provides a Rust wrapper of the C code here:
 https://docs.rs/ryu/0.1.1/ryu/
 
+Julia version: https://github.com/quinnj/Ryu.jl
+
 ## Building, Testing, Running
 
 We use the Bazel build system (https://bazel.build). We recommend using the
