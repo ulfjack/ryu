@@ -220,24 +220,37 @@ static inline uint32_t decimalLength(const uint64_t v) {
 
 // A floating decimal representing m * 10^e.
 struct floating_decimal_64 {
-  int16_t exponent;
-  int64_t mantissa;
+  uint64_t mantissa;
+  int32_t exponent;
 };
 
-static inline int fd_to_char(const struct floating_decimal_64 v, char* const result) {
-  int index = 0;
-  uint64_t output;
-  if (v.mantissa < 0) {
-    result[index++] = '-';
-    output = -v.mantissa;
-  } else {
-    output = v.mantissa;
+static inline struct floating_decimal_64 d2d(uint64_t ieeeMantissa, uint32_t ieeeExponent);
+
+int d2s_buffered_n(double f, char* result) {
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
+  uint64_t bits = 0;
+  // This only works on little-endian architectures.
+  memcpy(&bits, &f, sizeof(double));
+
+  const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
   }
 
+  struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+
+  int index = 0;
+  if (sign) {
+    result[index++] = '-';
+  }
+
+  uint64_t output = v.mantissa;
   const uint32_t olength = decimalLength(output);
 
 #ifdef RYU_DEBUG
-  printf("DIGITS=%" PRIu64 "\n", output);
+  printf("DIGITS=%" PRIu64 "\n", v.mantissa);
   printf("OLEN=%d\n", olength);
   printf("EXP=%d\n", v.exponent + olength);
 #endif
@@ -337,22 +350,11 @@ static inline int fd_to_char(const struct floating_decimal_64 v, char* const res
   return index;
 }
 
-int d2s_buffered_n(double f, char* result) {
-  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  const uint32_t mantissaBits = DOUBLE_MANTISSA_BITS;
-  const uint32_t exponentBits = DOUBLE_EXPONENT_BITS;
-  const uint32_t offset = (1u << (exponentBits - 1)) - 1;
-
-  uint64_t bits = 0;
-  // This only works on little-endian architectures.
-  memcpy(&bits, &f, sizeof(double));
-
-  // Decode bits into sign, mantissa, and exponent.
-  const bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << mantissaBits) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
+static inline struct floating_decimal_64 d2d(uint64_t ieeeMantissa, uint32_t ieeeExponent) {
+  const uint32_t offset = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
 
 #ifdef RYU_DEBUG
+  uint64_t bits = (((uint64_t) ieeeExponent) << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   printf("IN=");
   for (int32_t bit = 63; bit >= 0; --bit) {
     printf("%d", (int) ((bits >> bit) & 1));
@@ -363,27 +365,25 @@ int d2s_buffered_n(double f, char* result) {
   int32_t e2;
   uint64_t m2;
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
-  } else if (ieeeExponent == 0) {
+  if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - offset - mantissaBits - 2;
+    e2 = 1 - offset - DOUBLE_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - offset - mantissaBits - 2;
-    m2 = (1ull << mantissaBits) | ieeeMantissa;
+    e2 = ieeeExponent - offset - DOUBLE_MANTISSA_BITS - 2;
+    m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("S=%s E=%d M=%" PRIu64 "\n", sign ? "-" : "+", e2 + 2, m2);
+  printf("E=%d M=%" PRIu64 "\n", e2 + 2, m2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
   const uint64_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  const uint32_t mmShift = (m2 != (1ull << mantissaBits)) || (ieeeExponent <= 1);
+  const uint32_t mmShift = (m2 != (1ull << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1);
   // We would compute mp and mm like this:
 //  uint64_t mp = 4 * m2 + 2;
 //  uint64_t mm = mv - 1 - mmShift;
@@ -547,9 +547,9 @@ int d2s_buffered_n(double f, char* result) {
 
   // Step 5: Print the decimal representation.
   struct floating_decimal_64 fd;
-  fd.exponent = (int16_t) exp;
-  fd.mantissa = sign ? -(int64_t) output : output;
-  return fd_to_char(fd, result);
+  fd.exponent = exp;
+  fd.mantissa = output;
+  return fd;
 }
 
 void d2s_buffered(double f, char* result) {
