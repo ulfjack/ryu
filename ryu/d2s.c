@@ -254,7 +254,7 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   // We prefer 32-bit operations, even on 64-bit platforms.
   // We have at most 17 digits, and 32-bit unsigned int can store 9. We cut off
   // 8 in the first iteration, so the remainder will fit into a 32-bit int.
-  if (olength >= 8) {
+  if (olength > 8) {
     // Expensive 64-bit division.
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     uint32_t output2 = (uint32_t) (output - 100000000 * (output / 100000000));
