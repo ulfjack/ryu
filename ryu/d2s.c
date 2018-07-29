@@ -248,19 +248,21 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   // Print decimal digits after the decimal point.
 #ifndef NO_DIGIT_TABLE
   uint32_t i = 0;
-#if defined(_M_IX86) || defined(_M_ARM)
-  // 64-bit division is inefficient on 32-bit platforms.
-  uint32_t output2;
-  while ((output >> 32) != 0) {
+  // We prefer 32-bit operations, even on 64-bit platforms.
+  // We have at most 17 digits, and 32-bit unsigned int can store 9. We cut off
+  // 8 in the first iteration, so the remainder will fit into a 32-bit int.
+  if (olength >= 8) {
     // Expensive 64-bit division.
-    output2 = (uint32_t) (output % 1000000000);
-    output /= 1000000000;
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
+    uint32_t output2 = (uint32_t) (output - 100000000 * (output / 100000000));
+#else
+    uint32_t output2 = (uint32_t) (output % 100000000);
+#endif
+    output /= 100000000;
 
-    // Cheap 32-bit divisions.
     const uint32_t c = output2 % 10000;
     output2 /= 10000;
     const uint32_t d = output2 % 10000;
-    output2 /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
     const uint32_t d0 = (d % 100) << 1;
@@ -269,14 +271,9 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
     memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
     memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
     memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
-    result[index + olength - i - 8] = (char) ('0' + output2);
-    i += 9;
+    i += 8;
   }
-  output2 = (uint32_t) output;
-#else // ^^^ known 32-bit platforms ^^^ / vvv other platforms vvv
-  // 64-bit division is efficient on 64-bit platforms.
-  uint64_t output2 = output;
-#endif // ^^^ other platforms ^^^
+  uint32_t output2 = (uint32_t) output;
   while (output2 >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000));
@@ -298,10 +295,10 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   }
   if (output2 >= 10) {
     const uint32_t c = (uint32_t) (output2 << 1);
+    // We can't use memcpy here: the decimal dot goes between these two digits.
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
-    // Print the leading decimal digit.
     result[index] = (char) ('0' + output2);
   }
 #else
