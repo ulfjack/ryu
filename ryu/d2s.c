@@ -221,20 +221,22 @@ static inline uint32_t decimalLength(const uint64_t v) {
   return 1;
 }
 
-// A floating decimal representing (-1)^s * m * 10^e.
+// A floating decimal representing m * 10^e.
 struct floating_decimal_64 {
-  bool sign;
   int16_t exponent;
-  uint64_t mantissa;
+  int64_t mantissa;
 };
 
 static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   int index = 0;
-  if (v.sign) {
+  uint64_t output;
+  if (v.mantissa < 0) {
     result[index++] = '-';
+    output = -v.mantissa;
+  } else {
+    output = v.mantissa;
   }
 
-  uint64_t output = v.mantissa;
   const uint32_t olength = decimalLength(output);
 
 #ifdef RYU_DEBUG
@@ -563,9 +565,8 @@ int d2s_buffered_n(double f, char* result) {
 
   // Step 5: Print the decimal representation.
   struct floating_decimal_64 fd = {
-    .sign = sign,
     .exponent = exp,
-    .mantissa = output
+    .mantissa = sign ? -(int64_t) output : output
   };
   return fd_to_char(fd, result);
 }
