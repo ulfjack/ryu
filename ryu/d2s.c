@@ -35,10 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef NO_DIGIT_TABLE
-#include "ryu/digit_table.h"
-#endif
-
 #ifdef RYU_DEBUG
 #include <inttypes.h>
 #include <stdio.h>
@@ -54,6 +50,7 @@
 #endif
 
 #include "ryu/common.h"
+#include "ryu/digit_table.h"
 #include "ryu/d2s.h"
 
 static inline int32_t pow5Factor(uint64_t value) {
@@ -245,8 +242,14 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   printf("EXP=%d\n", v.exponent + olength);
 #endif
 
-  // Print decimal digits after the decimal point.
-#ifndef NO_DIGIT_TABLE
+  // Print the decimal digits. This following code is equivalent to:
+  // for (uint32_t i = 0; i < olength - 1; ++i) {
+  //   const uint32_t c = output % 10; output /= 10;
+  //   result[index + olength - i] = (char) ('0' + c);
+  // }
+  // // Print the leading decimal digit.
+  // result[index] = '0' + output % 10;
+
   uint32_t i = 0;
   // We prefer 32-bit operations, even on 64-bit platforms.
   // We have at most 17 digits, and 32-bit unsigned int can store 9. We cut off
@@ -301,15 +304,6 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   } else {
     result[index] = (char) ('0' + output2);
   }
-#else
-  // Print decimal digits after the decimal point.
-  for (uint32_t i = 0; i < olength - 1; ++i) {
-    const uint32_t c = output % 10; output /= 10;
-    result[index + olength - i] = (char) ('0' + c);
-  }
-  // Print the leading decimal digit.
-  result[index] = '0' + output % 10;
-#endif // NO_DIGIT_TABLE
 
   // Print decimal point if needed.
   if (olength > 1) {
@@ -327,7 +321,6 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
     exp = -exp;
   }
 
-#ifndef NO_DIGIT_TABLE
   if (exp >= 100) {
     const int32_t c = exp % 10;
     memcpy(result + index, DIGIT_TABLE + (2 * (exp / 10)), 2);
@@ -339,15 +332,6 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   } else {
     result[index++] = (char) ('0' + exp);
   }
-#else
-  if (exp >= 100) {
-    result[index++] = (char) ('0' + exp / 100);
-  }
-  if (exp >= 10) {
-    result[index++] = '0' + (exp / 10) % 10;
-  }
-  result[index++] = '0' + exp % 10;
-#endif // NO_DIGIT_TABLE
 
   return index;
 }

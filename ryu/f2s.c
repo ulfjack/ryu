@@ -27,15 +27,12 @@
 #include <string.h>
 #include <limits.h>
 
-#include "ryu/common.h"
-
-#ifndef NO_DIGIT_TABLE
-#include "ryu/digit_table.h"
-#endif
-
 #ifdef RYU_DEBUG
 #include <stdio.h>
 #endif
+
+#include "ryu/common.h"
+#include "ryu/digit_table.h"
 
 #define FLOAT_MANTISSA_BITS 23
 #define FLOAT_EXPONENT_BITS 8
@@ -311,8 +308,13 @@ int f2s_buffered_n(float f, char* result) {
     result[index++] = '-';
   }
 
-#ifndef NO_DIGIT_TABLE
   // Print decimal digits after the decimal point.
+  // The following code is equivalent to:
+  // for (uint32_t i = 0; i < olength - 1; ++i) {
+  //   const uint32_t c = output % 10; output /= 10;
+  //   result[index + olength - i] = (char) ('0' + c);
+  // }
+  // result[index] = '0' + output % 10;
   uint32_t i = 0;
   while (output >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
@@ -338,18 +340,8 @@ int f2s_buffered_n(float f, char* result) {
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
-    // Print the leading decimal digit.
     result[index] = (char) ('0' + output);
   }
-#else
-  // Print decimal digits after the decimal point.
-  for (uint32_t i = 0; i < olength - 1; ++i) {
-    const uint32_t c = output % 10; output /= 10;
-    result[index + olength - i] = (char) ('0' + c);
-  }
-  // Print the leading decimal digit.
-  result[index] = '0' + output % 10;
-#endif // NO_DIGIT_TABLE
 
   // Print decimal point if needed.
   if (olength > 1) {
@@ -366,19 +358,12 @@ int f2s_buffered_n(float f, char* result) {
     exp = -exp;
   }
 
-#ifndef NO_DIGIT_TABLE
   if (exp >= 10) {
     memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
     index += 2;
   } else {
     result[index++] = (char) ('0' + exp);
   }
-#else
-  if (exp >= 10) {
-    result[index++] = '0' + (exp / 10) % 10;
-  }
-  result[index++] = '0' + exp % 10;
-#endif // NO_DIGIT_TABLE
 
   return index;
 }
