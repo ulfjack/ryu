@@ -221,11 +221,11 @@ static inline uint32_t decimalLength(const uint64_t v) {
   return 1;
 }
 
-// A floating decimal representing (-1)^s * value * 10^exp10.
+// A floating decimal representing (-1)^s * m * 10^e.
 struct floating_decimal_64 {
   bool sign;
-  int16_t exp10;
-  uint64_t value;
+  int16_t exponent;
+  uint64_t mantissa;
 };
 
 static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
@@ -234,13 +234,13 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
     result[index++] = '-';
   }
 
-  uint64_t output = v.value;
+  uint64_t output = v.mantissa;
   const uint32_t olength = decimalLength(output);
 
 #ifdef RYU_DEBUG
   printf("DIGITS=%" PRIu64 "\n", v.value);
   printf("OLEN=%d\n", olength);
-  printf("EXP=%d\n", v.exp10 + olength);
+  printf("EXP=%d\n", v.exponent + olength);
 #endif
 
   // Print decimal digits after the decimal point.
@@ -322,7 +322,7 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
 
   // Print the exponent.
   result[index++] = 'E';
-  int32_t exp = v.exp10 + olength;
+  int32_t exp = v.exponent + olength;
   if (exp < 0) {
     result[index++] = '-';
     exp = -exp;
@@ -564,8 +564,8 @@ int d2s_buffered_n(double f, char* result) {
   // Step 5: Print the decimal representation.
   struct floating_decimal_64 fd = {
     .sign = sign,
-    .exp10 = exp,
-    .value = output
+    .exponent = exp,
+    .mantissa = output
   };
   return fd_to_char(fd, result);
 }
