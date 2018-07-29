@@ -221,6 +221,7 @@ static inline uint32_t decimalLength(const uint64_t v) {
   return 1;
 }
 
+// A floating decimal representing (-1)^s * value * 10^exp10.
 struct floating_decimal_64 {
   bool sign;
   int16_t exp10;
