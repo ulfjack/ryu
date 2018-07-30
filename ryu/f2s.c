@@ -308,7 +308,7 @@ int f2s_buffered_n(float f, char* result) {
     result[index++] = '-';
   }
 
-  // Print decimal digits after the decimal point.
+  // Print the decimal digits.
   // The following code is equivalent to:
   // for (uint32_t i = 0; i < olength - 1; ++i) {
   //   const uint32_t c = output % 10; output /= 10;
@@ -369,7 +369,7 @@ int f2s_buffered_n(float f, char* result) {
 }
 
 void f2s_buffered(float f, char* result) {
-  int index = f2s_buffered_n(f, result);
+  const int index = f2s_buffered_n(f, result);
 
   // Terminate the string.
   result[index] = '\0';

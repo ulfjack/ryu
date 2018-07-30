@@ -224,7 +224,7 @@ struct floating_decimal_64 {
   int64_t mantissa;
 };
 
-static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
+static inline int fd_to_char(const struct floating_decimal_64 v, char* const result) {
   int index = 0;
   uint64_t output;
   if (v.mantissa < 0) {
@@ -242,12 +242,12 @@ static inline int fd_to_char(struct floating_decimal_64 v, char* result) {
   printf("EXP=%d\n", v.exponent + olength);
 #endif
 
-  // Print the decimal digits. This following code is equivalent to:
+  // Print the decimal digits.
+  // The following code is equivalent to:
   // for (uint32_t i = 0; i < olength - 1; ++i) {
   //   const uint32_t c = output % 10; output /= 10;
   //   result[index + olength - i] = (char) ('0' + c);
   // }
-  // // Print the leading decimal digit.
   // result[index] = '0' + output % 10;
 
   uint32_t i = 0;
@@ -536,7 +536,7 @@ int d2s_buffered_n(double f, char* result) {
   }
   // The average output length is 16.38 digits.
   // const uint32_t olength = decimalLength(output);
-  int32_t exp = e10 + removed - 1;
+  const int32_t exp = e10 + removed - 1;
 
 #ifdef RYU_DEBUG
   printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
@@ -553,7 +553,7 @@ int d2s_buffered_n(double f, char* result) {
 }
 
 void d2s_buffered(double f, char* result) {
-  int index = d2s_buffered_n(f, result);
+  const int index = d2s_buffered_n(f, result);
 
   // Terminate the string.
   result[index] = '\0';
