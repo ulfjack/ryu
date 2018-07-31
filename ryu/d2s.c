@@ -237,7 +237,7 @@ static inline int fd_to_char(const struct floating_decimal_64 v, char* const res
   const uint32_t olength = decimalLength(output);
 
 #ifdef RYU_DEBUG
-  printf("DIGITS=%" PRIu64 "\n", v.value);
+  printf("DIGITS=%" PRIu64 "\n", output);
   printf("OLEN=%d\n", olength);
   printf("EXP=%d\n", v.exponent + olength);
 #endif
