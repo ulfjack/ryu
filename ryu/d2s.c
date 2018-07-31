@@ -545,10 +545,9 @@ int d2s_buffered_n(double f, char* result) {
 #endif
 
   // Step 5: Print the decimal representation.
-  struct floating_decimal_64 fd = {
-    .exponent = exp,
-    .mantissa = sign ? -(int64_t) output : output
-  };
+  struct floating_decimal_64 fd;
+  fd.exponent = (int16_t) exp;
+  fd.mantissa = sign ? -(int64_t) output : output;
   return fd_to_char(fd, result);
 }
 
