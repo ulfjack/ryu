@@ -224,132 +224,6 @@ struct floating_decimal_64 {
   int32_t exponent;
 };
 
-static inline struct floating_decimal_64 d2d(uint64_t ieeeMantissa, uint32_t ieeeExponent);
-
-int d2s_buffered_n(double f, char* result) {
-  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  uint64_t bits = 0;
-  // This only works on little-endian architectures.
-  memcpy(&bits, &f, sizeof(double));
-
-  const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
-  }
-
-  struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
-
-  int index = 0;
-  if (sign) {
-    result[index++] = '-';
-  }
-
-  uint64_t output = v.mantissa;
-  const uint32_t olength = decimalLength(output);
-
-#ifdef RYU_DEBUG
-  printf("DIGITS=%" PRIu64 "\n", v.mantissa);
-  printf("OLEN=%d\n", olength);
-  printf("EXP=%d\n", v.exponent + olength);
-#endif
-
-  // Print the decimal digits.
-  // The following code is equivalent to:
-  // for (uint32_t i = 0; i < olength - 1; ++i) {
-  //   const uint32_t c = output % 10; output /= 10;
-  //   result[index + olength - i] = (char) ('0' + c);
-  // }
-  // result[index] = '0' + output % 10;
-
-  uint32_t i = 0;
-  // We prefer 32-bit operations, even on 64-bit platforms.
-  // We have at most 17 digits, and uint32_t can store 9 digits.
-  // If output doesn't fit into uint32_t, we cut off 8 digits,
-  // so the rest will fit into uint32_t.
-  if ((output >> 32) != 0) {
-    // Expensive 64-bit division.
-#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
-    uint32_t output2 = (uint32_t) (output - 100000000 * (output / 100000000));
-#else
-    uint32_t output2 = (uint32_t) (output % 100000000);
-#endif
-    output /= 100000000;
-
-    const uint32_t c = output2 % 10000;
-    output2 /= 10000;
-    const uint32_t d = output2 % 10000;
-    const uint32_t c0 = (c % 100) << 1;
-    const uint32_t c1 = (c / 100) << 1;
-    const uint32_t d0 = (d % 100) << 1;
-    const uint32_t d1 = (d / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
-    memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
-    memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
-    i += 8;
-  }
-  uint32_t output2 = (uint32_t) output;
-  while (output2 >= 10000) {
-#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
-    const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000));
-#else
-    const uint32_t c = (uint32_t) (output2 % 10000);
-#endif
-    output2 /= 10000;
-    const uint32_t c0 = (c % 100) << 1;
-    const uint32_t c1 = (c / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
-    i += 4;
-  }
-  if (output2 >= 100) {
-    const uint32_t c = (uint32_t) ((output2 % 100) << 1);
-    output2 /= 100;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
-    i += 2;
-  }
-  if (output2 >= 10) {
-    const uint32_t c = (uint32_t) (output2 << 1);
-    // We can't use memcpy here: the decimal dot goes between these two digits.
-    result[index + olength - i] = DIGIT_TABLE[c + 1];
-    result[index] = DIGIT_TABLE[c];
-  } else {
-    result[index] = (char) ('0' + output2);
-  }
-
-  // Print decimal point if needed.
-  if (olength > 1) {
-    result[index + 1] = '.';
-    index += olength + 1;
-  } else {
-    ++index;
-  }
-
-  // Print the exponent.
-  result[index++] = 'E';
-  int32_t exp = v.exponent + olength;
-  if (exp < 0) {
-    result[index++] = '-';
-    exp = -exp;
-  }
-
-  if (exp >= 100) {
-    const int32_t c = exp % 10;
-    memcpy(result + index, DIGIT_TABLE + (2 * (exp / 10)), 2);
-    result[index + 2] = (char) ('0' + c);
-    index += 3;
-  } else if (exp >= 10) {
-    memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
-    index += 2;
-  } else {
-    result[index++] = (char) ('0' + exp);
-  }
-
-  return index;
-}
-
 static inline struct floating_decimal_64 d2d(uint64_t ieeeMantissa, uint32_t ieeeExponent) {
   const uint32_t offset = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
 
@@ -550,6 +424,130 @@ static inline struct floating_decimal_64 d2d(uint64_t ieeeMantissa, uint32_t iee
   fd.exponent = exp;
   fd.mantissa = output;
   return fd;
+}
+
+int d2s_buffered_n(double f, char* result) {
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
+  uint64_t bits = 0;
+  // This only works on little-endian architectures.
+  memcpy(&bits, &f, sizeof(double));
+
+  const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
+  }
+
+  struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+
+  int index = 0;
+  if (sign) {
+    result[index++] = '-';
+  }
+
+  uint64_t output = v.mantissa;
+  const uint32_t olength = decimalLength(output);
+
+#ifdef RYU_DEBUG
+  printf("DIGITS=%" PRIu64 "\n", v.mantissa);
+  printf("OLEN=%d\n", olength);
+  printf("EXP=%d\n", v.exponent + olength);
+#endif
+
+  // Print the decimal digits.
+  // The following code is equivalent to:
+  // for (uint32_t i = 0; i < olength - 1; ++i) {
+  //   const uint32_t c = output % 10; output /= 10;
+  //   result[index + olength - i] = (char) ('0' + c);
+  // }
+  // result[index] = '0' + output % 10;
+
+  uint32_t i = 0;
+  // We prefer 32-bit operations, even on 64-bit platforms.
+  // We have at most 17 digits, and uint32_t can store 9 digits.
+  // If output doesn't fit into uint32_t, we cut off 8 digits,
+  // so the rest will fit into uint32_t.
+  if ((output >> 32) != 0) {
+    // Expensive 64-bit division.
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
+    uint32_t output2 = (uint32_t) (output - 100000000 * (output / 100000000));
+#else
+    uint32_t output2 = (uint32_t) (output % 100000000);
+#endif
+    output /= 100000000;
+
+    const uint32_t c = output2 % 10000;
+    output2 /= 10000;
+    const uint32_t d = output2 % 10000;
+    const uint32_t c0 = (c % 100) << 1;
+    const uint32_t c1 = (c / 100) << 1;
+    const uint32_t d0 = (d % 100) << 1;
+    const uint32_t d1 = (d / 100) << 1;
+    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
+    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
+    memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
+    memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
+    i += 8;
+  }
+  uint32_t output2 = (uint32_t) output;
+  while (output2 >= 10000) {
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
+    const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000));
+#else
+    const uint32_t c = (uint32_t) (output2 % 10000);
+#endif
+    output2 /= 10000;
+    const uint32_t c0 = (c % 100) << 1;
+    const uint32_t c1 = (c / 100) << 1;
+    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
+    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
+    i += 4;
+  }
+  if (output2 >= 100) {
+    const uint32_t c = (uint32_t) ((output2 % 100) << 1);
+    output2 /= 100;
+    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
+    i += 2;
+  }
+  if (output2 >= 10) {
+    const uint32_t c = (uint32_t) (output2 << 1);
+    // We can't use memcpy here: the decimal dot goes between these two digits.
+    result[index + olength - i] = DIGIT_TABLE[c + 1];
+    result[index] = DIGIT_TABLE[c];
+  } else {
+    result[index] = (char) ('0' + output2);
+  }
+
+  // Print decimal point if needed.
+  if (olength > 1) {
+    result[index + 1] = '.';
+    index += olength + 1;
+  } else {
+    ++index;
+  }
+
+  // Print the exponent.
+  result[index++] = 'E';
+  int32_t exp = v.exponent + olength;
+  if (exp < 0) {
+    result[index++] = '-';
+    exp = -exp;
+  }
+
+  if (exp >= 100) {
+    const int32_t c = exp % 10;
+    memcpy(result + index, DIGIT_TABLE + (2 * (exp / 10)), 2);
+    result[index + 2] = (char) ('0' + c);
+    index += 3;
+  } else if (exp >= 10) {
+    memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
+    index += 2;
+  } else {
+    result[index++] = (char) ('0' + exp);
+  }
+
+  return index;
 }
 
 void d2s_buffered(double f, char* result) {
