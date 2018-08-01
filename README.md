@@ -125,8 +125,7 @@ You can build and run the C benchmark without using Bazel with the following she
 command:
 ```
 $ gcc -o benchmark -I. -O2 -l m -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
-    third_party/double-conversion/double-conversion/*.cc \
-    third_party/mersenne/*.c
+    third_party/double-conversion/double-conversion/*.cc
 $ ./benchmark
 ```
 
