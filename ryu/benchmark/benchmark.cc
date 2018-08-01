@@ -111,21 +111,21 @@ static int bench32(int samples, int iterations, bool verbose) {
     uint32_t r = mt32();
     float f = int32Bits2Float(r);
 
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    steady_clock::time_point t1 = steady_clock::now();
     for (int j = 0; j < iterations; j++) {
       f2s_buffered(f, bufferown);
       throwaway += (int) strlen(bufferown);
     }
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    steady_clock::time_point t2 = steady_clock::now();
     double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv1, delta1);
 
-    t1 = high_resolution_clock::now();
+    t1 = steady_clock::now();
     for (int j = 0; j < iterations; j++) {
       fcv(f);
       throwaway += (int) strlen(buffer);
     }
-    t2 = high_resolution_clock::now();
+    t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
     if (verbose) {
@@ -162,21 +162,21 @@ static int bench64(int samples, int iterations, bool verbose) {
     r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
     double f = int64Bits2Double(r);
 
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    steady_clock::time_point t1 = steady_clock::now();
     for (int j = 0; j < iterations; j++) {
       d2s_buffered(f, bufferown);
       throwaway += bufferown[2];
     }
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    steady_clock::time_point t2 = steady_clock::now();
     double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv1, delta1);
 
-    t1 = high_resolution_clock::now();
+    t1 = steady_clock::now();
     for (int j = 0; j < iterations; j++) {
       dcv(f);
       throwaway += buffer[2];
     }
-    t2 = high_resolution_clock::now();
+    t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
     update(mv2, delta2);
     if (verbose) {
