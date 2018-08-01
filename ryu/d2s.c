@@ -224,7 +224,7 @@ struct floating_decimal_64 {
   int32_t exponent;
 };
 
-static inline struct floating_decimal_64 d2d(uint64_t ieeeMantissa, uint32_t ieeeExponent) {
+static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
   const uint32_t offset = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
 
 #ifdef RYU_DEBUG
@@ -439,7 +439,7 @@ int d2s_buffered_n(double f, char* result) {
     return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
   }
 
-  struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+  const struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
 
   int index = 0;
   if (sign) {
