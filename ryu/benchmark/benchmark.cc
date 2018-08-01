@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string.h>
 #include <chrono>
+#include <random>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -31,7 +32,6 @@
 #include "ryu/ryu.h"
 #include "third_party/double-conversion/double-conversion/utils.h"
 #include "third_party/double-conversion/double-conversion/double-conversion.h"
-#include "third_party/mersenne/random.h"
 
 using double_conversion::StringBuilder;
 using double_conversion::DoubleToStringConverter;
@@ -101,14 +101,14 @@ double variance(mean_and_variance &mv) {
 
 static int bench32(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
-  RandomInit(12345);
+  std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; i++) {
-    uint32_t r = RandomU32();
+    uint32_t r = mt32();
     float f = int32Bits2Float(r);
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -150,14 +150,16 @@ static int bench32(int samples, int iterations, bool verbose) {
 
 static int bench64(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
-  RandomInit(12345);
+  std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; i++) {
-    uint64_t r = RandomU64();
+    uint64_t r = mt32();
+    r <<= 32;
+    r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
     double f = int64Bits2Double(r);
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
@@ -205,7 +207,7 @@ int main(int argc, char** argv) {
   sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
 #endif
 
-  // By default, run both 32 and 64-bit benchmarks with 10000 iterations each.
+  // By default, run both 32 and 64-bit benchmarks with 10000 samples and 1000 iterations each.
   bool run32 = true;
   bool run64 = true;
   int samples = 10000;

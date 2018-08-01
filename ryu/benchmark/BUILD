@@ -7,7 +7,6 @@ cc_binary(
   srcs = ["benchmark.cc"],
   deps = [
     "//ryu",
-    "//third_party/mersenne",
     "//third_party/double-conversion",
   ],
 )
