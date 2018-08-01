@@ -140,12 +140,12 @@ static inline uint32_t decimalLength(const uint32_t v) {
 }
 
 // A floating decimal representing m * 10^e.
-struct floating_decimal_32 {
+typedef struct floating_decimal_32 {
   uint32_t mantissa;
   int32_t exponent;
-};
+} floating_decimal_32;
 
-static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_t ieeeExponent) {
+static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_t ieeeExponent) {
   const uint32_t bias = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
 
   int32_t e2;
@@ -320,13 +320,13 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   printf("EXP=%d\n", exp);
 #endif
 
-  struct floating_decimal_32 fd;
+  floating_decimal_32 fd;
   fd.exponent = exp;
   fd.mantissa = output;
   return fd;
 }
 
-static inline int to_chars(const struct floating_decimal_32 v, const bool sign, char* const result) {
+static inline int to_chars(const floating_decimal_32 v, const bool sign, char* const result) {
   // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
@@ -426,7 +426,7 @@ int f2s_buffered_n(float f, char* result) {
     return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
   }
 
-  const struct floating_decimal_32 v = f2d(ieeeMantissa, ieeeExponent);
+  const floating_decimal_32 v = f2d(ieeeMantissa, ieeeExponent);
   return to_chars(v, ieeeSign, result);
 }
 
