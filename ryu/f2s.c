@@ -174,8 +174,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   const uint32_t mm = 4 * m2 - (((m2 != (1u << FLOAT_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 2 : 1);
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
-  uint32_t vr;
-  uint32_t vp, vm;
+  uint32_t vr, vp, vm;
   int32_t e10;
   bool vmIsTrailingZeros = false;
   bool vrIsTrailingZeros = false;
@@ -298,7 +297,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   return fd;
 }
 
-static inline int to_chars(const struct floating_decimal_32 v, const bool sign, char* result) {
+static inline int to_chars(const struct floating_decimal_32 v, const bool sign, char* const result) {
   // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
@@ -337,6 +336,7 @@ static inline int to_chars(const struct floating_decimal_32 v, const bool sign, 
   }
   if (output >= 10) {
     const uint32_t c = output << 1;
+    // We can't use memcpy here: the decimal dot goes between these two digits.
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
