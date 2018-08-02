@@ -492,9 +492,9 @@ int d2s_buffered_n(double f, char* result) {
   uint32_t output2 = (uint32_t) output;
   while (output2 >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
-    const uint32_t c = (uint32_t) (output2 - 10000 * (output2 / 10000));
+    const uint32_t c = output2 - 10000 * (output2 / 10000);
 #else
-    const uint32_t c = (uint32_t) (output2 % 10000);
+    const uint32_t c = output2 % 10000;
 #endif
     output2 /= 10000;
     const uint32_t c0 = (c % 100) << 1;
@@ -504,13 +504,13 @@ int d2s_buffered_n(double f, char* result) {
     i += 4;
   }
   if (output2 >= 100) {
-    const uint32_t c = (uint32_t) ((output2 % 100) << 1);
+    const uint32_t c = (output2 % 100) << 1;
     output2 /= 100;
     memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
   }
   if (output2 >= 10) {
-    const uint32_t c = (uint32_t) (output2 << 1);
+    const uint32_t c = output2 << 1;
     // We can't use memcpy here: the decimal dot goes between these two digits.
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
