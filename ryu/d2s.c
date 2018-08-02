@@ -416,30 +416,14 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
   printf("EXP=%d\n", exp);
 #endif
 
-  // Step 5: Print the decimal representation.
   struct floating_decimal_64 fd;
   fd.exponent = exp;
   fd.mantissa = output;
   return fd;
 }
 
-int d2s_buffered_n(double f, char* result) {
-  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  uint64_t bits = 0;
-  // This only works on little-endian architectures.
-  memcpy(&bits, &f, sizeof(double));
-
-  // Decode bits into sign, mantissa, and exponent.
-  const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
-  // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
-  }
-
-  const struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
-
+static inline int to_chars(const struct floating_decimal_64 v, const bool sign, char* const result) {
+  // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
     result[index++] = '-';
@@ -547,6 +531,25 @@ int d2s_buffered_n(double f, char* result) {
   }
 
   return index;
+}
+
+int d2s_buffered_n(double f, char* result) {
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
+  uint64_t bits = 0;
+  // This only works on little-endian architectures.
+  memcpy(&bits, &f, sizeof(double));
+
+  // Decode bits into sign, mantissa, and exponent.
+  const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  // Case distinction; exit early for the easy cases.
+  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
+  }
+
+  const struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+  return to_chars(v, sign, result);
 }
 
 void d2s_buffered(double f, char* result) {
