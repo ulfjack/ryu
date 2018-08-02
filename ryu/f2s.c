@@ -156,12 +156,14 @@ int f2s_buffered_n(float f, char* result) {
   printf("\n");
 #endif
 
-  int32_t e2;
-  uint32_t m2;
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
     return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
-  } else if (ieeeExponent == 0) {
+  }
+
+  int32_t e2;
+  uint32_t m2;
+  if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
     e2 = 1 - offset - mantissaBits - 2;
     m2 = ieeeMantissa;
