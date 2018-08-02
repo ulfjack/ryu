@@ -133,22 +133,17 @@ static inline uint32_t decimalLength(const uint32_t v) {
   return 1;
 }
 
-int f2s_buffered_n(float f, char* result) {
-  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  const uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
-  const uint32_t exponentBits = FLOAT_EXPONENT_BITS;
-  const uint32_t offset = (1u << (exponentBits - 1)) - 1;
+// A floating decimal representing m * 10^e.
+struct floating_decimal_32 {
+  uint32_t mantissa;
+  int32_t exponent;
+};
 
-  uint32_t bits = 0;
-  // This only works on little-endian architectures.
-  memcpy(&bits, &f, sizeof(float));
-
-  // Decode bits into sign, mantissa, and exponent.
-  const bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  const uint32_t ieeeMantissa = bits & ((1u << mantissaBits) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
+static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_t ieeeExponent) {
+  const uint32_t offset = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
 
 #ifdef RYU_DEBUG
+  uint32_t bits = (ieeeExponent << FLOAT_MANTISSA_BITS) | ieeeMantissa;
   printf("IN=");
   for (int32_t bit = 31; bit >= 0; --bit) {
     printf("%d", (bits >> bit) & 1);
@@ -156,32 +151,27 @@ int f2s_buffered_n(float f, char* result) {
   printf("\n");
 #endif
 
-  // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
-  }
-
   int32_t e2;
   uint32_t m2;
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - offset - mantissaBits - 2;
+    e2 = 1 - offset - FLOAT_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - offset - mantissaBits - 2;
-    m2 = (1u << mantissaBits) | ieeeMantissa;
+    e2 = ieeeExponent - offset - FLOAT_MANTISSA_BITS - 2;
+    m2 = (1u << FLOAT_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("S=%s E=%d M=%u\n", sign ? "-" : "+", e2, m2);
+  printf("E=%d M=%u\n", e2, m2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
   const uint32_t mv = 4 * m2;
   const uint32_t mp = 4 * m2 + 2;
-  const uint32_t mm = 4 * m2 - (((m2 != (1u << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
+  const uint32_t mm = 4 * m2 - (((m2 != (1u << FLOAT_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 2 : 1);
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
   uint32_t vr;
@@ -300,15 +290,23 @@ int f2s_buffered_n(float f, char* result) {
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  const uint32_t olength = decimalLength(output);
-  const uint32_t vplength = olength + removed;
-  int32_t exp = e10 + vplength - 1;
+  const int32_t exp = e10 + removed - 1;
 
+  struct floating_decimal_32 fd;
+  fd.exponent = exp;
+  fd.mantissa = output;
+  return fd;
+}
+
+static inline int to_chars(const struct floating_decimal_32 v, const bool sign, char* result) {
   // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
     result[index++] = '-';
   }
+
+  uint32_t output = v.mantissa;
+  const uint32_t olength = decimalLength(output);
 
   // Print the decimal digits.
   // The following code is equivalent to:
@@ -355,6 +353,7 @@ int f2s_buffered_n(float f, char* result) {
 
   // Print the exponent.
   result[index++] = 'E';
+  int32_t exp = v.exponent + olength;
   if (exp < 0) {
     result[index++] = '-';
     exp = -exp;
@@ -368,6 +367,26 @@ int f2s_buffered_n(float f, char* result) {
   }
 
   return index;
+}
+
+int f2s_buffered_n(float f, char* result) {
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
+  uint32_t bits = 0;
+  // This only works on little-endian architectures.
+  memcpy(&bits, &f, sizeof(float));
+
+  // Decode bits into sign, mantissa, and exponent.
+  const bool sign = ((bits >> (FLOAT_MANTISSA_BITS + FLOAT_EXPONENT_BITS)) & 1) != 0;
+  const uint32_t ieeeMantissa = bits & ((1u << FLOAT_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> FLOAT_MANTISSA_BITS) & ((1u << FLOAT_EXPONENT_BITS) - 1));
+
+  // Case distinction; exit early for the easy cases.
+  if (ieeeExponent == ((1u << FLOAT_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
+  }
+
+  const struct floating_decimal_32 v = f2d(ieeeMantissa, ieeeExponent);
+  return to_chars(v, sign, result);
 }
 
 void f2s_buffered(float f, char* result) {
