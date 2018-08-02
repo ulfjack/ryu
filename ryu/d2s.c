@@ -258,8 +258,8 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
   // Implicit bool -> int conversion. True is 1, false is 0.
   const uint32_t mmShift = (m2 != (1ull << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1);
   // We would compute mp and mm like this:
-//  uint64_t mp = 4 * m2 + 2;
-//  uint64_t mm = mv - 1 - mmShift;
+  // uint64_t mp = 4 * m2 + 2;
+  // uint64_t mm = mv - 1 - mmShift;
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
   uint64_t vr, vp, vm;
@@ -408,8 +408,6 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  // The average output length is 16.38 digits.
-  // const uint32_t olength = decimalLength(output);
   const int32_t exp = e10 + removed - 1;
 
 #ifdef RYU_DEBUG
