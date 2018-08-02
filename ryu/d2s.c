@@ -238,7 +238,6 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
 
   int32_t e2;
   uint64_t m2;
-  // Case distinction; exit early for the easy cases.
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
     e2 = 1 - offset - DOUBLE_MANTISSA_BITS - 2;
@@ -432,9 +431,11 @@ int d2s_buffered_n(double f, char* result) {
   // This only works on little-endian architectures.
   memcpy(&bits, &f, sizeof(double));
 
+  // Decode bits into sign, mantissa, and exponent.
   const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
   const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
   const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
     return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
   }
