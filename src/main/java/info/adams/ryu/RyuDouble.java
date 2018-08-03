@@ -106,8 +106,8 @@ public final class RyuDouble {
     // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
     // First, handle all the trivial cases.
     if (Double.isNaN(value)) return "NaN";
-    if (value == Float.POSITIVE_INFINITY) return "Infinity";
-    if (value == Float.NEGATIVE_INFINITY) return "-Infinity";
+    if (value == Double.POSITIVE_INFINITY) return "Infinity";
+    if (value == Double.NEGATIVE_INFINITY) return "-Infinity";
     long bits = Double.doubleToLongBits(value);
     if (bits == 0) return "0.0";
     if (bits == 0x8000000000000000L) return "-0.0";
