@@ -28,6 +28,7 @@
 //     performance. Currently requires MSVC intrinsics.
 
 #include "ryu/ryu.h"
+#include "ryu/ryu_low_level.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -224,19 +225,17 @@ struct floating_decimal_64 {
   int32_t exponent;
 };
 
-static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
-  const uint32_t bias = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
+static inline uint32_t internal_bias(const uint32_t mantissaBits, const uint32_t exponentBits) {
+  // We subtract 2 so that the bounds computation has 2 additional bits.
+  return (1u << (exponentBits - 1)) - 1 + mantissaBits + 2;
+}
 
-  int32_t e2;
-  uint64_t m2;
-  if (ieeeExponent == 0) {
-    // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - bias - DOUBLE_MANTISSA_BITS - 2;
-    m2 = ieeeMantissa;
-  } else {
-    e2 = ieeeExponent - bias - DOUBLE_MANTISSA_BITS - 2;
-    m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
-  }
+static inline struct floating_decimal_64 d2d(
+    const uint64_t ieeeMantissa,
+    const uint32_t ieeeExponent,
+    const uint32_t bias) {
+  const int32_t e2 = (ieeeExponent == 0 ? 1 : ieeeExponent) - bias;
+  const uint64_t m2 = ieeeMantissa;
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
 
@@ -247,7 +246,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
   // Step 2: Determine the interval of legal decimal representations.
   const uint64_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  const uint32_t mmShift = (ieeeMantissa != 0) || (ieeeExponent <= 1);
+  const uint32_t mmShift = (m2 != (1ull << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1);
   // We would compute mp and mm like this:
   // uint64_t mp = 4 * m2 + 2;
   // uint64_t mm = mv - 1 - mmShift;
@@ -415,6 +414,41 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
   return fd;
 }
 
+struct floating_decimal generic_binary_to_decimal(
+    const uint64_t ieeeBits,
+    const uint32_t mantissaBits,
+    const uint32_t exponentBits) {
+  assert(mantissaBits < 64);
+  assert(exponentBits < 64);
+  assert(mantissaBits + exponentBits + 1 <= 64);
+
+  const bool ieeeSign = ((ieeeBits >> (mantissaBits + exponentBits)) & 1) != 0;
+  uint64_t ieeeMantissa = ieeeBits & ((1ull << mantissaBits) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((ieeeBits >> mantissaBits) & ((1u << exponentBits) - 1));
+  // Case distinction; exit early for the easy cases.
+  if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    struct floating_decimal result;
+    result.mantissa = 0;
+    result.exponent = 0;
+    result.sign = ieeeSign;
+    result.type = ieeeMantissa ? NAN : (ieeeExponent ? VALUE : INFINITY);
+    return result;
+  }
+
+  if (ieeeExponent != 0) {
+    ieeeMantissa |= (1ull << mantissaBits);
+  }
+
+  const uint32_t bias = internal_bias(mantissaBits, exponentBits);
+  const struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent, bias);
+  struct floating_decimal result;
+  result.mantissa = v.mantissa;
+  result.exponent = v.exponent;
+  result.sign = ieeeSign;
+  result.type = VALUE;
+  return result;
+}
+
 static inline int to_chars(const struct floating_decimal_64 v, const bool sign, char* const result) {
   // Step 5: Print the decimal representation.
   int index = 0;
@@ -542,14 +576,18 @@ int d2s_buffered_n(double f, char* result) {
 
   // Decode bits into sign, mantissa, and exponent.
   const bool ieeeSign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
+  uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
   const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
     return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
   }
 
-  const struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+  if (ieeeExponent != 0) {
+    ieeeMantissa |= (1ull << DOUBLE_MANTISSA_BITS);
+  }
+  const uint32_t bias = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1 + DOUBLE_MANTISSA_BITS + 2;
+  const struct floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent, bias);
   return to_chars(v, ieeeSign, result);
 }
 

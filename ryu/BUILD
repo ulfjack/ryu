@@ -11,5 +11,9 @@ cc_library(
     "mulshift128.h",
     "common.h",
   ],
-  hdrs = ["ryu.h"],
+  hdrs = [
+    "ryu.h",
+    # Experimental low-level API; may change at any time.
+    "ryu_low_level.h",
+  ],
 )
