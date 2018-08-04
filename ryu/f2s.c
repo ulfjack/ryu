@@ -143,10 +143,10 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   const uint32_t offset = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
 
 #ifdef RYU_DEBUG
-  uint32_t bits = (ieeeExponent << FLOAT_MANTISSA_BITS) | ieeeMantissa;
+  const uint32_t bits = (ieeeExponent << FLOAT_MANTISSA_BITS) | ieeeMantissa;
   printf("IN=");
   for (int32_t bit = 31; bit >= 0; --bit) {
-    printf("%d", (bits >> bit) & 1);
+    printf("%u", (bits >> bit) & 1);
   }
   printf("\n");
 #endif
@@ -165,7 +165,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("E=%d M=%u\n", e2, m2);
+  printf("E=%d M=%u\n", e2 + 2, m2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
@@ -188,8 +188,8 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef RYU_DEBUG
-    printf("%d * 2^%d / 10^%d\n", mv, e2, q);
-    printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
+    printf("%u * 2^%d / 10^%d\n", mv, e2, q);
+    printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
       // We need to know one removed digit even if we are not going to loop below. We could use
@@ -220,9 +220,9 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
 #ifdef RYU_DEBUG
-    printf("%d * 5^%d / 10^%d\n", mv, -e2, q);
+    printf("%u * 5^%d / 10^%d\n", mv, -e2, q);
     printf("%d %d %d %d\n", q, i, k, j);
-    printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
+    printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
       j = q - 1 - (pow5bits(i + 1) - FLOAT_POW5_BITCOUNT);
@@ -237,6 +237,9 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
       vrIsTrailingZeros = (mv & ((1u << (q - 1)) - 1)) == 0;
+#ifdef RYU_DEBUG
+      printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
     }
   }
 #ifdef RYU_DEBUG
@@ -260,6 +263,10 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       vm /= 10;
       ++removed;
     }
+#ifdef RYU_DEBUG
+    printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
+    printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
+#endif
     if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
@@ -270,6 +277,10 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
         ++removed;
       }
     }
+#ifdef RYU_DEBUG
+    printf("%u %d\n", vr, lastRemovedDigit);
+    printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
     if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
       // Round down not up if the number ends in X50000.
       lastRemovedDigit = 4;
@@ -286,10 +297,20 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       vm /= 10;
       ++removed;
     }
+#ifdef RYU_DEBUG
+    printf("%u %d\n", vr, lastRemovedDigit);
+    printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
   const int32_t exp = e10 + removed - 1;
+
+#ifdef RYU_DEBUG
+  printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
+  printf("O=%u\n", output);
+  printf("EXP=%d\n", exp);
+#endif
 
   struct floating_decimal_32 fd;
   fd.exponent = exp;
@@ -306,6 +327,12 @@ static inline int to_chars(const struct floating_decimal_32 v, const bool sign, 
 
   uint32_t output = v.mantissa;
   const uint32_t olength = decimalLength(output);
+
+#ifdef RYU_DEBUG
+  printf("DIGITS=%u\n", v.mantissa);
+  printf("OLEN=%u\n", olength);
+  printf("EXP=%u\n", v.exponent + olength);
+#endif
 
   // Print the decimal digits.
   // The following code is equivalent to:

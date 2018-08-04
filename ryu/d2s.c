@@ -228,7 +228,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
   const uint32_t offset = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
 
 #ifdef RYU_DEBUG
-  uint64_t bits = (((uint64_t) ieeeExponent) << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+  const uint64_t bits = (((uint64_t) ieeeExponent) << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   printf("IN=");
   for (int32_t bit = 63; bit >= 0; --bit) {
     printf("%d", (int) ((bits >> bit) & 1));
@@ -434,8 +434,8 @@ static inline int to_chars(const struct floating_decimal_64 v, const bool sign, 
 
 #ifdef RYU_DEBUG
   printf("DIGITS=%" PRIu64 "\n", v.mantissa);
-  printf("OLEN=%d\n", olength);
-  printf("EXP=%d\n", v.exponent + olength);
+  printf("OLEN=%u\n", olength);
+  printf("EXP=%u\n", v.exponent + olength);
 #endif
 
   // Print the decimal digits.
