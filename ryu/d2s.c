@@ -225,32 +225,23 @@ struct floating_decimal_64 {
 };
 
 static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
-  const uint32_t offset = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
-
-#ifdef RYU_DEBUG
-  const uint64_t bits = (((uint64_t) ieeeExponent) << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
-  printf("IN=");
-  for (int32_t bit = 63; bit >= 0; --bit) {
-    printf("%d", (int) ((bits >> bit) & 1));
-  }
-  printf("\n");
-#endif
+  const uint32_t bias = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
 
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - offset - DOUBLE_MANTISSA_BITS - 2;
+    e2 = 1 - bias - DOUBLE_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - offset - DOUBLE_MANTISSA_BITS - 2;
+    e2 = ieeeExponent - bias - DOUBLE_MANTISSA_BITS - 2;
     m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("E=%d M=%" PRIu64 "\n", e2 + 2, m2);
+  printf("-> %" PRIu64 " * 2^%d\n", m2, e2 + 2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
@@ -540,6 +531,14 @@ int d2s_buffered_n(double f, char* result) {
   uint64_t bits = 0;
   // This only works on little-endian architectures.
   memcpy(&bits, &f, sizeof(double));
+
+#ifdef RYU_DEBUG
+  printf("IN=");
+  for (int32_t bit = 63; bit >= 0; --bit) {
+    printf("%d", (int) ((bits >> bit) & 1));
+  }
+  printf("\n");
+#endif
 
   // Decode bits into sign, mantissa, and exponent.
   const bool sign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;

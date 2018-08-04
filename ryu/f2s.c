@@ -140,38 +140,30 @@ struct floating_decimal_32 {
 };
 
 static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_t ieeeExponent) {
-  const uint32_t offset = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
-
-#ifdef RYU_DEBUG
-  const uint32_t bits = (ieeeExponent << FLOAT_MANTISSA_BITS) | ieeeMantissa;
-  printf("IN=");
-  for (int32_t bit = 31; bit >= 0; --bit) {
-    printf("%u", (bits >> bit) & 1);
-  }
-  printf("\n");
-#endif
+  const uint32_t bias = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
 
   int32_t e2;
   uint32_t m2;
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - offset - FLOAT_MANTISSA_BITS - 2;
+    e2 = 1 - bias - FLOAT_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - offset - FLOAT_MANTISSA_BITS - 2;
+    e2 = ieeeExponent - bias - FLOAT_MANTISSA_BITS - 2;
     m2 = (1u << FLOAT_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("E=%d M=%u\n", e2 + 2, m2);
+  printf("-> %u * 2^%d\n", m2, e2 + 2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
   const uint32_t mv = 4 * m2;
   const uint32_t mp = 4 * m2 + 2;
-  const uint32_t mm = 4 * m2 - (((m2 != (1u << FLOAT_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 2 : 1);
+  const uint32_t mmShift = (m2 != (1u << FLOAT_MANTISSA_BITS)) || (ieeeExponent <= 1);
+  const uint32_t mm = 4 * m2 - 1 - mmShift;
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
   uint32_t vr, vp, vm;
@@ -407,6 +399,14 @@ int f2s_buffered_n(float f, char* result) {
   uint32_t bits = 0;
   // This only works on little-endian architectures.
   memcpy(&bits, &f, sizeof(float));
+
+#ifdef RYU_DEBUG
+  printf("IN=");
+  for (int32_t bit = 31; bit >= 0; --bit) {
+    printf("%u", (bits >> bit) & 1);
+  }
+  printf("\n");
+#endif
 
   // Decode bits into sign, mantissa, and exponent.
   const bool sign = ((bits >> (FLOAT_MANTISSA_BITS + FLOAT_EXPONENT_BITS)) & 1) != 0;
