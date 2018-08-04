@@ -64,9 +64,15 @@ static inline int32_t pow5Factor(uint64_t value) {
 }
 
 // Returns true if value is divisible by 5^p.
-static inline bool multipleOfPowerOf5(const uint64_t value, const int32_t p) {
+static inline bool multipleOfPowerOf5(const uint64_t value, const uint32_t p) {
   // I tried a case distinction on p, but there was no performance difference.
   return pow5Factor(value) >= p;
+}
+
+// Returns true if value is divisible by 2^p.
+static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
+  // return __builtin_ctz(value) >= p;
+  return (value & ((1ull << (p - 1)) - 1)) == 0;
 }
 
 // We need a 64x128-bit multiplication and a subsequent 128-bit shift.
@@ -260,7 +266,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
   if (e2 >= 0) {
     // I tried special-casing q == 0, but there was no effect on performance.
     // This expression is slightly faster than max(0, log10Pow2(e2) - 1).
-    const int32_t q = log10Pow2(e2) - (e2 > 3);
+    const uint32_t q = log10Pow2(e2) - (e2 > 3);
     e10 = q;
     const int32_t k = DOUBLE_POW5_INV_BITCOUNT + pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
@@ -291,7 +297,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     }
   } else {
     // This expression is slightly faster than max(0, log10Pow5(-e2) - 1).
-    const int32_t q = log10Pow5(-e2) - (-e2 > 1);
+    const uint32_t q = log10Pow5(-e2) - (-e2 > 1);
     e10 = q + e2;
     const int32_t i = -e2 - q;
     const int32_t k = pow5bits(i) - DOUBLE_POW5_BITCOUNT;
@@ -325,7 +331,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
       // <=> ntz(mv) >= q-1    (e2 is negative and -e2 >= q)
       // <=> (mv & ((1 << (q-1)) - 1)) == 0
       // We also need to make sure that the left shift does not overflow.
-      vrIsTrailingZeros = (mv & ((1ull << (q - 1)) - 1)) == 0;
+      vrIsTrailingZeros = multipleOfPowerOf2(mv, q);
 #ifdef RYU_DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
