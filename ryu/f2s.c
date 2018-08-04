@@ -255,7 +255,13 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
     // General case, which happens rarely.
     while (vp / 10 > vm / 10) {
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
+      // The compiler does not realize that vm % 10 can be computed from vm / 10
+      // as vm - (vm / 10) * 10.
+      vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0;
+#else
       vmIsTrailingZeros &= vm % 10 == 0;
+#endif
       vrIsTrailingZeros &= lastRemovedDigit == 0;
       lastRemovedDigit = (uint8_t) (vr % 10);
       vr /= 10;
