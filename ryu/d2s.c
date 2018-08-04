@@ -288,16 +288,14 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
+      } else if (acceptBounds) {
+        // Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
+        // <=> e2 + (~mm & 1) >= q && pow5Factor(mm) >= q
+        // <=> true && pow5Factor(mm) >= q, since e2 >= q.
+        vmIsTrailingZeros = multipleOfPowerOf5(mv - 1 - mmShift, q);
       } else {
-        if (acceptBounds) {
-          // Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
-          // <=> e2 + (~mm & 1) >= q && pow5Factor(mm) >= q
-          // <=> true && pow5Factor(mm) >= q, since e2 >= q.
-          vmIsTrailingZeros = multipleOfPowerOf5(mv - 1 - mmShift, q);
-        } else {
-          // Same as min(e2 + 1, pow5Factor(mp)) >= q.
-          vp -= multipleOfPowerOf5(mv + 2, q);
-        }
+        // Same as min(e2 + 1, pow5Factor(mp)) >= q.
+        vp -= multipleOfPowerOf5(mv + 2, q);
       }
     }
   } else {
@@ -320,16 +318,20 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
-      vrIsTrailingZeros = (~((uint32_t) mv) & 1) >= (uint32_t) q;
+      // {vr,vp,vm} is trailing zeros if {mv,mp,mm} has at least q trailing 0 bits.
+      // mv = 4 m2, so it always has at least two trailing 0 bits.
+      vrIsTrailingZeros = true;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~((uint32_t) (mv - 1 - mmShift)) & 1) >= (uint32_t) q;
+        // mm = mv - 1 - mmShift, so it has 1 trailing 0 bit iff mmShift == 1.
+        vmIsTrailingZeros = mmShift == 1;
       } else {
+        // mp = mv + 2, so it always has at least one trailing 0 bit.
         --vp;
       }
     } else if (q < 63) { // TODO(ulfjack): Use a tighter bound here.
       // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
       // <=> ntz(mv) >= q-1  &&  pow5Factor(mv) - e2 >= q-1
-      // <=> ntz(mv) >= q-1
+      // <=> ntz(mv) >= q-1    (e2 is negative and -e2 >= q)
       // <=> (mv & ((1 << (q-1)) - 1)) == 0
       // We also need to make sure that the left shift does not overflow.
       vrIsTrailingZeros = (mv & ((1ull << (q - 1)) - 1)) == 0;
@@ -386,7 +388,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
-      // Round down not up if the number ends in X50000.
+      // Round even if the exact numbers is .....50..0.
       lastRemovedDigit = 4;
     }
     // We need to take vr+1 if vr is outside bounds or we need to round up.
