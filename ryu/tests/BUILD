@@ -26,3 +26,11 @@ cc_test(
   ],
 )
 
+cc_test(
+  name = "generic_128_test",
+  srcs = ["generic_128_test.cc"],
+  deps = [
+    "//ryu:generic_128",
+    "//third_party/gtest",
+  ],
+)
