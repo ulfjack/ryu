@@ -82,6 +82,15 @@ public abstract class FloatToStringTest {
   }
 
   @Test
+  public void looksLikePow5() {
+    // These are all floating point numbers where the mantissa is a power of 5,
+    // and the exponent is in the range such that q = 10.
+    assertF2sEquals("6.7108864E17", Float.intBitsToFloat(0x5D1502F9));
+    assertF2sEquals("1.3421773E18", Float.intBitsToFloat(0x5D9502F9));
+    assertF2sEquals("2.6843546E18", Float.intBitsToFloat(0x5E1502F9));
+  }
+
+  @Test
   public void regressionTest() {
     assertF2sEquals("4.7223665E21", 4.7223665E21f);
     assertF2sEquals("8388608.0", 8388608.0f);
