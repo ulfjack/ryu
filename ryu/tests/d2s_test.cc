@@ -60,6 +60,15 @@ TEST(D2sTest, Regression) {
   ASSERT_STREQ("1.2345678E0", d2s(1.2345678));
 }
 
+TEST(D2sTest, LooksLikePow5) {
+  // These numbers have a mantissa that is a multiple of the largest power of 5 that fits,
+  // and an exponent that causes the computation for q to result in 22, which is a corner
+  // case for Ryu.
+  ASSERT_STREQ("5.764607523034235E39", d2s(int64Bits2Double(0x4830F0CF064DD592)));
+  ASSERT_STREQ("1.152921504606847E40", d2s(int64Bits2Double(0x4840F0CF064DD592)));
+  ASSERT_STREQ("2.305843009213694E40", d2s(int64Bits2Double(0x4850F0CF064DD592)));
+}
+
 TEST(D2sTest, OutputLength) {
   ASSERT_STREQ("1E0", d2s(1)); // already tested in Basic
   ASSERT_STREQ("1.2E0", d2s(1.2));
