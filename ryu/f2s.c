@@ -191,6 +191,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       lastRemovedDigit = (uint8_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
+      // The largest power of 5 that fits in 24 bits is 5^10, but q<=9 seems to be safe as well.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
