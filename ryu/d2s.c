@@ -53,8 +53,8 @@
 #include "ryu/digit_table.h"
 #include "ryu/d2s.h"
 
-static inline int32_t pow5Factor(uint64_t value) {
-  for (int32_t count = 0; value > 0; ++count) {
+static inline uint32_t pow5Factor(uint64_t value) {
+  for (uint32_t count = 0; value > 0; ++count) {
     if (value % 5 != 0) {
       return count;
     }
@@ -278,7 +278,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
 #endif
 #ifdef RYU_DEBUG
-    printf("%" PRIu64 " * 2^%d / 10^%d\n", mv, e2, q);
+    printf("%" PRIu64 " * 2^%d / 10^%u\n", mv, e2, q);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 21) {
@@ -312,8 +312,8 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT[i], j, &vp, &vm, mmShift);
 #endif
 #ifdef RYU_DEBUG
-    printf("%" PRIu64 " * 5^%d / 10^%d\n", mv, -e2, q);
-    printf("%d %d %d %d\n", q, i, k, j);
+    printf("%" PRIu64 " * 5^%d / 10^%u\n", mv, -e2, q);
+    printf("%u %d %d %d\n", q, i, k, j);
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 1) {
