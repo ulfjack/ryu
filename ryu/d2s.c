@@ -318,7 +318,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
 #endif
     if (q <= 1) {
       // {vr,vp,vm} is trailing zeros if {mv,mp,mm} has at least q trailing 0 bits.
-      // mv = 4 m2, so it always has at least two trailing 0 bits.
+      // mv = 4 * m2, so it always has at least two trailing 0 bits.
       vrIsTrailingZeros = true;
       if (acceptBounds) {
         // mm = mv - 1 - mmShift, so it has 1 trailing 0 bit iff mmShift == 1.
@@ -387,7 +387,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
-      // Round even if the exact numbers is .....50..0.
+      // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
     // We need to take vr+1 if vr is outside bounds or we need to round up.

@@ -196,12 +196,10 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
+      } else if (acceptBounds) {
+        vmIsTrailingZeros = multipleOfPowerOf5(mm, q);
       } else {
-        if (acceptBounds) {
-          vmIsTrailingZeros = multipleOfPowerOf5(mm, q);
-        } else {
-          vp -= multipleOfPowerOf5(mp, q);
-        }
+        vp -= multipleOfPowerOf5(mp, q);
       }
     }
   } else {
@@ -223,10 +221,14 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       lastRemovedDigit = (uint8_t) (mulPow5divPow2(mv, i + 1, j) % 10);
     }
     if (q <= 1) {
-      vrIsTrailingZeros = (~mv & 1) >= (uint32_t) q;
+      // {vr,vp,vm} is trailing zeros if {mv,mp,mm} has at least q trailing 0 bits.
+      // mv = 4 * m2, so it always has at least two trailing 0 bits.
+      vrIsTrailingZeros = true;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~mm & 1) >= (uint32_t) q;
+        // mm = mv - 1 - mmShift, so it has 1 trailing 0 bit iff mmShift == 1.
+        vmIsTrailingZeros = mmShift == 1;
       } else {
+        // mp = mv + 2, so it always has at least one trailing 0 bit.
         --vp;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
@@ -282,7 +284,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
-      // Round down not up if the number ends in X50000.
+      // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
     // We need to take vr+1 if vr is outside bounds or we need to round up.
