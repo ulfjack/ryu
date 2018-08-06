@@ -162,6 +162,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   // Step 2: Determine the interval of legal decimal representations.
   const uint32_t mv = 4 * m2;
   const uint32_t mp = 4 * m2 + 2;
+  // Implicit bool -> int conversion. True is 1, false is 0.
   const uint32_t mmShift = (m2 != (1u << FLOAT_MANTISSA_BITS)) || (ieeeExponent <= 1);
   const uint32_t mm = 4 * m2 - 1 - mmShift;
 
