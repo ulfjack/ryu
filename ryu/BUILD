@@ -13,3 +13,14 @@ cc_library(
   ],
   hdrs = ["ryu.h"],
 )
+
+cc_library(
+  name = "generic_128",
+  srcs = [
+    "generic_128.c",
+    "generic_128.h",
+  ],
+  hdrs = [
+    "ryu_generic_128.h",
+  ],
+)
