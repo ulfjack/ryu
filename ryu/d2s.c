@@ -282,6 +282,8 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
     printf("V+=%" PRIu64 "\nV =%" PRIu64 "\nV-=%" PRIu64 "\n", vp, vr, vm);
 #endif
     if (q <= 21) {
+      // This should use q <= 22, but I think 21 is also safe. Smaller values
+      // may still be safe, but it's more difficult to reason about them.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
