@@ -72,7 +72,7 @@ static inline bool multipleOfPowerOf5(const uint64_t value, const uint32_t p) {
 // Returns true if value is divisible by 2^p.
 static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
   // return __builtin_ctz(value) >= p;
-  return (value & ((1ull << (p - 1)) - 1)) == 0;
+  return (value & ((1ull << p) - 1)) == 0;
 }
 
 // We need a 64x128-bit multiplication and a subsequent 128-bit shift.
@@ -333,7 +333,7 @@ static inline struct floating_decimal_64 d2d(const uint64_t ieeeMantissa, const 
       // <=> ntz(mv) >= q-1    (e2 is negative and -e2 >= q)
       // <=> (mv & ((1 << (q-1)) - 1)) == 0
       // We also need to make sure that the left shift does not overflow.
-      vrIsTrailingZeros = multipleOfPowerOf2(mv, q);
+      vrIsTrailingZeros = multipleOfPowerOf2(mv, q - 1);
 #ifdef RYU_DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
