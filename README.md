@@ -49,6 +49,13 @@ You can run both C and Java tests with
 $ bazel test //ryu/... //src/...
 ```
 
+### Big-Endian Architectures
+The C implementation of Ryu should work on big-endian architectures provided
+that the floating point type and the corresponding integer type use the same
+endianness.
+
+There are no concerns around endianness for the Java implementation.
+
 ### Computing Required Lookup Table Sizes
 You can compute the required lookup table sizes with:
 ```
