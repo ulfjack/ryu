@@ -35,6 +35,9 @@ struct floating_decimal_128 {
 
 struct floating_decimal_128 float_to_fd128(float f);
 struct floating_decimal_128 double_to_fd128(double d);
+
+// According to wikipedia (https://en.wikipedia.org/wiki/Long_double), this likely only works on
+// x86 with specific compilers (clang?). May need an ifdef.
 struct floating_decimal_128 long_double_to_fd128(long double d);
 
 // Converts the given binary floating point number to the shortest decimal floating point number
