@@ -114,7 +114,7 @@ static int bench32(int samples, int iterations, bool verbose) {
     steady_clock::time_point t1 = steady_clock::now();
     for (int j = 0; j < iterations; j++) {
       f2s_buffered(f, bufferown);
-      throwaway += (int) strlen(bufferown);
+      throwaway += bufferown[2];
     }
     steady_clock::time_point t2 = steady_clock::now();
     double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
@@ -123,7 +123,7 @@ static int bench32(int samples, int iterations, bool verbose) {
     t1 = steady_clock::now();
     for (int j = 0; j < iterations; j++) {
       fcv(f);
-      throwaway += (int) strlen(buffer);
+      throwaway += buffer[2];
     }
     t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
