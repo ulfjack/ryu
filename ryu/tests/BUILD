@@ -5,6 +5,7 @@ cc_test(
   deps = [
     "//ryu",
     "//third_party/gtest",
+    "//third_party/double-conversion",
   ],
 )
 
@@ -23,6 +24,7 @@ cc_test(
   deps = [
     "//ryu",
     "//third_party/gtest",
+    "//third_party/double-conversion",
   ],
 )
 

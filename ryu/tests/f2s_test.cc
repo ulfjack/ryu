@@ -16,14 +16,36 @@
 // KIND, either express or implied.
 
 #include <math.h>
+#include <string.h>
 
 #include "ryu/ryu.h"
 #include "third_party/gtest/gtest.h"
+#include "third_party/double-conversion/double-conversion/double-conversion.h"
 
 static float int32Bits2Float(uint32_t bits) {
   float f;
   memcpy(&f, &bits, sizeof(float));
   return f;
+}
+
+static bool compareRyuWithDC(float f) {
+  using double_conversion::DoubleToStringConverter;
+  using double_conversion::StringBuilder;
+
+  static DoubleToStringConverter converter(
+      DoubleToStringConverter::Flags::EMIT_TRAILING_DECIMAL_POINT
+          | DoubleToStringConverter::Flags::EMIT_TRAILING_ZERO_AFTER_POINT,
+      "Infinity", "NaN", 'E', 7, 7, 0, 0);
+
+  char bufDC[32];
+  StringBuilder builder(bufDC, 32);
+  converter.ToShortestSingle(f, &builder);
+  builder.Finalize();
+
+  char bufRyu[32];
+  f2s_buffered(f, bufRyu);
+
+  return strcmp(bufDC, bufRyu) == 0;
 }
 
 TEST(F2sTest, Basic) {
@@ -125,4 +147,14 @@ TEST(F2sTest, OutputLength) {
   ASSERT_STREQ("1.234567E0", f2s(1.234567f));
   ASSERT_STREQ("1.2345678E0", f2s(1.2345678f));
   ASSERT_STREQ("1.23456735E-36", f2s(1.23456735E-36f));
+}
+
+TEST(F2sTest, Boundaries) {
+  const uint32_t eMin = 1;
+  const uint32_t eMax = 255; // Tests NaN and Infinity, too.
+  for (uint32_t e = eMin; e <= eMax; ++e) {
+    ASSERT_TRUE(compareRyuWithDC(int32Bits2Float((e-1) << 23 | 0x007FFFFF)));
+    ASSERT_TRUE(compareRyuWithDC(int32Bits2Float((e  ) << 23 | 0x00000000)));
+    ASSERT_TRUE(compareRyuWithDC(int32Bits2Float((e  ) << 23 | 0x00000001)));
+  }
 }
