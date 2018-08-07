@@ -169,7 +169,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
   const uint32_t mv = 4 * m2;
   const uint32_t mp = 4 * m2 + 2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  const uint32_t mmShift = (ieeeMantissa != 0) || (ieeeExponent <= 1);
+  const uint32_t mmShift = ieeeMantissa != 0 || ieeeExponent <= 1;
   const uint32_t mm = 4 * m2 - 1 - mmShift;
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
@@ -190,7 +190,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     printf("%u * 2^%d / 10^%u\n", mv, e2, q);
     printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
-    if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
+    if (q != 0 && (vp - 1) / 10 <= vm / 10) {
       // We need to know one removed digit even if we are not going to loop below. We could use
       // q = X - 1 above, except that would require 33 bits for the result, and we've found that
       // 32-bit arithmetic is faster even on 64-bit machines.
@@ -222,7 +222,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     printf("%u %d %d %d\n", q, i, k, j);
     printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
-    if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
+    if (q != 0 && (vp - 1) / 10 <= vm / 10) {
       j = q - 1 - (pow5bits(i + 1) - FLOAT_POW5_BITCOUNT);
       lastRemovedDigit = (uint8_t) (mulPow5divPow2(mv, i + 1, j) % 10);
     }
@@ -289,13 +289,13 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     printf("%u %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
-    if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
+    if (vrIsTrailingZeros && lastRemovedDigit == 5 && vr % 2 == 0) {
       // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr +
-        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
+        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
     // Common case.
     while (vp / 10 > vm / 10) {
@@ -310,7 +310,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
-    output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
+    output = vr + (vr == vm || lastRemovedDigit >= 5);
   }
   const int32_t exp = e10 + removed;
 
@@ -395,7 +395,7 @@ static inline int to_chars(const floating_decimal_32 v, const bool sign, char* c
   }
 
   if (exp >= 10) {
-    memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
+    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
     index += 2;
   } else {
     result[index++] = (char) ('0' + exp);
