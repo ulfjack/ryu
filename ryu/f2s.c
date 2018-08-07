@@ -406,9 +406,7 @@ static inline int to_chars(const struct floating_decimal_32 v, const bool sign, 
 
 int f2s_buffered_n(float f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  uint32_t bits = 0;
-  // This only works on little-endian architectures.
-  memcpy(&bits, &f, sizeof(float));
+  uint32_t bits = float_to_bits(f);
 
 #ifdef RYU_DEBUG
   printf("IN=");
