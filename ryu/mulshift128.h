@@ -33,8 +33,8 @@ static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const
   // modulo 64.
   // In the current implementation of the double-precision version
   // of Ryu, the shift value is always < 64. (In the case
-  // RYU_OPTIMIZE_SIZE == 0, the shift value is in the range [50,58].
-  // Otherwise in the range [2,59].)
+  // RYU_OPTIMIZE_SIZE == 0, the shift value is in the range [50, 58].
+  // Otherwise in the range [2, 59].)
   // Check this here in case a future change requires larger shift
   // values. In this case this function needs to be adjusted.
   assert(dist < 64);

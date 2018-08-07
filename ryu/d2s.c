@@ -83,16 +83,16 @@ static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
 //   factor only has 124 significant bits (i.e., the 4 topmost bits are
 //   zeros).
 // Shift:
-//   In principle, the multiplication result requires 55+124=179 bits to
+//   In principle, the multiplication result requires 55 + 124 = 179 bits to
 //   represent. However, we then shift this value to the right by j, which is
-//   at least j >= 115, so the result is guaranteed to fit into 179-115=64
+//   at least j >= 115, so the result is guaranteed to fit into 179 - 115 = 64
 //   bits. This means that we only need the topmost 64 significant bits of
 //   the 64x128-bit multiplication.
 //
 // There are several ways to do this:
 // 1. Best case: the compiler exposes a 128-bit type.
 //    We perform two 64x64-bit multiplications, add the higher 64 bits of the
-//    lower result to the higher result, and shift by j-64 bits.
+//    lower result to the higher result, and shift by j - 64 bits.
 //
 //    We explicitly cast from 64-bit to 128-bit, so the compiler can tell
 //    that these are only 64-bit inputs, and can map these to the best
@@ -328,10 +328,10 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
         --vp;
       }
     } else if (q < 63) { // TODO(ulfjack): Use a tighter bound here.
-      // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q-1
-      // <=> ntz(mv) >= q-1  &&  pow5Factor(mv) - e2 >= q-1
-      // <=> ntz(mv) >= q-1    (e2 is negative and -e2 >= q)
-      // <=> (mv & ((1 << (q-1)) - 1)) == 0
+      // We need to compute min(ntz(mv), pow5Factor(mv) - e2) >= q - 1
+      // <=> ntz(mv) >= q - 1 && pow5Factor(mv) - e2 >= q - 1
+      // <=> ntz(mv) >= q - 1 (e2 is negative and -e2 >= q)
+      // <=> (mv & ((1 << (q - 1)) - 1)) == 0
       // We also need to make sure that the left shift does not overflow.
       vrIsTrailingZeros = multipleOfPowerOf2(mv, q - 1);
 #ifdef RYU_DEBUG
@@ -390,7 +390,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
-    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr +
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
   } else {
@@ -406,7 +406,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
-    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
   const int32_t exp = e10 + removed;
