@@ -19,11 +19,32 @@
 
 #include "ryu/ryu.h"
 #include "third_party/gtest/gtest.h"
+#include "third_party/double-conversion/double-conversion/double-conversion.h"
 
 static double int64Bits2Double(uint64_t bits) {
   double f;
   memcpy(&f, &bits, sizeof(double));
   return f;
+}
+
+static bool compareRyuWithDC(double f) {
+  using double_conversion::DoubleToStringConverter;
+  using double_conversion::StringBuilder;
+
+  static DoubleToStringConverter converter(
+      DoubleToStringConverter::Flags::EMIT_TRAILING_DECIMAL_POINT
+          | DoubleToStringConverter::Flags::EMIT_TRAILING_ZERO_AFTER_POINT,
+      "Infinity", "NaN", 'E', 7, 7, 0, 0);
+
+  char bufDC[32];
+  StringBuilder builder(bufDC, 32);
+  converter.ToShortest(f, &builder);
+  builder.Finalize();
+
+  char bufRyu[32];
+  d2s_buffered(f, bufRyu);
+
+  return strcmp(bufDC, bufRyu) == 0;
 }
 
 TEST(D2sTest, Basic) {
@@ -94,4 +115,14 @@ TEST(D2sTest, OutputLength) {
   ASSERT_STREQ("4.294967296E0", d2s(4.294967296)); // 2^32
   ASSERT_STREQ("4.294967297E0", d2s(4.294967297)); // 2^32 + 1
   ASSERT_STREQ("4.294967298E0", d2s(4.294967298)); // 2^32 + 2
+}
+
+TEST(D2sTest, Boundaries) {
+  const uint64_t eMin = 1;
+  const uint64_t eMax = 2047; // Tests NaN and Infinity, too.
+  for (uint64_t e = eMin; e <= eMax; ++e) {
+    ASSERT_TRUE(compareRyuWithDC(int64Bits2Double((e-1) << 52 | 0x000FFFFFFFFFFFFF)));
+    ASSERT_TRUE(compareRyuWithDC(int64Bits2Double((e  ) << 52 | 0x0000000000000000)));
+    ASSERT_TRUE(compareRyuWithDC(int64Bits2Double((e  ) << 52 | 0x0000000000000001)));
+  }
 }
