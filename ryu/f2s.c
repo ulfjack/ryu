@@ -65,8 +65,8 @@ static const uint64_t FLOAT_POW5_SPLIT[47] = {
  1292469707114105741u, 1615587133892632177u, 2019483917365790221u
 };
 
-static inline int32_t pow5Factor(uint32_t value) {
-  for (int32_t count = 0; value > 0; ++count) {
+static inline uint32_t pow5Factor(uint32_t value) {
+  for (uint32_t count = 0; value > 0; ++count) {
     if (value % 5 != 0) {
       return count;
     }
@@ -76,8 +76,14 @@ static inline int32_t pow5Factor(uint32_t value) {
 }
 
 // Returns true if value is divisible by 5^p.
-static inline bool multipleOfPowerOf5(const uint32_t value, const int32_t p) {
+static inline bool multipleOfPowerOf5(const uint32_t value, const uint32_t p) {
   return pow5Factor(value) >= p;
+}
+
+// Returns true if value is divisible by 2^p.
+static inline bool multipleOfPowerOf2(const uint32_t value, const uint32_t p) {
+  // return __builtin_ctz(value) >= p;
+  return (value & ((1u << p) - 1)) == 0;
 }
 
 // It seems to be slightly faster to avoid uint128_t here, although the
@@ -173,7 +179,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
   bool vrIsTrailingZeros = false;
   uint8_t lastRemovedDigit = 0;
   if (e2 >= 0) {
-    const int32_t q = log10Pow2(e2);
+    const uint32_t q = log10Pow2(e2);
     e10 = q;
     const int32_t k = FLOAT_POW5_INV_BITCOUNT + pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
@@ -181,7 +187,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef RYU_DEBUG
-    printf("%u * 2^%d / 10^%d\n", mv, e2, q);
+    printf("%u * 2^%d / 10^%u\n", mv, e2, q);
     printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
@@ -203,7 +209,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
       }
     }
   } else {
-    const int32_t q = log10Pow5(-e2);
+    const uint32_t q = log10Pow5(-e2);
     e10 = q + e2;
     const int32_t i = -e2 - q;
     const int32_t k = pow5bits(i) - FLOAT_POW5_BITCOUNT;
@@ -212,8 +218,8 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
 #ifdef RYU_DEBUG
-    printf("%u * 5^%d / 10^%d\n", mv, -e2, q);
-    printf("%d %d %d %d\n", q, i, k, j);
+    printf("%u * 5^%d / 10^%u\n", mv, -e2, q);
+    printf("%u %d %d %d\n", q, i, k, j);
     printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
     if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
@@ -232,7 +238,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
         --vp;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
-      vrIsTrailingZeros = (mv & ((1u << (q - 1)) - 1)) == 0;
+      vrIsTrailingZeros = multipleOfPowerOf2(mv, q - 1);
 #ifdef RYU_DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
