@@ -46,16 +46,45 @@ static char* s(uint128_t v) {
 
 #define ONE ((uint128_t) 1)
 
-struct floating_decimal generic_binary_to_decimal(
-    const uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits) {
-  assert(mantissaBits < 128);
-  assert(exponentBits < 16);
-  assert(mantissaBits + exponentBits < 128);
+#define FLOAT_MANTISSA_BITS 23
+#define FLOAT_EXPONENT_BITS 8
 
+struct floating_decimal_128 float_to_fd128(float f) {
+  uint32_t bits = 0;
+  memcpy(&bits, &f, sizeof(float));
+  return generic_binary_to_decimal(bits, FLOAT_MANTISSA_BITS, FLOAT_EXPONENT_BITS);
+}
+
+#define DOUBLE_MANTISSA_BITS 52
+#define DOUBLE_EXPONENT_BITS 11
+
+struct floating_decimal_128 double_to_fd128(double d) {
+  uint64_t bits = 0;
+  memcpy(&bits, &d, sizeof(double));
+  return generic_binary_to_decimal(bits, DOUBLE_MANTISSA_BITS, DOUBLE_EXPONENT_BITS);
+}
+
+struct floating_decimal_128 generic_binary_to_decimal(
+    const uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits) {
   const uint32_t bias = (1u << (exponentBits - 1)) - 1;
   const bool ieeeSign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
   const uint128_t ieeeMantissa = bits & ((ONE << mantissaBits) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((ONE << exponentBits) - 1));
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((ONE << exponentBits) - 1u));
+
+  if (ieeeExponent == 0 && ieeeMantissa == 0) {
+    struct floating_decimal_128 fd;
+    fd.mantissa = 0;
+    fd.exponent = 0;
+    fd.sign = ieeeSign;
+    return fd;
+  }
+  if (ieeeExponent == ((1u << exponentBits) - 1u)) {
+    struct floating_decimal_128 fd;
+    fd.mantissa = ieeeMantissa;
+    fd.exponent = FD128_EXCEPTIONAL_EXPONENT;
+    fd.sign = ieeeSign;
+    return fd;
+  }
 
   int32_t e2;
   uint128_t m2;
@@ -71,13 +100,13 @@ struct floating_decimal generic_binary_to_decimal(
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("-> %s * 2^%d\n", s(m2), e2 + 2);
+  printf("-> %s %s * 2^%d\n", ieeeSign ? "-" : "+", s(m2), e2 + 2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
   const uint128_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  const uint32_t mmShift = (ieeeMantissa != 0) || (ieeeExponent <= 1);
+  const uint32_t mmShift = (ieeeMantissa != 0) || (ieeeExponent == 0);
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
   uint128_t vr, vp, vm;
@@ -209,14 +238,30 @@ struct floating_decimal generic_binary_to_decimal(
   printf("EXP=%d\n", exp);
 #endif
 
-  struct floating_decimal fd;
+  struct floating_decimal_128 fd;
   fd.mantissa = output;
   fd.exponent = exp;
   fd.sign = ieeeSign;
   return fd;
 }
 
-int generic_to_chars(const struct floating_decimal v, char* const result) {
+static inline int copy_special_str(char * const result, const struct floating_decimal_128 fd) {
+  if (fd.mantissa) {
+    memcpy(result, "NaN", 3);
+    return 3;
+  }
+  if (fd.sign) {
+    result[0] = '-';
+  }
+  memcpy(result + fd.sign, "Infinity", 8);
+  return fd.sign + 8;
+}
+
+int generic_to_chars(const struct floating_decimal_128 v, char* const result) {
+  if (v.exponent == FD128_EXCEPTIONAL_EXPONENT) {
+    return copy_special_str(result, v);
+  }
+
   // Step 5: Print the decimal representation.
   int index = 0;
   if (v.sign) {
