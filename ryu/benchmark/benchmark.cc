@@ -108,7 +108,7 @@ static int bench32(int samples, int iterations, bool verbose) {
   init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; i++) {
-    uint32_t r = mt32();
+    const uint32_t r = mt32();
     float f = int32Bits2Float(r);
 
     steady_clock::time_point t1 = steady_clock::now();
@@ -150,16 +150,14 @@ static int bench32(int samples, int iterations, bool verbose) {
 
 static int bench64(int samples, int iterations, bool verbose) {
   char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
-  std::mt19937 mt32(12345);
+  std::mt19937_64 mt64(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   init(mv1);
   init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; i++) {
-    uint64_t r = mt32();
-    r <<= 32;
-    r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
+    const uint64_t r = mt64();
     double f = int64Bits2Double(r);
 
     steady_clock::time_point t1 = steady_clock::now();
