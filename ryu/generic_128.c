@@ -52,7 +52,7 @@ static char* s(uint128_t v) {
 struct floating_decimal_128 float_to_fd128(float f) {
   uint32_t bits = 0;
   memcpy(&bits, &f, sizeof(float));
-  return generic_binary_to_decimal(bits, FLOAT_MANTISSA_BITS, FLOAT_EXPONENT_BITS);
+  return generic_binary_to_decimal(bits, FLOAT_MANTISSA_BITS, FLOAT_EXPONENT_BITS, false);
 }
 
 #define DOUBLE_MANTISSA_BITS 52
@@ -61,11 +61,28 @@ struct floating_decimal_128 float_to_fd128(float f) {
 struct floating_decimal_128 double_to_fd128(double d) {
   uint64_t bits = 0;
   memcpy(&bits, &d, sizeof(double));
-  return generic_binary_to_decimal(bits, DOUBLE_MANTISSA_BITS, DOUBLE_EXPONENT_BITS);
+  return generic_binary_to_decimal(bits, DOUBLE_MANTISSA_BITS, DOUBLE_EXPONENT_BITS, false);
+}
+
+#define LONG_DOUBLE_MANTISSA_BITS 64
+#define LONG_DOUBLE_EXPONENT_BITS 15
+
+struct floating_decimal_128 long_double_to_fd128(long double d) {
+  uint128_t bits = 0;
+  memcpy(&bits, &d, sizeof(long double));
+  return generic_binary_to_decimal(bits, LONG_DOUBLE_MANTISSA_BITS, LONG_DOUBLE_EXPONENT_BITS, true);
 }
 
 struct floating_decimal_128 generic_binary_to_decimal(
-    const uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits) {
+    const uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits, const bool explicitLeadingBit) {
+#ifdef RYU_DEBUG
+  printf("IN=");
+  for (int32_t bit = 127; bit >= 0; --bit) {
+    printf("%u", (uint32_t) ((bits >> bit) & 1));
+  }
+  printf("\n");
+#endif
+
   const uint32_t bias = (1u << (exponentBits - 1)) - 1;
   const bool ieeeSign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
   const uint128_t ieeeMantissa = bits & ((ONE << mantissaBits) - 1);
@@ -80,7 +97,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
   }
   if (ieeeExponent == ((1u << exponentBits) - 1u)) {
     struct floating_decimal_128 fd;
-    fd.mantissa = ieeeMantissa;
+    fd.mantissa = explicitLeadingBit ? ieeeMantissa & ((ONE << (mantissaBits - 1)) - 1) : ieeeMantissa;
     fd.exponent = FD128_EXCEPTIONAL_EXPONENT;
     fd.sign = ieeeSign;
     return fd;
@@ -88,13 +105,23 @@ struct floating_decimal_128 generic_binary_to_decimal(
 
   int32_t e2;
   uint128_t m2;
-  if (ieeeExponent == 0) {
-    // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - bias - mantissaBits - 2;
+  // We subtract 2 in all cases so that the bounds computation has 2 additional bits.
+  if (explicitLeadingBit) {
+    // mantissaBits includes the explicit leading bit, so we need to correct for that here.
+    if (ieeeExponent == 0) {
+      e2 = 1 - bias - mantissaBits + 1 - 2;
+    } else {
+      e2 = ieeeExponent - bias - mantissaBits + 1 - 2;
+    }
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - bias - mantissaBits - 2;
-    m2 = (ONE << mantissaBits) | ieeeMantissa;
+    if (ieeeExponent == 0) {
+      e2 = 1 - bias - mantissaBits - 2;
+      m2 = ieeeMantissa;
+    } else {
+      e2 = ieeeExponent - bias - mantissaBits - 2;
+      m2 = (ONE << mantissaBits) | ieeeMantissa;
+    }
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;

@@ -157,77 +157,6 @@ TEST(Generic128Test, generic_to_chars_with_long_param) {
   ASSERT_STREQ("1.00000000000000000000000000000000000000E18", buffer);
 }
 
-TEST(Generic128Test, generic_binary_to_decimal) {
-  const struct floating_decimal_128 v = double_to_fd128(4.708356024711512E18);
-  ASSERT_EQ(false, v.sign);
-  ASSERT_EQ(3, v.exponent);
-  ASSERT_EQ(4708356024711512ull, v.mantissa);
-}
-
-static char* d2s(double d) {
-  const struct floating_decimal_128 v = double_to_fd128(d);
-  char* const result = (char*) malloc(25);
-  const int index = generic_to_chars(v, result);
-  result[index] = '\0';
-  return result;
-}
-
-static double int64Bits2Double(uint64_t bits) {
-  double f;
-  memcpy(&f, &bits, sizeof(double));
-  return f;
-}
-
-TEST(Generic128Test, EmulateDouble) {
-  ASSERT_STREQ("0E0", d2s(0.0));
-  ASSERT_STREQ("-0E0", d2s(-0.0));
-  ASSERT_STREQ("1E0", d2s(1.0));
-  ASSERT_STREQ("-1E0", d2s(-1.0));
-  ASSERT_STREQ("NaN", d2s(NAN));
-  ASSERT_STREQ("Infinity", d2s(INFINITY));
-  ASSERT_STREQ("-Infinity", d2s(-INFINITY));
-  ASSERT_STREQ("2.2250738585072014E-308", d2s(2.2250738585072014E-308));
-  ASSERT_STREQ("1.7976931348623157E308", d2s(int64Bits2Double(0x7fefffffffffffff)));
-  ASSERT_STREQ("5E-324", d2s(int64Bits2Double(1)));
-  ASSERT_STREQ("2.9802322387695312E-8", d2s(2.98023223876953125E-8));
-  ASSERT_STREQ("-2.109808898695963E16", d2s(-2.109808898695963E16));
-  ASSERT_STREQ("4.940656E-318", d2s(4.940656E-318));
-  ASSERT_STREQ("1.18575755E-316", d2s(1.18575755E-316));
-  ASSERT_STREQ("2.989102097996E-312", d2s(2.989102097996E-312));
-  ASSERT_STREQ("9.0608011534336E15", d2s(9.0608011534336E15));
-  ASSERT_STREQ("4.708356024711512E18", d2s(4.708356024711512E18));
-  ASSERT_STREQ("9.409340012568248E18", d2s(9.409340012568248E18));
-  ASSERT_STREQ("1.2345678E0", d2s(1.2345678));
-  ASSERT_STREQ("5.764607523034235E39", d2s(int64Bits2Double(0x4830F0CF064DD592)));
-  ASSERT_STREQ("1.152921504606847E40", d2s(int64Bits2Double(0x4840F0CF064DD592)));
-  ASSERT_STREQ("2.305843009213694E40", d2s(int64Bits2Double(0x4850F0CF064DD592)));
-
-  ASSERT_STREQ("1E0", d2s(1)); // already tested in Basic
-  ASSERT_STREQ("1.2E0", d2s(1.2));
-  ASSERT_STREQ("1.23E0", d2s(1.23));
-  ASSERT_STREQ("1.234E0", d2s(1.234));
-  ASSERT_STREQ("1.2345E0", d2s(1.2345));
-  ASSERT_STREQ("1.23456E0", d2s(1.23456));
-  ASSERT_STREQ("1.234567E0", d2s(1.234567));
-  ASSERT_STREQ("1.2345678E0", d2s(1.2345678)); // already tested in Regression
-  ASSERT_STREQ("1.23456789E0", d2s(1.23456789));
-  ASSERT_STREQ("1.234567895E0", d2s(1.234567895)); // 1.234567890 would be trimmed
-  ASSERT_STREQ("1.2345678901E0", d2s(1.2345678901));
-  ASSERT_STREQ("1.23456789012E0", d2s(1.23456789012));
-  ASSERT_STREQ("1.234567890123E0", d2s(1.234567890123));
-  ASSERT_STREQ("1.2345678901234E0", d2s(1.2345678901234));
-  ASSERT_STREQ("1.23456789012345E0", d2s(1.23456789012345));
-  ASSERT_STREQ("1.234567890123456E0", d2s(1.234567890123456));
-  ASSERT_STREQ("1.2345678901234567E0", d2s(1.2345678901234567));
-
-  // Test 32-bit chunking
-  ASSERT_STREQ("4.294967294E0", d2s(4.294967294)); // 2^32 - 2
-  ASSERT_STREQ("4.294967295E0", d2s(4.294967295)); // 2^32 - 1
-  ASSERT_STREQ("4.294967296E0", d2s(4.294967296)); // 2^32
-  ASSERT_STREQ("4.294967297E0", d2s(4.294967297)); // 2^32 + 1
-  ASSERT_STREQ("4.294967298E0", d2s(4.294967298)); // 2^32 + 2
-}
-
 static char* f2s(float f) {
   const struct floating_decimal_128 fd = float_to_fd128(f);
   char* const result = (char*) malloc(25);
@@ -242,11 +171,7 @@ static float int32Bits2Float(uint32_t bits) {
   return f;
 }
 
-TEST(Generic128Test, EmulateFloatRegression) {
-  ASSERT_STREQ("9E9", f2s(8.999999E9f));
-}
-
-TEST(Generic128Test, EmulateFloat) {
+TEST(Generic128Test, float_to_fd128) {
   ASSERT_STREQ("0E0", f2s(0.0));
   ASSERT_STREQ("-0E0", f2s(-0.0));
   ASSERT_STREQ("1E0", f2s(1.0));
@@ -312,3 +237,91 @@ TEST(Generic128Test, EmulateFloat) {
   ASSERT_STREQ("1.23456735E-36", f2s(1.23456735E-36f));
 }
 
+TEST(Generic128Test, direct_double_to_fd128) {
+  const struct floating_decimal_128 v = double_to_fd128(4.708356024711512E18);
+  ASSERT_EQ(false, v.sign);
+  ASSERT_EQ(3, v.exponent);
+  ASSERT_EQ(4708356024711512ull, v.mantissa);
+}
+
+static char* d2s(double d) {
+  const struct floating_decimal_128 v = double_to_fd128(d);
+  char* const result = (char*) malloc(25);
+  const int index = generic_to_chars(v, result);
+  result[index] = '\0';
+  return result;
+}
+
+static double int64Bits2Double(uint64_t bits) {
+  double f;
+  memcpy(&f, &bits, sizeof(double));
+  return f;
+}
+
+TEST(Generic128Test, double_to_fd128) {
+  ASSERT_STREQ("0E0", d2s(0.0));
+  ASSERT_STREQ("-0E0", d2s(-0.0));
+  ASSERT_STREQ("1E0", d2s(1.0));
+  ASSERT_STREQ("-1E0", d2s(-1.0));
+  ASSERT_STREQ("NaN", d2s(NAN));
+  ASSERT_STREQ("Infinity", d2s(INFINITY));
+  ASSERT_STREQ("-Infinity", d2s(-INFINITY));
+  ASSERT_STREQ("2.2250738585072014E-308", d2s(2.2250738585072014E-308));
+  ASSERT_STREQ("1.7976931348623157E308", d2s(int64Bits2Double(0x7fefffffffffffff)));
+  ASSERT_STREQ("5E-324", d2s(int64Bits2Double(1)));
+  ASSERT_STREQ("2.9802322387695312E-8", d2s(2.98023223876953125E-8));
+  ASSERT_STREQ("-2.109808898695963E16", d2s(-2.109808898695963E16));
+  ASSERT_STREQ("4.940656E-318", d2s(4.940656E-318));
+  ASSERT_STREQ("1.18575755E-316", d2s(1.18575755E-316));
+  ASSERT_STREQ("2.989102097996E-312", d2s(2.989102097996E-312));
+  ASSERT_STREQ("9.0608011534336E15", d2s(9.0608011534336E15));
+  ASSERT_STREQ("4.708356024711512E18", d2s(4.708356024711512E18));
+  ASSERT_STREQ("9.409340012568248E18", d2s(9.409340012568248E18));
+  ASSERT_STREQ("1.2345678E0", d2s(1.2345678));
+  ASSERT_STREQ("5.764607523034235E39", d2s(int64Bits2Double(0x4830F0CF064DD592)));
+  ASSERT_STREQ("1.152921504606847E40", d2s(int64Bits2Double(0x4840F0CF064DD592)));
+  ASSERT_STREQ("2.305843009213694E40", d2s(int64Bits2Double(0x4850F0CF064DD592)));
+
+  ASSERT_STREQ("1E0", d2s(1)); // already tested in Basic
+  ASSERT_STREQ("1.2E0", d2s(1.2));
+  ASSERT_STREQ("1.23E0", d2s(1.23));
+  ASSERT_STREQ("1.234E0", d2s(1.234));
+  ASSERT_STREQ("1.2345E0", d2s(1.2345));
+  ASSERT_STREQ("1.23456E0", d2s(1.23456));
+  ASSERT_STREQ("1.234567E0", d2s(1.234567));
+  ASSERT_STREQ("1.2345678E0", d2s(1.2345678)); // already tested in Regression
+  ASSERT_STREQ("1.23456789E0", d2s(1.23456789));
+  ASSERT_STREQ("1.234567895E0", d2s(1.234567895)); // 1.234567890 would be trimmed
+  ASSERT_STREQ("1.2345678901E0", d2s(1.2345678901));
+  ASSERT_STREQ("1.23456789012E0", d2s(1.23456789012));
+  ASSERT_STREQ("1.234567890123E0", d2s(1.234567890123));
+  ASSERT_STREQ("1.2345678901234E0", d2s(1.2345678901234));
+  ASSERT_STREQ("1.23456789012345E0", d2s(1.23456789012345));
+  ASSERT_STREQ("1.234567890123456E0", d2s(1.234567890123456));
+  ASSERT_STREQ("1.2345678901234567E0", d2s(1.2345678901234567));
+
+  // Test 32-bit chunking
+  ASSERT_STREQ("4.294967294E0", d2s(4.294967294)); // 2^32 - 2
+  ASSERT_STREQ("4.294967295E0", d2s(4.294967295)); // 2^32 - 1
+  ASSERT_STREQ("4.294967296E0", d2s(4.294967296)); // 2^32
+  ASSERT_STREQ("4.294967297E0", d2s(4.294967297)); // 2^32 + 1
+  ASSERT_STREQ("4.294967298E0", d2s(4.294967298)); // 2^32 + 2
+}
+
+static char* l2s(long double d) {
+  const struct floating_decimal_128 v = long_double_to_fd128(d);
+  char* const result = (char*) malloc(60);
+  const int index = generic_to_chars(v, result);
+  result[index] = '\0';
+  return result;
+}
+
+TEST(Generic128Test, long_double_to_fd128) {
+  ASSERT_STREQ("0E0", l2s(0.0));
+  ASSERT_STREQ("-0E0", l2s(-0.0));
+  ASSERT_STREQ("1E0", l2s(1.0));
+  ASSERT_STREQ("-1E0", l2s(-1.0));
+  ASSERT_STREQ("NaN", l2s(NAN));
+  ASSERT_STREQ("Infinity", l2s(INFINITY));
+  ASSERT_STREQ("-Infinity", l2s(-INFINITY));
+}
