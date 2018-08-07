@@ -312,7 +312,7 @@ static inline struct floating_decimal_32 f2d(const uint32_t ieeeMantissa, const 
     // We need to take vr+1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
-  const int32_t exp = e10 + removed - 1;
+  const int32_t exp = e10 + removed;
 
 #ifdef RYU_DEBUG
   printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
@@ -388,7 +388,7 @@ static inline int to_chars(const struct floating_decimal_32 v, const bool sign, 
 
   // Print the exponent.
   result[index++] = 'E';
-  int32_t exp = v.exponent + olength;
+  int32_t exp = v.exponent + olength - 1;
   if (exp < 0) {
     result[index++] = '-';
     exp = -exp;
