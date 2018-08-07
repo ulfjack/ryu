@@ -297,7 +297,6 @@ public final class RyuDouble {
           // Double.toString semantics requires printing at least two digits.
           break;
         }
-        dvIsTrailingZeros &= lastRemovedDigit == 0;
         lastRemovedDigit = (int) (dv % 10);
         dp /= 10;
         dv /= 10;
