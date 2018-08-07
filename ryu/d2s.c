@@ -253,7 +253,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   // Step 2: Determine the interval of legal decimal representations.
   const uint64_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  const uint32_t mmShift = (ieeeMantissa != 0) || (ieeeExponent <= 1);
+  const uint32_t mmShift = ieeeMantissa != 0 || ieeeExponent <= 1;
   // We would compute mp and mm like this:
   // uint64_t mp = 4 * m2 + 2;
   // uint64_t mm = mv - 1 - mmShift;
@@ -386,13 +386,13 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
-    if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
+    if (vrIsTrailingZeros && lastRemovedDigit == 5 && vr % 2 == 0) {
       // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr +
-        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
+        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
     // Specialized for the common case (>99%).
     while (vp / 10 > vm / 10) {
@@ -407,7 +407,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
-    output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
+    output = vr + (vr == vm || lastRemovedDigit >= 5);
   }
   const int32_t exp = e10 + removed;
 
@@ -521,11 +521,11 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
 
   if (exp >= 100) {
     const int32_t c = exp % 10;
-    memcpy(result + index, DIGIT_TABLE + (2 * (exp / 10)), 2);
+    memcpy(result + index, DIGIT_TABLE + 2 * (exp / 10), 2);
     result[index + 2] = (char) ('0' + c);
     index += 3;
   } else if (exp >= 10) {
-    memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
+    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
     index += 2;
   } else {
     result[index++] = (char) ('0' + exp);
