@@ -24,16 +24,21 @@
 extern "C" {
 #endif
 
+#define FD128_EXCEPTIONAL_EXPONENT 0x7FFFFFFF
+
 // A floating decimal representing (-1)^s * m * 10^e.
-struct floating_decimal {
+struct floating_decimal_128 {
   __uint128_t mantissa;
   int32_t exponent;
   bool sign;
 };
 
+struct floating_decimal_128 float_to_fd128(float f);
+struct floating_decimal_128 double_to_fd128(double d);
+
 // Converts the given binary floating point number to the shortest decimal floating point number
 // that still accurately represents it.
-struct floating_decimal generic_binary_to_decimal(
+struct floating_decimal_128 generic_binary_to_decimal(
     const __uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits);
 
 // Converts the given decimal floating point number to a string, writing to result, and returning
@@ -43,7 +48,7 @@ struct floating_decimal generic_binary_to_decimal(
 // Maximal char buffer requirement:
 // sign + mantissa digits + decimal dot + 'E' + exponent sign + exponent digits
 // = 1 + 39 + 1 + 1 + 1 + 10 = 53
-int generic_to_chars(const struct floating_decimal v, char* const result);
+int generic_to_chars(const struct floating_decimal_128 v, char* const result);
 
 #ifdef __cplusplus
 }

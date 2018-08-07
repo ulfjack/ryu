@@ -137,7 +137,7 @@ TEST(Generic128Test, log10Pow5) {
 
 TEST(Generic128Test, generic_to_chars) {
   char buffer[100];
-  struct floating_decimal v;
+  struct floating_decimal_128 v;
   v.mantissa = 12345;
   v.exponent = -2;
   v.sign = false;
@@ -148,7 +148,7 @@ TEST(Generic128Test, generic_to_chars) {
 
 TEST(Generic128Test, generic_to_chars_with_long_param) {
   char buffer[100];
-  struct floating_decimal v;
+  struct floating_decimal_128 v;
   v.mantissa = (((uint128_t) 5421010862427522170ull) << 64) | 687399551400673280ull;
   v.exponent = -20;
   v.sign = false;
@@ -157,56 +157,16 @@ TEST(Generic128Test, generic_to_chars_with_long_param) {
   ASSERT_STREQ("1.00000000000000000000000000000000000000E18", buffer);
 }
 
-#define DOUBLE_MANTISSA_BITS 52
-#define DOUBLE_EXPONENT_BITS 11
-
-// Behavior for special cases (NaN, +-Infty, 0.0) is undefined
-static struct floating_decimal d2d(double f) {
-  uint64_t bits = 0;
-  memcpy(&bits, &f, sizeof(double));
-  return generic_binary_to_decimal(bits, DOUBLE_MANTISSA_BITS, DOUBLE_EXPONENT_BITS);
-}
-
 TEST(Generic128Test, generic_binary_to_decimal) {
-  const struct floating_decimal v = d2d(4.708356024711512E18);
+  const struct floating_decimal_128 v = double_to_fd128(4.708356024711512E18);
   ASSERT_EQ(false, v.sign);
   ASSERT_EQ(3, v.exponent);
   ASSERT_EQ(4708356024711512ull, v.mantissa);
 }
 
-static inline int copy_special_str(char * const result, const bool sign, const bool exponent, const bool mantissa) {
-  if (mantissa) {
-    memcpy(result, "NaN", 3);
-    return 3;
-  }
-  if (sign) {
-    result[0] = '-';
-  }
-  if (exponent) {
-    memcpy(result + sign, "Infinity", 8);
-    return sign + 8;
-  }
-  memcpy(result + sign, "0E0", 3);
-  return sign + 3;
-}
-
-static char* d2s(double f) {
-  uint64_t bits = 0;
-  memcpy(&bits, &f, sizeof(double));
-
-  const bool ieeeSign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
-
+static char* d2s(double d) {
+  const struct floating_decimal_128 v = double_to_fd128(d);
   char* const result = (char*) malloc(25);
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    const int index = copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
-    result[index] = '\0';
-    return result;
-  }
-
-  const struct floating_decimal v = generic_binary_to_decimal(
-      bits, DOUBLE_MANTISSA_BITS, DOUBLE_EXPONENT_BITS);
   const int index = generic_to_chars(v, result);
   result[index] = '\0';
   return result;
@@ -268,27 +228,10 @@ TEST(Generic128Test, EmulateDouble) {
   ASSERT_STREQ("4.294967298E0", d2s(4.294967298)); // 2^32 + 2
 }
 
-#define FLOAT_MANTISSA_BITS 23
-#define FLOAT_EXPONENT_BITS 8
-
 static char* f2s(float f) {
-  uint32_t bits = 0;
-  memcpy(&bits, &f, sizeof(float));
-
-  const bool ieeeSign = ((bits >> (FLOAT_MANTISSA_BITS + FLOAT_EXPONENT_BITS)) & 1) != 0;
-  const uint32_t ieeeMantissa = bits & ((1u << FLOAT_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (bits >> FLOAT_MANTISSA_BITS) & ((1u << FLOAT_EXPONENT_BITS) - 1);
-
+  const struct floating_decimal_128 fd = float_to_fd128(f);
   char* const result = (char*) malloc(25);
-  if (ieeeExponent == ((1u << FLOAT_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    const int index = copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
-    result[index] = '\0';
-    return result;
-  }
-
-  const struct floating_decimal v = generic_binary_to_decimal(
-      bits, FLOAT_MANTISSA_BITS, FLOAT_EXPONENT_BITS);
-  const int index = generic_to_chars(v, result);
+  const int index = generic_to_chars(fd, result);
   result[index] = '\0';
   return result;
 }
