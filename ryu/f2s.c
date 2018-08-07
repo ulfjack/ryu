@@ -198,7 +198,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
       lastRemovedDigit = (uint8_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
-      // The largest power of 5 that fits in 24 bits is 5^10, but q<=9 seems to be safe as well.
+      // The largest power of 5 that fits in 24 bits is 5^10, but q <= 9 seems to be safe as well.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
@@ -293,7 +293,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
       // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
-    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr +
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
   } else {
@@ -309,7 +309,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     printf("%u %d\n", vr, lastRemovedDigit);
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
-    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
   }
   const int32_t exp = e10 + removed;
