@@ -62,13 +62,13 @@ static inline int copy_special_str(char * const result, const bool sign, const b
   return sign + 3;
 }
 
-static inline uint32_t float_to_bits(float f) {
+static inline uint32_t float_to_bits(const float f) {
   uint32_t bits = 0;
   memcpy(&bits, &f, sizeof(float));
   return bits;
 }
 
-static inline uint64_t double_to_bits(double d) {
+static inline uint64_t double_to_bits(const double d) {
   uint64_t bits = 0;
   memcpy(&bits, &d, sizeof(double));
   return bits;
