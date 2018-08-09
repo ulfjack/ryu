@@ -395,19 +395,34 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
     // Specialized for the common case (>99%).
+    bool roundUp = false;
+    while (vp - vm >= 1000) { // Optimization: remove three digits at a time.
+      roundUp = (vr % 1000) >= 500;
+      vr /= 1000;
+      vp /= 1000;
+      vm /= 1000;
+      removed += 3;
+    }
+    if (vp - vm >= 100) { // Optimization: remove two digits at a time.
+      roundUp = (vr % 100) >= 50;
+      vr /= 100;
+      vp /= 100;
+      vm /= 100;
+      removed += 2;
+    }
     while (vp / 10 > vm / 10) {
-      lastRemovedDigit = (uint8_t) (vr % 10);
+      roundUp = vr % 10 >= 5;
       vr /= 10;
       vp /= 10;
       vm /= 10;
       ++removed;
     }
 #ifdef RYU_DEBUG
-    printf("%" PRIu64 " %d\n", vr, lastRemovedDigit);
+    printf("%" PRIu64 " roundUp=%s\n", vr, roundUp ? "true" : "false");
     printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
-    output = vr + (vr == vm || lastRemovedDigit >= 5);
+    output = vr + (vr == vm || roundUp);
   }
   const int32_t exp = e10 + removed;
 
