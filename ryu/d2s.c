@@ -352,7 +352,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   uint64_t output;
   // On average, we remove ~2 digits.
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
-    // General case, which happens rarely (<1%).
+    // General case, which happens rarely (~0.7%).
     while (vp / 10 > vm / 10) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
       // The compiler does not realize that vm % 10 can be computed from vm / 10
@@ -394,22 +394,19 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     output = vr +
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
-    // Specialized for the common case (>99%).
+    // Specialized for the common case (~99.3%). Percentages below are relative to this.
     bool roundUp = false;
-    while (vp - vm >= 1000) { // Optimization: remove three digits at a time.
-      roundUp = (vr % 1000) >= 500;
-      vr /= 1000;
-      vp /= 1000;
-      vm /= 1000;
-      removed += 3;
-    }
-    if (vp - vm >= 100) { // Optimization: remove two digits at a time.
+    if (vp / 100 > vm / 100) { // Optimization: remove two digits at a time (~86.2%).
       roundUp = (vr % 100) >= 50;
       vr /= 100;
       vp /= 100;
       vm /= 100;
       removed += 2;
     }
+    // Loop iterations below (approximately), without optimization above:
+    // 0: 0.03%, 1: 13.8%, 2: 70.6%, 3: 14.0%, 4: 1.40%, 5: 0.14%, 6+: 0.02%
+    // Loop iterations below (approximately), with optimization above:
+    // 0: 70.6%, 1: 27.8%, 2: 1.40%, 3: 0.14%, 4+: 0.02%
     while (vp / 10 > vm / 10) {
       roundUp = vr % 10 >= 5;
       vr /= 10;
