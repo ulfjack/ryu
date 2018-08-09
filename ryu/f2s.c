@@ -255,7 +255,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
   uint32_t removed = 0;
   uint32_t output;
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
-    // General case, which happens rarely.
+    // General case, which happens rarely (~4.0%).
     while (vp / 10 > vm / 10) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
       // The compiler does not realize that vm % 10 can be computed from vm / 10
@@ -297,7 +297,9 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     output = vr +
         ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
-    // Common case.
+    // Specialized for the common case (~96.0%). Percentages below are relative to this.
+    // Loop iterations below (approximately):
+    // 0: 13.6%, 1: 70.7%, 2: 14.1%, 3: 1.39%, 4: 0.14%, 5+: 0.01%
     while (vp / 10 > vm / 10) {
       lastRemovedDigit = (uint8_t) (vr % 10);
       vr /= 10;
