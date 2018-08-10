@@ -99,7 +99,7 @@ double variance(mean_and_variance &mv) {
   return mv.m2 / (mv.n - 1);
 }
 
-static int bench32(int samples, int iterations, bool verbose) {
+static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
@@ -121,18 +121,21 @@ static int bench32(int samples, int iterations, bool verbose) {
     update(mv1, delta1);
 
     t1 = steady_clock::now();
-    for (int j = 0; j < iterations; ++j) {
-      fcv(f);
-      throwaway += buffer[2];
+    if (!ryu_only) {
+      for (int j = 0; j < iterations; ++j) {
+        fcv(f);
+        throwaway += buffer[2];
+      }
     }
     t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
     update(mv2, delta2);
+
     if (verbose) {
       printf("%u,%lf,%lf\n", r, delta1, delta2);
     }
 
-    if (strcmp(bufferown, buffer) != 0) {
+    if (!ryu_only && strcmp(bufferown, buffer) != 0) {
       printf("For %x %20s %20s\n", r, bufferown, buffer);
     }
   }
@@ -143,7 +146,7 @@ static int bench32(int samples, int iterations, bool verbose) {
   return throwaway;
 }
 
-static int bench64(int samples, int iterations, bool verbose) {
+static int bench64(int samples, int iterations, bool verbose, bool ryu_only) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
@@ -167,18 +170,21 @@ static int bench64(int samples, int iterations, bool verbose) {
     update(mv1, delta1);
 
     t1 = steady_clock::now();
-    for (int j = 0; j < iterations; ++j) {
-      dcv(f);
-      throwaway += buffer[2];
+    if (!ryu_only) {
+      for (int j = 0; j < iterations; ++j) {
+        dcv(f);
+        throwaway += buffer[2];
+      }
     }
     t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
     update(mv2, delta2);
+
     if (verbose) {
       printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
     }
 
-    if (strcmp(bufferown, buffer) != 0) {
+    if (!ryu_only && strcmp(bufferown, buffer) != 0) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
   }
@@ -206,6 +212,7 @@ int main(int argc, char** argv) {
   int samples = 10000;
   int iterations = 1000;
   bool verbose = false;
+  bool ryu_only = false;
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-32") == 0) {
       run32 = true;
@@ -215,6 +222,8 @@ int main(int argc, char** argv) {
       run64 = true;
     } else if (strcmp(argv[i], "-v") == 0) {
       verbose = true;
+    } else if (strcmp(argv[i], "-ryu") == 0) {
+      ryu_only = true;
     } else if (strncmp(argv[i], "-samples=", 9) == 0) {
       sscanf(argv[i], "-samples=%i", &samples);
     } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
@@ -234,10 +243,10 @@ int main(int argc, char** argv) {
   }
   int throwaway = 0;
   if (run32) {
-    throwaway += bench32(samples, iterations, verbose);
+    throwaway += bench32(samples, iterations, verbose, ryu_only);
   }
   if (run64) {
-    throwaway += bench64(samples, iterations, verbose);
+    throwaway += bench64(samples, iterations, verbose, ryu_only);
   }
   if (argc == 1000) {
     // Prevent the compiler from optimizing the code away.
