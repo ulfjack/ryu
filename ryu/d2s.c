@@ -54,13 +54,18 @@
 #include "ryu/d2s.h"
 
 static inline uint32_t pow5Factor(uint64_t value) {
-  for (uint32_t count = 0; value > 0; ++count) {
-    if (value % 5 != 0) {
-      return count;
+  uint32_t count = 0;
+  for (;;) {
+    assert(value != 0);
+    const uint64_t q = value / 5;
+    const uint64_t r = value % 5;
+    if (r != 0) {
+      break;
     }
-    value /= 5;
+    value = q;
+    ++count;
   }
-  return 0;
+  return count;
 }
 
 // Returns true if value is divisible by 5^p.
