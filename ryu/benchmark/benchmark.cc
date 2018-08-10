@@ -134,9 +134,6 @@ static int bench32(int samples, int iterations, bool verbose) {
 
     char* own = bufferown;
     char* theirs = fcv(f);
-    if (throwaway == 12345) {
-      printf("Argh!\n");
-    }
     if (strcmp(own, theirs) != 0) {
       printf("For %x %20s %20s\n", r, own, theirs);
     }
