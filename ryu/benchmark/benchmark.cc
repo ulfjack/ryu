@@ -51,16 +51,16 @@ static DoubleToStringConverter converter(
     0);
 static StringBuilder builder(buffer, BUFFER_SIZE);
 
-char* fcv(float value) {
+void fcv(float value) {
   builder.Reset();
   converter.ToShortestSingle(value, &builder);
-  return builder.Finalize();
+  builder.Finalize();
 }
 
-char* dcv(double value) {
+void dcv(double value) {
   builder.Reset();
   converter.ToShortest(value, &builder);
-  return builder.Finalize();
+  builder.Finalize();
 }
 
 static float int32Bits2Float(uint32_t bits) {
@@ -132,10 +132,8 @@ static int bench32(int samples, int iterations, bool verbose) {
       printf("%u,%lf,%lf\n", r, delta1, delta2);
     }
 
-    char* own = bufferown;
-    char* theirs = fcv(f);
-    if (strcmp(own, theirs) != 0) {
-      printf("For %x %20s %20s\n", r, own, theirs);
+    if (strcmp(bufferown, buffer) != 0) {
+      printf("For %x %20s %20s\n", r, bufferown, buffer);
     }
   }
   if (!verbose) {
@@ -180,10 +178,8 @@ static int bench64(int samples, int iterations, bool verbose) {
       printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
     }
 
-    char* own = bufferown;
-    char* theirs = dcv(f);
-    if (strcmp(own, theirs) != 0) {
-      printf("For %16" PRIX64 " %28s %28s\n", r, own, theirs);
+    if (strcmp(bufferown, buffer) != 0) {
+      printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
   }
   if (!verbose) {
