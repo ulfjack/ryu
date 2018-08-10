@@ -37,8 +37,8 @@ using double_conversion::StringBuilder;
 using double_conversion::DoubleToStringConverter;
 using namespace std::chrono;
 
-static int BUFFER_SIZE = 40;
-static char* buffer = (char*) calloc(BUFFER_SIZE, sizeof(char));
+constexpr int BUFFER_SIZE = 40;
+static char buffer[BUFFER_SIZE];
 static DoubleToStringConverter converter(
     DoubleToStringConverter::Flags::EMIT_TRAILING_DECIMAL_POINT
         | DoubleToStringConverter::Flags::EMIT_TRAILING_ZERO_AFTER_POINT,
@@ -100,7 +100,7 @@ double variance(mean_and_variance &mv) {
 }
 
 static int bench32(int samples, int iterations, bool verbose) {
-  char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
+  char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
@@ -146,7 +146,7 @@ static int bench32(int samples, int iterations, bool verbose) {
 }
 
 static int bench64(int samples, int iterations, bool verbose) {
-  char* bufferown = (char*) calloc(BUFFER_SIZE, sizeof(char));
+  char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
