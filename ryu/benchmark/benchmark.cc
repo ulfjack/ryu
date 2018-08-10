@@ -75,11 +75,11 @@ static double int64Bits2Double(uint64_t bits) {
   return f;
 }
 
-typedef struct {
+struct mean_and_variance {
   int64_t n;
   double mean;
   double m2;
-} mean_and_variance;
+};
 
 void init(mean_and_variance &mv) {
   mv.n = 0;
@@ -107,26 +107,26 @@ static int bench32(int samples, int iterations, bool verbose) {
   init(mv1);
   init(mv2);
   int throwaway = 0;
-  for (int i = 0; i < samples; i++) {
+  for (int i = 0; i < samples; ++i) {
     uint32_t r = mt32();
     float f = int32Bits2Float(r);
 
-    steady_clock::time_point t1 = steady_clock::now();
-    for (int j = 0; j < iterations; j++) {
+    auto t1 = steady_clock::now();
+    for (int j = 0; j < iterations; ++j) {
       f2s_buffered(f, bufferown);
       throwaway += bufferown[2];
     }
-    steady_clock::time_point t2 = steady_clock::now();
-    double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    auto t2 = steady_clock::now();
+    double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
     update(mv1, delta1);
 
     t1 = steady_clock::now();
-    for (int j = 0; j < iterations; j++) {
+    for (int j = 0; j < iterations; ++j) {
       fcv(f);
       throwaway += buffer[2];
     }
     t2 = steady_clock::now();
-    double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
     update(mv2, delta2);
     if (verbose) {
       printf("%u,%lf,%lf\n", r, delta1, delta2);
@@ -151,28 +151,28 @@ static int bench64(int samples, int iterations, bool verbose) {
   init(mv1);
   init(mv2);
   int throwaway = 0;
-  for (int i = 0; i < samples; i++) {
+  for (int i = 0; i < samples; ++i) {
     uint64_t r = mt32();
     r <<= 32;
     r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
     double f = int64Bits2Double(r);
 
-    steady_clock::time_point t1 = steady_clock::now();
-    for (int j = 0; j < iterations; j++) {
+    auto t1 = steady_clock::now();
+    for (int j = 0; j < iterations; ++j) {
       d2s_buffered(f, bufferown);
       throwaway += bufferown[2];
     }
-    steady_clock::time_point t2 = steady_clock::now();
-    double delta1 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    auto t2 = steady_clock::now();
+    double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
     update(mv1, delta1);
 
     t1 = steady_clock::now();
-    for (int j = 0; j < iterations; j++) {
+    for (int j = 0; j < iterations; ++j) {
       dcv(f);
       throwaway += buffer[2];
     }
     t2 = steady_clock::now();
-    double delta2 = duration_cast<nanoseconds>( t2 - t1 ).count() / (double) iterations;
+    double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
     update(mv2, delta2);
     if (verbose) {
       printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
   int samples = 10000;
   int iterations = 1000;
   bool verbose = false;
-  for (int i = 1; i < argc; i++) {
+  for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-32") == 0) {
       run32 = true;
       run64 = false;
