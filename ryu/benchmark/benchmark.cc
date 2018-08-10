@@ -76,36 +76,32 @@ static double int64Bits2Double(uint64_t bits) {
 }
 
 struct mean_and_variance {
-  int64_t n;
-  double mean;
-  double m2;
+  int64_t n = 0;
+  double mean = 0;
+  double m2 = 0;
+
+  void update(double x) {
+    ++n;
+    double d = x - mean;
+    mean += d / n;
+    double d2 = x - mean;
+    m2 += d * d2;
+  }
+
+  double variance() const {
+    return m2 / (n - 1);
+  }
+
+  double stddev() const {
+    return sqrt(variance());
+  }
 };
-
-void init(mean_and_variance &mv) {
-  mv.n = 0;
-  mv.mean = 0;
-  mv.m2 = 0;
-}
-
-void update(mean_and_variance &mv, double x) {
-  int64_t n = ++mv.n;
-  double d = x - mv.mean;
-  mv.mean += d / n;
-  double d2 = x - mv.mean;
-  mv.m2 += d * d2;
-}
-
-double variance(mean_and_variance &mv) {
-  return mv.m2 / (mv.n - 1);
-}
 
 static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
-  init(mv1);
-  init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; ++i) {
     uint32_t r = mt32();
@@ -118,7 +114,7 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
     }
     auto t2 = steady_clock::now();
     double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    update(mv1, delta1);
+    mv1.update(delta1);
 
     t1 = steady_clock::now();
     if (!ryu_only) {
@@ -129,7 +125,7 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
     }
     t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    update(mv2, delta2);
+    mv2.update(delta2);
 
     if (verbose) {
       printf("%u,%lf,%lf\n", r, delta1, delta2);
@@ -141,7 +137,7 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
   }
   if (!verbose) {
     printf("32: %8.3f %8.3f     %8.3f %8.3f\n",
-        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)));
+        mv1.mean, mv1.stddev(), mv2.mean, mv2.stddev());
   }
   return throwaway;
 }
@@ -151,8 +147,6 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only) {
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
-  init(mv1);
-  init(mv2);
   int throwaway = 0;
   for (int i = 0; i < samples; ++i) {
     uint64_t r = mt32();
@@ -167,7 +161,7 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only) {
     }
     auto t2 = steady_clock::now();
     double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    update(mv1, delta1);
+    mv1.update(delta1);
 
     t1 = steady_clock::now();
     if (!ryu_only) {
@@ -178,7 +172,7 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only) {
     }
     t2 = steady_clock::now();
     double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    update(mv2, delta2);
+    mv2.update(delta2);
 
     if (verbose) {
       printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
@@ -190,7 +184,7 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only) {
   }
   if (!verbose) {
     printf("64: %8.3f %8.3f     %8.3f %8.3f\n",
-        mv1.mean, sqrt(variance(mv1)), mv2.mean, sqrt(variance(mv2)));
+        mv1.mean, mv1.stddev(), mv2.mean, mv2.stddev());
   }
   return throwaway;
 }
