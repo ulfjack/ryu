@@ -55,14 +55,22 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
   const uint64_t b10 = (uint64_t)aHi * bLo;
   const uint64_t b11 = (uint64_t)aHi * bHi;
 
-  const uint64_t midSum = b01 + b10;
-  const uint64_t midCarry = midSum < b01;
+  const uint32_t b00Lo = (uint32_t)b00;
+  const uint32_t b00Hi = (uint32_t)(b00 >> 32);
 
-  const uint64_t productLo = b00 + (midSum << 32);
-  const uint64_t productLoCarry = productLo < b00;
+  const uint64_t mid1 = b10 + b00Hi;
+  const uint32_t mid1Lo = (uint32_t)(mid1);
+  const uint32_t mid1Hi = (uint32_t)(mid1 >> 32);
 
-  *productHi = b11 + (midSum >> 32) + (midCarry << 32) + productLoCarry;
-  return productLo;
+  const uint64_t mid2 = b01 + mid1Lo;
+  const uint32_t mid2Lo = (uint32_t)(mid2);
+  const uint32_t mid2Hi = (uint32_t)(mid2 >> 32);
+
+  const uint64_t pHi = b11 + mid1Hi + mid2Hi;
+  const uint64_t pLo = ((uint64_t)mid2Lo << 32) + b00Lo;
+
+  *productHi = pHi;
+  return pLo;
 }
 
 static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
