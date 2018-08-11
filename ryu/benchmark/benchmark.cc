@@ -117,19 +117,24 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
       double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
       mv1.update(delta1);
 
-      t1 = steady_clock::now();
+      double delta2 = 0.0;
       if (!ryu_only) {
+        t1 = steady_clock::now();
         for (int j = 0; j < iterations; ++j) {
           fcv(f);
           throwaway += buffer[2];
         }
+        t2 = steady_clock::now();
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+        mv2.update(delta2);
       }
-      t2 = steady_clock::now();
-      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-      mv2.update(delta2);
 
       if (verbose) {
-        printf("%u,%lf,%lf\n", r, delta1, delta2);
+        if (ryu_only) {
+          printf("%u,%lf\n", r, delta1);
+        } else {
+          printf("%u,%lf,%lf\n", r, delta1, delta2);
+        }
       }
 
       if (!ryu_only && strcmp(bufferown, buffer) != 0) {
@@ -154,25 +159,33 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
       double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
       mv1.update(delta1);
 
-      t1 = steady_clock::now();
+      double delta2 = 0.0;
       if (!ryu_only) {
+        t1 = steady_clock::now();
         for (int i = 0; i < samples; ++i) {
           fcv(vec[i]);
           throwaway += buffer[2];
         }
+        t2 = steady_clock::now();
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+        mv2.update(delta2);
       }
-      t2 = steady_clock::now();
-      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
-      mv2.update(delta2);
 
       if (verbose) {
-        printf("N/A,%lf,%lf\n", delta1, delta2);
+        if (ryu_only) {
+          printf("%lf\n", delta1);
+        } else {
+          printf("%lf,%lf\n", delta1, delta2);
+        }
       }
     }
   }
   if (!verbose) {
-    printf("32: %8.3f %8.3f     %8.3f %8.3f\n",
-        mv1.mean, mv1.stddev(), mv2.mean, mv2.stddev());
+    printf("32: %8.3f %8.3f", mv1.mean, mv1.stddev());
+    if (!ryu_only) {
+      printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
+    }
+    printf("\n");
   }
   return throwaway;
 }
@@ -199,19 +212,24 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only, boo
       double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
       mv1.update(delta1);
 
-      t1 = steady_clock::now();
+      double delta2 = 0.0;
       if (!ryu_only) {
+        t1 = steady_clock::now();
         for (int j = 0; j < iterations; ++j) {
           dcv(f);
           throwaway += buffer[2];
         }
+        t2 = steady_clock::now();
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+        mv2.update(delta2);
       }
-      t2 = steady_clock::now();
-      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-      mv2.update(delta2);
 
       if (verbose) {
-        printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
+        if (ryu_only) {
+          printf("%" PRIu64 ",%lf\n", r, delta1);
+        } else {
+          printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
+        }
       }
 
       if (!ryu_only && strcmp(bufferown, buffer) != 0) {
@@ -238,25 +256,33 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only, boo
       double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
       mv1.update(delta1);
 
-      t1 = steady_clock::now();
+      double delta2 = 0.0;
       if (!ryu_only) {
+        t1 = steady_clock::now();
         for (int i = 0; i < samples; ++i) {
           dcv(vec[i]);
           throwaway += buffer[2];
         }
+        t2 = steady_clock::now();
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+        mv2.update(delta2);
       }
-      t2 = steady_clock::now();
-      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
-      mv2.update(delta2);
 
       if (verbose) {
-        printf("N/A,%lf,%lf\n", delta1, delta2);
+        if (ryu_only) {
+          printf("%lf\n", delta1);
+        } else {
+          printf("%lf,%lf\n", delta1, delta2);
+        }
       }
     }
   }
   if (!verbose) {
-    printf("64: %8.3f %8.3f     %8.3f %8.3f\n",
-        mv1.mean, mv1.stddev(), mv2.mean, mv2.stddev());
+    printf("64: %8.3f %8.3f", mv1.mean, mv1.stddev());
+    if (!ryu_only) {
+      printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
+    }
+    printf("\n");
   }
   return throwaway;
 }
@@ -306,9 +332,9 @@ int main(int argc, char** argv) {
   }
 
   if (verbose) {
-    printf("float_bits_as_int,ryu_time_in_ns,grisu3_time_in_ns\n");
+    printf("%sryu_time_in_ns%s\n", invert ? "" : "float_bits_as_int,", ryu_only ? "" : ",grisu3_time_in_ns");
   } else {
-    printf("    Average & Stddev Ryu  Average & Stddev Grisu3\n");
+    printf("    Average & Stddev Ryu%s\n", ryu_only ? "" : "  Average & Stddev Grisu3");
   }
   int throwaway = 0;
   if (run32) {
