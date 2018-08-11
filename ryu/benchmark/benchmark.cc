@@ -97,42 +97,77 @@ struct mean_and_variance {
   }
 };
 
-static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
+static int bench32(int samples, int iterations, bool verbose, bool ryu_only, bool invert) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  for (int i = 0; i < samples; ++i) {
-    uint32_t r = mt32();
-    float f = int32Bits2Float(r);
+  if (!invert) {
+    for (int i = 0; i < samples; ++i) {
+      uint32_t r = mt32();
+      float f = int32Bits2Float(r);
 
-    auto t1 = steady_clock::now();
-    for (int j = 0; j < iterations; ++j) {
-      f2s_buffered(f, bufferown);
-      throwaway += bufferown[2];
-    }
-    auto t2 = steady_clock::now();
-    double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    mv1.update(delta1);
-
-    t1 = steady_clock::now();
-    if (!ryu_only) {
+      auto t1 = steady_clock::now();
       for (int j = 0; j < iterations; ++j) {
-        fcv(f);
-        throwaway += buffer[2];
+        f2s_buffered(f, bufferown);
+        throwaway += bufferown[2];
+      }
+      auto t2 = steady_clock::now();
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+      mv1.update(delta1);
+
+      t1 = steady_clock::now();
+      if (!ryu_only) {
+        for (int j = 0; j < iterations; ++j) {
+          fcv(f);
+          throwaway += buffer[2];
+        }
+      }
+      t2 = steady_clock::now();
+      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+      mv2.update(delta2);
+
+      if (verbose) {
+        printf("%u,%lf,%lf\n", r, delta1, delta2);
+      }
+
+      if (!ryu_only && strcmp(bufferown, buffer) != 0) {
+        printf("For %x %20s %20s\n", r, bufferown, buffer);
       }
     }
-    t2 = steady_clock::now();
-    double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    mv2.update(delta2);
-
-    if (verbose) {
-      printf("%u,%lf,%lf\n", r, delta1, delta2);
+  } else {
+    std::vector<float> vec(samples);
+    for (int i = 0; i < samples; ++i) {
+      uint32_t r = mt32();
+      float f = int32Bits2Float(r);
+      vec[i] = f;
     }
 
-    if (!ryu_only && strcmp(bufferown, buffer) != 0) {
-      printf("For %x %20s %20s\n", r, bufferown, buffer);
+    for (int j = 0; j < iterations; ++j) {
+      auto t1 = steady_clock::now();
+      for (int i = 0; i < samples; ++i) {
+        f2s_buffered(vec[i], bufferown);
+        throwaway += bufferown[2];
+      }
+      auto t2 = steady_clock::now();
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+      mv1.update(delta1);
+
+      t1 = steady_clock::now();
+      if (!ryu_only) {
+        for (int i = 0; i < samples; ++i) {
+          fcv(vec[i]);
+          throwaway += buffer[2];
+        }
+      }
+      t2 = steady_clock::now();
+      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+      mv2.update(delta2);
+
+      if (verbose) {
+        printf("N/A,%lf,%lf\n", delta1, delta2);
+      }
     }
   }
   if (!verbose) {
@@ -142,44 +177,81 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only) {
   return throwaway;
 }
 
-static int bench64(int samples, int iterations, bool verbose, bool ryu_only) {
+static int bench64(int samples, int iterations, bool verbose, bool ryu_only, bool invert) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  for (int i = 0; i < samples; ++i) {
-    uint64_t r = mt32();
-    r <<= 32;
-    r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
-    double f = int64Bits2Double(r);
+  if (!invert) {
+    for (int i = 0; i < samples; ++i) {
+      uint64_t r = mt32();
+      r <<= 32;
+      r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
+      double f = int64Bits2Double(r);
 
-    auto t1 = steady_clock::now();
-    for (int j = 0; j < iterations; ++j) {
-      d2s_buffered(f, bufferown);
-      throwaway += bufferown[2];
-    }
-    auto t2 = steady_clock::now();
-    double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    mv1.update(delta1);
-
-    t1 = steady_clock::now();
-    if (!ryu_only) {
+      auto t1 = steady_clock::now();
       for (int j = 0; j < iterations; ++j) {
-        dcv(f);
-        throwaway += buffer[2];
+        d2s_buffered(f, bufferown);
+        throwaway += bufferown[2];
+      }
+      auto t2 = steady_clock::now();
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+      mv1.update(delta1);
+
+      t1 = steady_clock::now();
+      if (!ryu_only) {
+        for (int j = 0; j < iterations; ++j) {
+          dcv(f);
+          throwaway += buffer[2];
+        }
+      }
+      t2 = steady_clock::now();
+      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+      mv2.update(delta2);
+
+      if (verbose) {
+        printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
+      }
+
+      if (!ryu_only && strcmp(bufferown, buffer) != 0) {
+        printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
       }
     }
-    t2 = steady_clock::now();
-    double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
-    mv2.update(delta2);
-
-    if (verbose) {
-      printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
+  } else {
+    std::vector<double> vec(samples);
+    for (int i = 0; i < samples; ++i) {
+      uint64_t r = mt32();
+      r <<= 32;
+      r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
+      double f = int64Bits2Double(r);
+      vec[i] = f;
     }
 
-    if (!ryu_only && strcmp(bufferown, buffer) != 0) {
-      printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    for (int j = 0; j < iterations; ++j) {
+      auto t1 = steady_clock::now();
+      for (int i = 0; i < samples; ++i) {
+        d2s_buffered(vec[i], bufferown);
+        throwaway += bufferown[2];
+      }
+      auto t2 = steady_clock::now();
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+      mv1.update(delta1);
+
+      t1 = steady_clock::now();
+      if (!ryu_only) {
+        for (int i = 0; i < samples; ++i) {
+          dcv(vec[i]);
+          throwaway += buffer[2];
+        }
+      }
+      t2 = steady_clock::now();
+      double delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+      mv2.update(delta2);
+
+      if (verbose) {
+        printf("N/A,%lf,%lf\n", delta1, delta2);
+      }
     }
   }
   if (!verbose) {
@@ -207,6 +279,7 @@ int main(int argc, char** argv) {
   int iterations = 1000;
   bool verbose = false;
   bool ryu_only = false;
+  bool invert = false;
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-32") == 0) {
       run32 = true;
@@ -218,6 +291,8 @@ int main(int argc, char** argv) {
       verbose = true;
     } else if (strcmp(argv[i], "-ryu") == 0) {
       ryu_only = true;
+    } else if (strcmp(argv[i], "-invert") == 0) {
+      invert = true;
     } else if (strncmp(argv[i], "-samples=", 9) == 0) {
       sscanf(argv[i], "-samples=%i", &samples);
     } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
@@ -237,10 +312,10 @@ int main(int argc, char** argv) {
   }
   int throwaway = 0;
   if (run32) {
-    throwaway += bench32(samples, iterations, verbose, ryu_only);
+    throwaway += bench32(samples, iterations, verbose, ryu_only, invert);
   }
   if (run64) {
-    throwaway += bench64(samples, iterations, verbose, ryu_only);
+    throwaway += bench64(samples, iterations, verbose, ryu_only, invert);
   }
   if (argc == 1000) {
     // Prevent the compiler from optimizing the code away.
