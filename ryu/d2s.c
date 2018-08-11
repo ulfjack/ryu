@@ -52,13 +52,14 @@
 #include "ryu/common.h"
 #include "ryu/digit_table.h"
 #include "ryu/d2s.h"
+#include "ryu/d2s_intrinsics.h"
 
 static inline uint32_t pow5Factor(uint64_t value) {
   uint32_t count = 0;
   for (;;) {
     assert(value != 0);
-    const uint64_t q = value / 5;
-    const uint64_t r = value % 5;
+    const uint64_t q = div5(value);
+    const uint32_t r = (uint32_t) (value - 5 * q);
     if (r != 0) {
       break;
     }
@@ -290,7 +291,8 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       // This should use q <= 22, but I think 21 is also safe. Smaller values
       // may still be safe, but it's more difficult to reason about them.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
-      if (mv % 5 == 0) {
+      const uint32_t mvMod5 = (uint32_t) (mv - 5 * div5(mv));
+      if (mvMod5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
       } else if (acceptBounds) {
         // Same as min(e2 + (~mm & 1), pow5Factor(mm)) >= q
@@ -358,19 +360,21 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   // On average, we remove ~2 digits.
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
     // General case, which happens rarely (~0.7%).
-    while (vp / 10 > vm / 10) {
-#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
-      // The compiler does not realize that vm % 10 can be computed from vm / 10
-      // as vm - (vm / 10) * 10.
-      vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0;
-#else
-      vmIsTrailingZeros &= vm % 10 == 0;
-#endif
+    for (;;) {
+      const uint64_t vpDiv10 = div10(vp);
+      const uint64_t vmDiv10 = div10(vm);
+      if (vpDiv10 <= vmDiv10) {
+        break;
+      }
+      const uint32_t vmMod10 = (uint32_t) (vm - 10 * vmDiv10);
+      const uint64_t vrDiv10 = div10(vr);
+      const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+      vmIsTrailingZeros &= vmMod10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
-      lastRemovedDigit = (uint8_t) (vr % 10);
-      vr /= 10;
-      vp /= 10;
-      vm /= 10;
+      lastRemovedDigit = (uint8_t) vrMod10;
+      vr = vrDiv10;
+      vp = vpDiv10;
+      vm = vmDiv10;
       ++removed;
     }
 #ifdef RYU_DEBUG
@@ -378,12 +382,20 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
 #endif
     if (vmIsTrailingZeros) {
-      while (vm % 10 == 0) {
+      for (;;) {
+        const uint64_t vmDiv10 = div10(vm);
+        const uint32_t vmMod10 = (uint32_t) (vm - 10 * vmDiv10);
+        if (vmMod10 != 0) {
+          break;
+        }
+        const uint64_t vpDiv10 = div10(vp);
+        const uint64_t vrDiv10 = div10(vr);
+        const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
         vrIsTrailingZeros &= lastRemovedDigit == 0;
-        lastRemovedDigit = (uint8_t) (vr % 10);
-        vr /= 10;
-        vp /= 10;
-        vm /= 10;
+        lastRemovedDigit = (uint8_t) vrMod10;
+        vr = vrDiv10;
+        vp = vpDiv10;
+        vm = vmDiv10;
         ++removed;
       }
     }
@@ -401,22 +413,33 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   } else {
     // Specialized for the common case (~99.3%). Percentages below are relative to this.
     bool roundUp = false;
-    if (vp / 100 > vm / 100) { // Optimization: remove two digits at a time (~86.2%).
-      roundUp = (vr % 100) >= 50;
-      vr /= 100;
-      vp /= 100;
-      vm /= 100;
+    const uint64_t vpDiv100 = div100(vp);
+    const uint64_t vmDiv100 = div100(vm);
+    if (vpDiv100 > vmDiv100) { // Optimization: remove two digits at a time (~86.2%).
+      const uint64_t vrDiv100 = div100(vr);
+      const uint32_t vrMod100 = (uint32_t) (vr - 100 * vrDiv100);
+      roundUp = vrMod100 >= 50;
+      vr = vrDiv100;
+      vp = vpDiv100;
+      vm = vmDiv100;
       removed += 2;
     }
     // Loop iterations below (approximately), without optimization above:
     // 0: 0.03%, 1: 13.8%, 2: 70.6%, 3: 14.0%, 4: 1.40%, 5: 0.14%, 6+: 0.02%
     // Loop iterations below (approximately), with optimization above:
     // 0: 70.6%, 1: 27.8%, 2: 1.40%, 3: 0.14%, 4+: 0.02%
-    while (vp / 10 > vm / 10) {
-      roundUp = vr % 10 >= 5;
-      vr /= 10;
-      vp /= 10;
-      vm /= 10;
+    for (;;) {
+      const uint64_t vpDiv10 = div10(vp);
+      const uint64_t vmDiv10 = div10(vm);
+      if (vpDiv10 <= vmDiv10) {
+        break;
+      }
+      const uint64_t vrDiv10 = div10(vr);
+      const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+      roundUp = vrMod10 >= 5;
+      vr = vrDiv10;
+      vp = vpDiv10;
+      vm = vmDiv10;
       ++removed;
     }
 #ifdef RYU_DEBUG
@@ -471,12 +494,9 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   // so the rest will fit into uint32_t.
   if ((output >> 32) != 0) {
     // Expensive 64-bit division.
-#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
-    uint32_t output2 = (uint32_t) (output - 100000000 * (output / 100000000));
-#else
-    uint32_t output2 = (uint32_t) (output % 100000000);
-#endif
-    output /= 100000000;
+    const uint64_t q = div100000000(output);
+    uint32_t output2 = (uint32_t) (output - 100000000 * q);
+    output = q;
 
     const uint32_t c = output2 % 10000;
     output2 /= 10000;
