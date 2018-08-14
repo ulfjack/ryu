@@ -104,13 +104,13 @@ float generate_float(std::mt19937& mt32) {
   return f;
 }
 
-static int bench32(int samples, int iterations, bool verbose, bool ryu_only, bool invert) {
+static int bench32(int samples, int iterations, bool verbose, bool ryu_only, bool classic) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  if (!invert) {
+  if (classic) {
     for (int i = 0; i < samples; ++i) {
       const float f = generate_float(mt32);
 
@@ -202,13 +202,13 @@ double generate_double(std::mt19937& mt32) {
   return f;
 }
 
-static int bench64(int samples, int iterations, bool verbose, bool ryu_only, bool invert) {
+static int bench64(int samples, int iterations, bool verbose, bool ryu_only, bool classic) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  if (!invert) {
+  if (classic) {
     for (int i = 0; i < samples; ++i) {
       const double f = generate_double(mt32);
 
@@ -310,7 +310,7 @@ int main(int argc, char** argv) {
   int iterations = 1000;
   bool verbose = false;
   bool ryu_only = false;
-  bool invert = false;
+  bool classic = false;
   for (int i = 1; i < argc; ++i) {
     if (strcmp(argv[i], "-32") == 0) {
       run32 = true;
@@ -322,8 +322,8 @@ int main(int argc, char** argv) {
       verbose = true;
     } else if (strcmp(argv[i], "-ryu") == 0) {
       ryu_only = true;
-    } else if (strcmp(argv[i], "-invert") == 0) {
-      invert = true;
+    } else if (strcmp(argv[i], "-classic") == 0) {
+      classic = true;
     } else if (strncmp(argv[i], "-samples=", 9) == 0) {
       sscanf(argv[i], "-samples=%i", &samples);
     } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
@@ -340,16 +340,16 @@ int main(int argc, char** argv) {
   }
 
   if (verbose) {
-    printf("%sryu_time_in_ns%s\n", invert ? "" : "hexfloat,", ryu_only ? "" : ",grisu3_time_in_ns");
+    printf("%sryu_time_in_ns%s\n", classic ? "hexfloat," : "", ryu_only ? "" : ",grisu3_time_in_ns");
   } else {
     printf("    Average & Stddev Ryu%s\n", ryu_only ? "" : "  Average & Stddev Grisu3");
   }
   int throwaway = 0;
   if (run32) {
-    throwaway += bench32(samples, iterations, verbose, ryu_only, invert);
+    throwaway += bench32(samples, iterations, verbose, ryu_only, classic);
   }
   if (run64) {
-    throwaway += bench64(samples, iterations, verbose, ryu_only, invert);
+    throwaway += bench64(samples, iterations, verbose, ryu_only, classic);
   }
   if (argc == 1000) {
     // Prevent the compiler from optimizing the code away.
