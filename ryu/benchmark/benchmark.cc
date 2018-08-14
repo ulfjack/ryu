@@ -23,6 +23,7 @@
 #include <random>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined(__linux__)
 #include <sys/types.h>
@@ -323,6 +324,9 @@ int main(int argc, char** argv) {
       sscanf(argv[i], "-samples=%i", &samples);
     } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
       sscanf(argv[i], "-iterations=%i", &iterations);
+    } else {
+      printf("Unrecognized option '%s'.\n", argv[i]);
+      return EXIT_FAILURE;
     }
   }
 
