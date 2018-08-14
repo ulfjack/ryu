@@ -98,85 +98,133 @@ struct mean_and_variance {
   }
 };
 
+class benchmark_options {
+public:
+  benchmark_options() = default;
+  benchmark_options(const benchmark_options&) = delete;
+  benchmark_options& operator=(const benchmark_options&) = delete;
+
+  bool run32() const { return m_run32; }
+  bool run64() const { return m_run64; }
+  int samples() const { return m_samples; }
+  int iterations() const { return m_iterations; }
+  bool verbose() const { return m_verbose; }
+  bool ryu_only() const { return m_ryu_only; }
+  bool classic() const { return m_classic; }
+
+  void parse(const char * const arg) {
+    if (strcmp(arg, "-32") == 0) {
+      m_run32 = true;
+      m_run64 = false;
+    } else if (strcmp(arg, "-64") == 0) {
+      m_run32 = false;
+      m_run64 = true;
+    } else if (strcmp(arg, "-v") == 0) {
+      m_verbose = true;
+    } else if (strcmp(arg, "-ryu") == 0) {
+      m_ryu_only = true;
+    } else if (strcmp(arg, "-classic") == 0) {
+      m_classic = true;
+    } else if (strncmp(arg, "-samples=", 9) == 0) {
+      sscanf(arg, "-samples=%i", &m_samples);
+    } else if (strncmp(arg, "-iterations=", 12) == 0) {
+      sscanf(arg, "-iterations=%i", &m_iterations);
+    } else {
+      printf("Unrecognized option '%s'.\n", arg);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+private:
+  // By default, run both 32 and 64-bit benchmarks with 10000 samples and 1000 iterations each.
+  bool m_run32 = true;
+  bool m_run64 = true;
+  int m_samples = 10000;
+  int m_iterations = 1000;
+  bool m_verbose = false;
+  bool m_ryu_only = false;
+  bool m_classic = false;
+};
+
 float generate_float(std::mt19937& mt32) {
   uint32_t r = mt32();
   float f = int32Bits2Float(r);
   return f;
 }
 
-static int bench32(int samples, int iterations, bool verbose, bool ryu_only, bool classic) {
+static int bench32(const benchmark_options& options) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  if (classic) {
-    for (int i = 0; i < samples; ++i) {
+  if (options.classic()) {
+    for (int i = 0; i < options.samples(); ++i) {
       const float f = generate_float(mt32);
 
       auto t1 = steady_clock::now();
-      for (int j = 0; j < iterations; ++j) {
+      for (int j = 0; j < options.iterations(); ++j) {
         f2s_buffered(f, bufferown);
         throwaway += bufferown[2];
       }
       auto t2 = steady_clock::now();
-      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
       mv1.update(delta1);
 
       double delta2 = 0.0;
-      if (!ryu_only) {
+      if (!options.ryu_only()) {
         t1 = steady_clock::now();
-        for (int j = 0; j < iterations; ++j) {
+        for (int j = 0; j < options.iterations(); ++j) {
           fcv(f);
           throwaway += buffer[2];
         }
         t2 = steady_clock::now();
-        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
         mv2.update(delta2);
       }
 
-      if (verbose) {
-        if (ryu_only) {
+      if (options.verbose()) {
+        if (options.ryu_only()) {
           printf("%.6a,%f\n", f, delta1);
         } else {
           printf("%.6a,%f,%f\n", f, delta1, delta2);
         }
       }
 
-      if (!ryu_only && strcmp(bufferown, buffer) != 0) {
+      if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
         printf("For %.6a %20s %20s\n", f, bufferown, buffer);
       }
     }
   } else {
-    std::vector<float> vec(samples);
-    for (int i = 0; i < samples; ++i) {
+    std::vector<float> vec(options.samples());
+    for (int i = 0; i < options.samples(); ++i) {
       vec[i] = generate_float(mt32);
     }
 
-    for (int j = 0; j < iterations; ++j) {
+    for (int j = 0; j < options.iterations(); ++j) {
       auto t1 = steady_clock::now();
-      for (int i = 0; i < samples; ++i) {
+      for (int i = 0; i < options.samples(); ++i) {
         f2s_buffered(vec[i], bufferown);
         throwaway += bufferown[2];
       }
       auto t2 = steady_clock::now();
-      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.samples());
       mv1.update(delta1);
 
       double delta2 = 0.0;
-      if (!ryu_only) {
+      if (!options.ryu_only()) {
         t1 = steady_clock::now();
-        for (int i = 0; i < samples; ++i) {
+        for (int i = 0; i < options.samples(); ++i) {
           fcv(vec[i]);
           throwaway += buffer[2];
         }
         t2 = steady_clock::now();
-        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.samples());
         mv2.update(delta2);
       }
 
-      if (verbose) {
-        if (ryu_only) {
+      if (options.verbose()) {
+        if (options.ryu_only()) {
           printf("%f\n", delta1);
         } else {
           printf("%f,%f\n", delta1, delta2);
@@ -184,9 +232,9 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
       }
     }
   }
-  if (!verbose) {
+  if (!options.verbose()) {
     printf("32: %8.3f %8.3f", mv1.mean, mv1.stddev());
-    if (!ryu_only) {
+    if (!options.ryu_only()) {
       printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
     }
     printf("\n");
@@ -202,79 +250,79 @@ double generate_double(std::mt19937& mt32) {
   return f;
 }
 
-static int bench64(int samples, int iterations, bool verbose, bool ryu_only, bool classic) {
+static int bench64(const benchmark_options& options) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  if (classic) {
-    for (int i = 0; i < samples; ++i) {
+  if (options.classic()) {
+    for (int i = 0; i < options.samples(); ++i) {
       const double f = generate_double(mt32);
 
       auto t1 = steady_clock::now();
-      for (int j = 0; j < iterations; ++j) {
+      for (int j = 0; j < options.iterations(); ++j) {
         d2s_buffered(f, bufferown);
         throwaway += bufferown[2];
       }
       auto t2 = steady_clock::now();
-      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
       mv1.update(delta1);
 
       double delta2 = 0.0;
-      if (!ryu_only) {
+      if (!options.ryu_only()) {
         t1 = steady_clock::now();
-        for (int j = 0; j < iterations; ++j) {
+        for (int j = 0; j < options.iterations(); ++j) {
           dcv(f);
           throwaway += buffer[2];
         }
         t2 = steady_clock::now();
-        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(iterations);
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
         mv2.update(delta2);
       }
 
-      if (verbose) {
-        if (ryu_only) {
+      if (options.verbose()) {
+        if (options.ryu_only()) {
           printf("%.13a,%f\n", f, delta1);
         } else {
           printf("%.13a,%f,%f\n", f, delta1, delta2);
         }
       }
 
-      if (!ryu_only && strcmp(bufferown, buffer) != 0) {
+      if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
         printf("For %.13a %28s %28s\n", f, bufferown, buffer);
       }
     }
   } else {
-    std::vector<double> vec(samples);
-    for (int i = 0; i < samples; ++i) {
+    std::vector<double> vec(options.samples());
+    for (int i = 0; i < options.samples(); ++i) {
       vec[i] = generate_double(mt32);
     }
 
-    for (int j = 0; j < iterations; ++j) {
+    for (int j = 0; j < options.iterations(); ++j) {
       auto t1 = steady_clock::now();
-      for (int i = 0; i < samples; ++i) {
+      for (int i = 0; i < options.samples(); ++i) {
         d2s_buffered(vec[i], bufferown);
         throwaway += bufferown[2];
       }
       auto t2 = steady_clock::now();
-      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.samples());
       mv1.update(delta1);
 
       double delta2 = 0.0;
-      if (!ryu_only) {
+      if (!options.ryu_only()) {
         t1 = steady_clock::now();
-        for (int i = 0; i < samples; ++i) {
+        for (int i = 0; i < options.samples(); ++i) {
           dcv(vec[i]);
           throwaway += buffer[2];
         }
         t2 = steady_clock::now();
-        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(samples);
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.samples());
         mv2.update(delta2);
       }
 
-      if (verbose) {
-        if (ryu_only) {
+      if (options.verbose()) {
+        if (options.ryu_only()) {
           printf("%f\n", delta1);
         } else {
           printf("%f,%f\n", delta1, delta2);
@@ -282,9 +330,9 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only, boo
       }
     }
   }
-  if (!verbose) {
+  if (!options.verbose()) {
     printf("64: %8.3f %8.3f", mv1.mean, mv1.stddev());
-    if (!ryu_only) {
+    if (!options.ryu_only()) {
       printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
     }
     printf("\n");
@@ -303,53 +351,28 @@ int main(int argc, char** argv) {
   sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
 #endif
 
-  // By default, run both 32 and 64-bit benchmarks with 10000 samples and 1000 iterations each.
-  bool run32 = true;
-  bool run64 = true;
-  int samples = 10000;
-  int iterations = 1000;
-  bool verbose = false;
-  bool ryu_only = false;
-  bool classic = false;
+  benchmark_options options;
+
   for (int i = 1; i < argc; ++i) {
-    if (strcmp(argv[i], "-32") == 0) {
-      run32 = true;
-      run64 = false;
-    } else if (strcmp(argv[i], "-64") == 0) {
-      run32 = false;
-      run64 = true;
-    } else if (strcmp(argv[i], "-v") == 0) {
-      verbose = true;
-    } else if (strcmp(argv[i], "-ryu") == 0) {
-      ryu_only = true;
-    } else if (strcmp(argv[i], "-classic") == 0) {
-      classic = true;
-    } else if (strncmp(argv[i], "-samples=", 9) == 0) {
-      sscanf(argv[i], "-samples=%i", &samples);
-    } else if (strncmp(argv[i], "-iterations=", 12) == 0) {
-      sscanf(argv[i], "-iterations=%i", &iterations);
-    } else {
-      printf("Unrecognized option '%s'.\n", argv[i]);
-      return EXIT_FAILURE;
-    }
+    options.parse(argv[i]);
   }
 
-  if (!verbose) {
+  if (!options.verbose()) {
     // No need to buffer the output if we're just going to print three lines.
     setbuf(stdout, NULL);
   }
 
-  if (verbose) {
-    printf("%sryu_time_in_ns%s\n", classic ? "hexfloat," : "", ryu_only ? "" : ",grisu3_time_in_ns");
+  if (options.verbose()) {
+    printf("%sryu_time_in_ns%s\n", options.classic() ? "hexfloat," : "", options.ryu_only() ? "" : ",grisu3_time_in_ns");
   } else {
-    printf("    Average & Stddev Ryu%s\n", ryu_only ? "" : "  Average & Stddev Grisu3");
+    printf("    Average & Stddev Ryu%s\n", options.ryu_only() ? "" : "  Average & Stddev Grisu3");
   }
   int throwaway = 0;
-  if (run32) {
-    throwaway += bench32(samples, iterations, verbose, ryu_only, classic);
+  if (options.run32()) {
+    throwaway += bench32(options);
   }
-  if (run64) {
-    throwaway += bench64(samples, iterations, verbose, ryu_only, classic);
+  if (options.run64()) {
+    throwaway += bench64(options);
   }
   if (argc == 1000) {
     // Prevent the compiler from optimizing the code away.
