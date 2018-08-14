@@ -98,6 +98,12 @@ struct mean_and_variance {
   }
 };
 
+float generate_float(std::mt19937& mt32) {
+  uint32_t r = mt32();
+  float f = int32Bits2Float(r);
+  return f;
+}
+
 static int bench32(int samples, int iterations, bool verbose, bool ryu_only, bool invert) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
@@ -106,8 +112,7 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
   int throwaway = 0;
   if (!invert) {
     for (int i = 0; i < samples; ++i) {
-      uint32_t r = mt32();
-      float f = int32Bits2Float(r);
+      const float f = generate_float(mt32);
 
       auto t1 = steady_clock::now();
       for (int j = 0; j < iterations; ++j) {
@@ -132,22 +137,20 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
 
       if (verbose) {
         if (ryu_only) {
-          printf("%u,%lf\n", r, delta1);
+          printf("%.6a,%f\n", f, delta1);
         } else {
-          printf("%u,%lf,%lf\n", r, delta1, delta2);
+          printf("%.6a,%f,%f\n", f, delta1, delta2);
         }
       }
 
       if (!ryu_only && strcmp(bufferown, buffer) != 0) {
-        printf("For %x %20s %20s\n", r, bufferown, buffer);
+        printf("For %.6a %20s %20s\n", f, bufferown, buffer);
       }
     }
   } else {
     std::vector<float> vec(samples);
     for (int i = 0; i < samples; ++i) {
-      uint32_t r = mt32();
-      float f = int32Bits2Float(r);
-      vec[i] = f;
+      vec[i] = generate_float(mt32);
     }
 
     for (int j = 0; j < iterations; ++j) {
@@ -174,9 +177,9 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
 
       if (verbose) {
         if (ryu_only) {
-          printf("%lf\n", delta1);
+          printf("%f\n", delta1);
         } else {
-          printf("%lf,%lf\n", delta1, delta2);
+          printf("%f,%f\n", delta1, delta2);
         }
       }
     }
@@ -191,6 +194,14 @@ static int bench32(int samples, int iterations, bool verbose, bool ryu_only, boo
   return throwaway;
 }
 
+double generate_double(std::mt19937& mt32) {
+  uint64_t r = mt32();
+  r <<= 32;
+  r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
+  double f = int64Bits2Double(r);
+  return f;
+}
+
 static int bench64(int samples, int iterations, bool verbose, bool ryu_only, bool invert) {
   char bufferown[BUFFER_SIZE];
   std::mt19937 mt32(12345);
@@ -199,10 +210,7 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only, boo
   int throwaway = 0;
   if (!invert) {
     for (int i = 0; i < samples; ++i) {
-      uint64_t r = mt32();
-      r <<= 32;
-      r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
-      double f = int64Bits2Double(r);
+      const double f = generate_double(mt32);
 
       auto t1 = steady_clock::now();
       for (int j = 0; j < iterations; ++j) {
@@ -227,24 +235,20 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only, boo
 
       if (verbose) {
         if (ryu_only) {
-          printf("%" PRIu64 ",%lf\n", r, delta1);
+          printf("%.13a,%f\n", f, delta1);
         } else {
-          printf("%" PRIu64 ",%lf,%lf\n", r, delta1, delta2);
+          printf("%.13a,%f,%f\n", f, delta1, delta2);
         }
       }
 
       if (!ryu_only && strcmp(bufferown, buffer) != 0) {
-        printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+        printf("For %.13a %28s %28s\n", f, bufferown, buffer);
       }
     }
   } else {
     std::vector<double> vec(samples);
     for (int i = 0; i < samples; ++i) {
-      uint64_t r = mt32();
-      r <<= 32;
-      r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
-      double f = int64Bits2Double(r);
-      vec[i] = f;
+      vec[i] = generate_double(mt32);
     }
 
     for (int j = 0; j < iterations; ++j) {
@@ -271,9 +275,9 @@ static int bench64(int samples, int iterations, bool verbose, bool ryu_only, boo
 
       if (verbose) {
         if (ryu_only) {
-          printf("%lf\n", delta1);
+          printf("%f\n", delta1);
         } else {
-          printf("%lf,%lf\n", delta1, delta2);
+          printf("%f,%f\n", delta1, delta2);
         }
       }
     }
@@ -336,7 +340,7 @@ int main(int argc, char** argv) {
   }
 
   if (verbose) {
-    printf("%sryu_time_in_ns%s\n", invert ? "" : "float_bits_as_int,", ryu_only ? "" : ",grisu3_time_in_ns");
+    printf("%sryu_time_in_ns%s\n", invert ? "" : "hexfloat,", ryu_only ? "" : ",grisu3_time_in_ns");
   } else {
     printf("    Average & Stddev Ryu%s\n", ryu_only ? "" : "  Average & Stddev Grisu3");
   }
