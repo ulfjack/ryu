@@ -171,8 +171,8 @@ uint32_t exp10(const int x) {
   return ret;
 }
 
-float generate_float(const benchmark_options& options, std::mt19937& mt32) {
-  uint32_t r = mt32();
+float generate_float(const benchmark_options& options, std::mt19937& mt32, uint32_t& r) {
+  r = mt32();
 
   if (options.small_digits() == 0) {
     float f = int32Bits2Float(r);
@@ -202,7 +202,8 @@ static int bench32(const benchmark_options& options) {
   int throwaway = 0;
   if (options.classic()) {
     for (int i = 0; i < options.samples(); ++i) {
-      const float f = generate_float(options, mt32);
+      uint32_t r = 0;
+      const float f = generate_float(options, mt32, r);
 
       auto t1 = steady_clock::now();
       for (int j = 0; j < options.iterations(); ++j) {
@@ -227,20 +228,21 @@ static int bench32(const benchmark_options& options) {
 
       if (options.verbose()) {
         if (options.ryu_only()) {
-          printf("%s,%.6a,%f\n", bufferown, f, delta1);
+          printf("%s,%u,%f\n", bufferown, r, delta1);
         } else {
-          printf("%s,%.6a,%f,%f\n", bufferown, f, delta1, delta2);
+          printf("%s,%u,%f,%f\n", bufferown, r, delta1, delta2);
         }
       }
 
       if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
-        printf("For %.6a %20s %20s\n", f, bufferown, buffer);
+        printf("For %x %20s %20s\n", r, bufferown, buffer);
       }
     }
   } else {
     std::vector<float> vec(options.samples());
     for (int i = 0; i < options.samples(); ++i) {
-      vec[i] = generate_float(options, mt32);
+      uint32_t r = 0;
+      vec[i] = generate_float(options, mt32, r);
     }
 
     for (int j = 0; j < options.iterations(); ++j) {
@@ -284,8 +286,8 @@ static int bench32(const benchmark_options& options) {
   return throwaway;
 }
 
-double generate_double(const benchmark_options& options, std::mt19937& mt32) {
-  uint64_t r = mt32();
+double generate_double(const benchmark_options& options, std::mt19937& mt32, uint64_t& r) {
+  r = mt32();
   r <<= 32;
   r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
 
@@ -309,7 +311,8 @@ static int bench64(const benchmark_options& options) {
   int throwaway = 0;
   if (options.classic()) {
     for (int i = 0; i < options.samples(); ++i) {
-      const double f = generate_double(options, mt32);
+      uint64_t r = 0;
+      const double f = generate_double(options, mt32, r);
 
       auto t1 = steady_clock::now();
       for (int j = 0; j < options.iterations(); ++j) {
@@ -334,20 +337,21 @@ static int bench64(const benchmark_options& options) {
 
       if (options.verbose()) {
         if (options.ryu_only()) {
-          printf("%s,%.13a,%f\n", bufferown, f, delta1);
+          printf("%s,%" PRIu64 ",%f\n", bufferown, r, delta1);
         } else {
-          printf("%s,%.13a,%f,%f\n", bufferown, f, delta1, delta2);
+          printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
         }
       }
 
       if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
-        printf("For %.13a %28s %28s\n", f, bufferown, buffer);
+        printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
       }
     }
   } else {
     std::vector<double> vec(options.samples());
     for (int i = 0; i < options.samples(); ++i) {
-      vec[i] = generate_double(options, mt32);
+      uint64_t r = 0;
+      vec[i] = generate_double(options, mt32, r);
     }
 
     for (int j = 0; j < options.iterations(); ++j) {
@@ -414,7 +418,7 @@ int main(int argc, char** argv) {
   }
 
   if (options.verbose()) {
-    printf("%sryu_time_in_ns%s\n", options.classic() ? "ryu_output,hexfloat," : "", options.ryu_only() ? "" : ",grisu3_time_in_ns");
+    printf("%sryu_time_in_ns%s\n", options.classic() ? "ryu_output,float_bits_as_int," : "", options.ryu_only() ? "" : ",grisu3_time_in_ns");
   } else {
     printf("    Average & Stddev Ryu%s\n", options.ryu_only() ? "" : "  Average & Stddev Grisu3");
   }
