@@ -126,16 +126,24 @@ public:
     } else if (strcmp(arg, "-classic") == 0) {
       m_classic = true;
     } else if (strncmp(arg, "-samples=", 9) == 0) {
-      sscanf(arg, "-samples=%i", &m_samples);
+      if (sscanf(arg, "-samples=%i", &m_samples) != 1 || m_samples < 1) {
+        fail(arg);
+      }
     } else if (strncmp(arg, "-iterations=", 12) == 0) {
-      sscanf(arg, "-iterations=%i", &m_iterations);
+      if (sscanf(arg, "-iterations=%i", &m_iterations) != 1 || m_iterations < 1) {
+        fail(arg);
+      }
     } else {
-      printf("Unrecognized option '%s'.\n", arg);
-      exit(EXIT_FAILURE);
+      fail(arg);
     }
   }
 
 private:
+  void fail(const char * const arg) {
+    printf("Unrecognized option '%s'.\n", arg);
+    exit(EXIT_FAILURE);
+  }
+
   // By default, run both 32 and 64-bit benchmarks with 10000 samples and 1000 iterations each.
   bool m_run32 = true;
   bool m_run64 = true;
