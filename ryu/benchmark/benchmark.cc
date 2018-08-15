@@ -111,6 +111,7 @@ public:
   bool verbose() const { return m_verbose; }
   bool ryu_only() const { return m_ryu_only; }
   bool classic() const { return m_classic; }
+  int small_digits() const { return m_small_digits; }
 
   void parse(const char * const arg) {
     if (strcmp(arg, "-32") == 0) {
@@ -133,6 +134,10 @@ public:
       if (sscanf(arg, "-iterations=%i", &m_iterations) != 1 || m_iterations < 1) {
         fail(arg);
       }
+    } else if (strncmp(arg, "-small_digits=", 14) == 0) {
+      if (sscanf(arg, "-small_digits=%i", &m_small_digits) != 1 || m_small_digits < 1 || m_small_digits > 7) {
+        fail(arg);
+      }
     } else {
       fail(arg);
     }
@@ -152,12 +157,41 @@ private:
   bool m_verbose = false;
   bool m_ryu_only = false;
   bool m_classic = false;
+  int m_small_digits = 0;
 };
 
-float generate_float(std::mt19937& mt32) {
+// returns 10^x
+uint32_t exp10(const int x) {
+  uint32_t ret = 1;
+
+  for (int i = 0; i < x; ++i) {
+    ret *= 10;
+  }
+
+  return ret;
+}
+
+float generate_float(const benchmark_options& options, std::mt19937& mt32) {
   uint32_t r = mt32();
-  float f = int32Bits2Float(r);
-  return f;
+
+  if (options.small_digits() == 0) {
+    float f = int32Bits2Float(r);
+    return f;
+  }
+
+  // Example:
+  // options.small_digits() is 3
+  // lower is 100
+  // upper is 1000
+  // r % (1000 - 100) + 100;
+  // r % 900 + 100;
+  // r is [0, 899] + 100
+  // r is [100, 999]
+  // r / 100 is [1.00, 9.99]
+  const uint32_t lower = exp10(options.small_digits() - 1);
+  const uint32_t upper = lower * 10;
+  r = r % (upper - lower) + lower; // slightly biased, but reproducible
+  return r / static_cast<float>(lower);
 }
 
 static int bench32(const benchmark_options& options) {
@@ -168,7 +202,7 @@ static int bench32(const benchmark_options& options) {
   int throwaway = 0;
   if (options.classic()) {
     for (int i = 0; i < options.samples(); ++i) {
-      const float f = generate_float(mt32);
+      const float f = generate_float(options, mt32);
 
       auto t1 = steady_clock::now();
       for (int j = 0; j < options.iterations(); ++j) {
@@ -193,9 +227,9 @@ static int bench32(const benchmark_options& options) {
 
       if (options.verbose()) {
         if (options.ryu_only()) {
-          printf("%.6a,%f\n", f, delta1);
+          printf("%s,%.6a,%f\n", bufferown, f, delta1);
         } else {
-          printf("%.6a,%f,%f\n", f, delta1, delta2);
+          printf("%s,%.6a,%f,%f\n", bufferown, f, delta1, delta2);
         }
       }
 
@@ -206,7 +240,7 @@ static int bench32(const benchmark_options& options) {
   } else {
     std::vector<float> vec(options.samples());
     for (int i = 0; i < options.samples(); ++i) {
-      vec[i] = generate_float(mt32);
+      vec[i] = generate_float(options, mt32);
     }
 
     for (int j = 0; j < options.iterations(); ++j) {
@@ -250,12 +284,21 @@ static int bench32(const benchmark_options& options) {
   return throwaway;
 }
 
-double generate_double(std::mt19937& mt32) {
+double generate_double(const benchmark_options& options, std::mt19937& mt32) {
   uint64_t r = mt32();
   r <<= 32;
   r |= mt32(); // calling mt32() in separate statements guarantees order of evaluation
-  double f = int64Bits2Double(r);
-  return f;
+
+  if (options.small_digits() == 0) {
+    double f = int64Bits2Double(r);
+    return f;
+  }
+
+  // see example in generate_float()
+  const uint32_t lower = exp10(options.small_digits() - 1);
+  const uint32_t upper = lower * 10;
+  r = r % (upper - lower) + lower; // slightly biased, but reproducible
+  return r / static_cast<double>(lower);
 }
 
 static int bench64(const benchmark_options& options) {
@@ -266,7 +309,7 @@ static int bench64(const benchmark_options& options) {
   int throwaway = 0;
   if (options.classic()) {
     for (int i = 0; i < options.samples(); ++i) {
-      const double f = generate_double(mt32);
+      const double f = generate_double(options, mt32);
 
       auto t1 = steady_clock::now();
       for (int j = 0; j < options.iterations(); ++j) {
@@ -291,9 +334,9 @@ static int bench64(const benchmark_options& options) {
 
       if (options.verbose()) {
         if (options.ryu_only()) {
-          printf("%.13a,%f\n", f, delta1);
+          printf("%s,%.13a,%f\n", bufferown, f, delta1);
         } else {
-          printf("%.13a,%f,%f\n", f, delta1, delta2);
+          printf("%s,%.13a,%f,%f\n", bufferown, f, delta1, delta2);
         }
       }
 
@@ -304,7 +347,7 @@ static int bench64(const benchmark_options& options) {
   } else {
     std::vector<double> vec(options.samples());
     for (int i = 0; i < options.samples(); ++i) {
-      vec[i] = generate_double(mt32);
+      vec[i] = generate_double(options, mt32);
     }
 
     for (int j = 0; j < options.iterations(); ++j) {
@@ -371,7 +414,7 @@ int main(int argc, char** argv) {
   }
 
   if (options.verbose()) {
-    printf("%sryu_time_in_ns%s\n", options.classic() ? "hexfloat," : "", options.ryu_only() ? "" : ",grisu3_time_in_ns");
+    printf("%sryu_time_in_ns%s\n", options.classic() ? "ryu_output,hexfloat," : "", options.ryu_only() ? "" : ",grisu3_time_in_ns");
   } else {
     printf("    Average & Stddev Ryu%s\n", options.ryu_only() ? "" : "  Average & Stddev Grisu3");
   }
