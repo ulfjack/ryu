@@ -96,6 +96,12 @@ static inline uint64_t umulh(const uint64_t a, const uint64_t b) {
 
 // On x86 platforms, compilers typically generate calls to library
 // functions for 64-bit divisions, even if the divisor is a constant.
+//
+// E.g.:
+// https://bugs.llvm.org/show_bug.cgi?id=37932
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=17958
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=37443
+//
 // The functions here perform division-by-constant using multiplications
 // in the same way as 64-bit compilers would do.
 //
