@@ -37,7 +37,9 @@ public final class ComputeRequiredBitSizes {
     formats.add(FloatingPointFormat.FLOAT32);
     formats.add(FloatingPointFormat.FLOAT64);
     for (String s : args) {
-      if ("-128".equals(s)) {
+      if ("-80".equals(s)) {
+        formats.add(FloatingPointFormat.FLOAT80);
+      } else if ("-128".equals(s)) {
         formats.add(FloatingPointFormat.FLOAT128);
       } else if ("-256".equals(s)) {
         formats.add(FloatingPointFormat.FLOAT256);

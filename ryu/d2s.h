@@ -30,7 +30,7 @@
 #if defined(HAS_UINT128)
 typedef __uint128_t uint128_t;
 #else
-#include "ryu/mulshift128.h"
+#include "ryu/d2s_intrinsics.h"
 #endif
 
 #define DOUBLE_MANTISSA_BITS 52

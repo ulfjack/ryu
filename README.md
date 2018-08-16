@@ -8,6 +8,9 @@ The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
 C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
 point numbers.
 
+There is an experimental C low-level API and 128-bit implementation in ryu/.
+These are still subject to change.
+
 All code outside of third_party/ is Copyright Ulf Adams, and may be used in
 accordance with the Apache 2.0 license. Alternatively, the files in the ryu/
 directory may be used in accordance with the Boost 1.0 license.
@@ -48,6 +51,13 @@ You can run both C and Java tests with
 ```
 $ bazel test //ryu/... //src/...
 ```
+
+### Big-Endian Architectures
+The C implementation of Ryu should work on big-endian architectures provided
+that the floating point type and the corresponding integer type use the same
+endianness.
+
+There are no concerns around endianness for the Java implementation.
 
 ### Computing Required Lookup Table Sizes
 You can compute the required lookup table sizes with:
@@ -125,8 +135,7 @@ You can build and run the C benchmark without using Bazel with the following she
 command:
 ```
 $ gcc -o benchmark -I. -O2 -l m -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
-    third_party/double-conversion/double-conversion/*.cc \
-    third_party/mersenne/*.c
+    third_party/double-conversion/double-conversion/*.cc
 $ ./benchmark
 ```
 

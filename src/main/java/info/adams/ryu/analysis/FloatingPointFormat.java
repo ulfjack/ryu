@@ -18,6 +18,7 @@ enum FloatingPointFormat {
   FLOAT16(16, 5, 10),
   FLOAT32(32, 8, 23),
   FLOAT64(64, 11, 52),
+  FLOAT80(80, 15, 63),
   FLOAT128(128, 15, 112),
   FLOAT256(256, 19, 236);
 

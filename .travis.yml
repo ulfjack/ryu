@@ -8,6 +8,7 @@ before_install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add - ; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq pkg-config zip g++ zlib1g-dev unzip python openjdk-8-jdk bazel ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install homebrew/cask-versions/java8 ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bazel ; fi
 - mkdir -p "$HOME/.cache/bazel/"
 - bazel version
@@ -17,9 +18,9 @@ before_install:
 script:
 - bazel test //ryu/... //src/...
 - bazel run //ryu/benchmark
-- bazel test --copt=-DONLY_64_BIT_OPS_RYU //ryu/...
-- bazel run --copt=-DONLY_64_BIT_OPS_RYU //ryu/benchmark
+- bazel test --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
+- bazel run --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark
 - bazel test --copt=-DRYU_OPTIMIZE_SIZE //ryu/... //src/...
 - bazel run --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark
-- bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DONLY_64_BIT_OPS_RYU //ryu/...
-- bazel run --copt=-DRYU_OPTIMIZE_SIZE --copt=-DONLY_64_BIT_OPS_RYU //ryu/benchmark
+- bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
+- bazel run --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark

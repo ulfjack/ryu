@@ -7,9 +7,20 @@ cc_library(
     "d2s.c",
     "d2s.h",
     "d2s_full_table.h",
+    "d2s_intrinsics.h",
     "digit_table.h",
-    "mulshift128.h",
     "common.h",
   ],
   hdrs = ["ryu.h"],
+)
+
+cc_library(
+  name = "generic_128",
+  srcs = [
+    "generic_128.c",
+    "generic_128.h",
+  ],
+  hdrs = [
+    "ryu_generic_128.h",
+  ],
 )

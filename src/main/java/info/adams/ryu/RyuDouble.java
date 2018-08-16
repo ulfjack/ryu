@@ -106,8 +106,8 @@ public final class RyuDouble {
     // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
     // First, handle all the trivial cases.
     if (Double.isNaN(value)) return "NaN";
-    if (value == Float.POSITIVE_INFINITY) return "Infinity";
-    if (value == Float.NEGATIVE_INFINITY) return "-Infinity";
+    if (value == Double.POSITIVE_INFINITY) return "Infinity";
+    if (value == Double.NEGATIVE_INFINITY) return "-Infinity";
     long bits = Double.doubleToLongBits(value);
     if (bits == 0) return "0.0";
     if (bits == 0x8000000000000000L) return "-0.0";
@@ -137,7 +137,8 @@ public final class RyuDouble {
     boolean even = (m2 & 1) == 0;
     final long mv = 4 * m2;
     final long mp = 4 * m2 + 2;
-    final long mm = 4 * m2 - (((m2 != (1L << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 2 : 1);
+    final int mmShift = ((m2 != (1L << DOUBLE_MANTISSA_BITS)) || (ieeeExponent <= 1)) ? 1 : 0;
+    final long mm = 4 * m2 - 1 - mmShift;
     e2 -= 2;
 
     if (DEBUG) {
@@ -169,7 +170,7 @@ public final class RyuDouble {
     // -1077 = 1 - 1023 - 53 - 2 <= e_2 - 2 <= 2046 - 1023 - 53 - 2 = 968
     long dv, dp, dm;
     final int e10;
-    boolean dmIsTrailingZeros = false;
+    boolean dmIsTrailingZeros = false, dvIsTrailingZeros = false;
     if (e2 >= 0) {
       final int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
       // k = constant + floor(log_2(5^q))
@@ -196,12 +197,12 @@ public final class RyuDouble {
       }
 
       if (q <= 21) {
-        if (mm % 5 == 0) {
+        if (mv % 5 == 0) {
+          dvIsTrailingZeros = multipleOfPowerOf5(mv, q);
+        } else if (roundingMode.acceptUpperBound(even)) {
           dmIsTrailingZeros = multipleOfPowerOf5(mm, q);
-        } else {
-          if (multipleOfPowerOf5(mp, q) && !roundingMode.acceptUpperBound(even)) {
-            dp--;
-          }
+        } else if (multipleOfPowerOf5(mp, q)) {
+          dp--;
         }
       }
     } else {
@@ -217,10 +218,14 @@ public final class RyuDouble {
         System.out.println(mv + " * 5^" + (-e2) + " / 10^" + q);
       }
       if (q <= 1) {
-        dmIsTrailingZeros = (~mm & 1) >= q;
-        if (!roundingMode.acceptUpperBound(even)) {
+        dvIsTrailingZeros = true;
+        if (roundingMode.acceptUpperBound(even)) {
+          dmIsTrailingZeros = mmShift == 1;
+        } else {
           dp--;
         }
+      } else if (q < 63) {
+        dvIsTrailingZeros = (mv & ((1L << (q - 1)) - 1)) == 0;
       }
     }
     if (DEBUG) {
@@ -229,6 +234,7 @@ public final class RyuDouble {
       System.out.println("d-=" + dm);
       System.out.println("e10=" + e10);
       System.out.println("d-10=" + dmIsTrailingZeros);
+      System.out.println("d   =" + dvIsTrailingZeros);
       System.out.println("Accept upper=" + roundingMode.acceptUpperBound(even));
       System.out.println("Accept lower=" + roundingMode.acceptLowerBound(even));
     }
@@ -251,15 +257,16 @@ public final class RyuDouble {
 
     int lastRemovedDigit = 0;
     long output;
-    if (dmIsTrailingZeros && roundingMode.acceptLowerBound(even)) {
+    if (dmIsTrailingZeros || dvIsTrailingZeros) {
       while (dp / 10 > dm / 10) {
         if ((dp < 100) && scientificNotation) {
           // Double.toString semantics requires printing at least two digits.
           break;
         }
         dmIsTrailingZeros &= dm % 10 == 0;
-        dp /= 10;
+        dvIsTrailingZeros &= lastRemovedDigit == 0;
         lastRemovedDigit = (int) (dv % 10);
+        dp /= 10;
         dv /= 10;
         dm /= 10;
         removed++;
@@ -270,12 +277,17 @@ public final class RyuDouble {
             // Double.toString semantics requires printing at least two digits.
             break;
           }
-          dp /= 10;
+          dvIsTrailingZeros &= lastRemovedDigit == 0;
           lastRemovedDigit = (int) (dv % 10);
+          dp /= 10;
           dv /= 10;
           dm /= 10;
           removed++;
         }
+      }
+      if (dvIsTrailingZeros && (lastRemovedDigit == 5) && (dv % 2 == 0)) {
+        // Round even if the exact numbers is .....50..0.
+        lastRemovedDigit = 4;
       }
       output = dv +
           ((dv == dm && !(dmIsTrailingZeros && roundingMode.acceptLowerBound(even))) || (lastRemovedDigit >= 5) ? 1 : 0);
@@ -285,8 +297,8 @@ public final class RyuDouble {
           // Double.toString semantics requires printing at least two digits.
           break;
         }
-        dp /= 10;
         lastRemovedDigit = (int) (dv % 10);
+        dp /= 10;
         dv /= 10;
         dm /= 10;
         removed++;

@@ -27,15 +27,12 @@
 #include <string.h>
 #include <limits.h>
 
-#include "ryu/common.h"
-
-#ifndef NO_DIGIT_TABLE
-#include "ryu/digit_table.h"
-#endif
-
 #ifdef RYU_DEBUG
 #include <stdio.h>
 #endif
+
+#include "ryu/common.h"
+#include "ryu/digit_table.h"
 
 #define FLOAT_MANTISSA_BITS 23
 #define FLOAT_EXPONENT_BITS 8
@@ -68,19 +65,30 @@ static const uint64_t FLOAT_POW5_SPLIT[47] = {
  1292469707114105741u, 1615587133892632177u, 2019483917365790221u
 };
 
-static inline int32_t pow5Factor(uint32_t value) {
-  for (int32_t count = 0; value > 0; ++count) {
-    if (value % 5 != 0) {
-      return count;
+static inline uint32_t pow5Factor(uint32_t value) {
+  uint32_t count = 0;
+  for (;;) {
+    assert(value != 0);
+    const uint32_t q = value / 5;
+    const uint32_t r = value % 5;
+    if (r != 0) {
+      break;
     }
-    value /= 5;
+    value = q;
+    ++count;
   }
-  return 0;
+  return count;
 }
 
 // Returns true if value is divisible by 5^p.
-static inline bool multipleOfPowerOf5(const uint32_t value, const int32_t p) {
+static inline bool multipleOfPowerOf5(const uint32_t value, const uint32_t p) {
   return pow5Factor(value) >= p;
+}
+
+// Returns true if value is divisible by 2^p.
+static inline bool multipleOfPowerOf2(const uint32_t value, const uint32_t p) {
+  // return __builtin_ctz(value) >= p;
+  return (value & ((1u << p) - 1)) == 0;
 }
 
 // It seems to be slightly faster to avoid uint128_t here, although the
@@ -136,63 +144,47 @@ static inline uint32_t decimalLength(const uint32_t v) {
   return 1;
 }
 
-int f2s_buffered_n(float f, char* result) {
-  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
-  const uint32_t mantissaBits = FLOAT_MANTISSA_BITS;
-  const uint32_t exponentBits = FLOAT_EXPONENT_BITS;
-  const uint32_t offset = (1u << (exponentBits - 1)) - 1;
+// A floating decimal representing m * 10^e.
+typedef struct floating_decimal_32 {
+  uint32_t mantissa;
+  int32_t exponent;
+} floating_decimal_32;
 
-  uint32_t bits = 0;
-  // This only works on little-endian architectures.
-  memcpy(&bits, &f, sizeof(float));
-
-  // Decode bits into sign, mantissa, and exponent.
-  const bool sign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  const uint32_t ieeeMantissa = bits & ((1u << mantissaBits) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((1u << exponentBits) - 1));
-
-#ifdef RYU_DEBUG
-  printf("IN=");
-  for (int32_t bit = 31; bit >= 0; --bit) {
-    printf("%d", (bits >> bit) & 1);
-  }
-  printf("\n");
-#endif
+static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_t ieeeExponent) {
+  const uint32_t bias = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
 
   int32_t e2;
   uint32_t m2;
-  // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << exponentBits) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, sign, ieeeExponent, ieeeMantissa);
-  } else if (ieeeExponent == 0) {
+  if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - offset - mantissaBits - 2;
+    e2 = 1 - bias - FLOAT_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - offset - mantissaBits - 2;
-    m2 = (1u << mantissaBits) | ieeeMantissa;
+    e2 = ieeeExponent - bias - FLOAT_MANTISSA_BITS - 2;
+    m2 = (1u << FLOAT_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
 
 #ifdef RYU_DEBUG
-  printf("S=%s E=%d M=%u\n", sign ? "-" : "+", e2, m2);
+  printf("-> %u * 2^%d\n", m2, e2 + 2);
 #endif
 
   // Step 2: Determine the interval of legal decimal representations.
   const uint32_t mv = 4 * m2;
   const uint32_t mp = 4 * m2 + 2;
-  const uint32_t mm = 4 * m2 - (((m2 != (1u << mantissaBits)) || (ieeeExponent <= 1)) ? 2 : 1);
+  // Implicit bool -> int conversion. True is 1, false is 0.
+  const uint32_t mmShift = ieeeMantissa != 0 || ieeeExponent <= 1;
+  const uint32_t mm = 4 * m2 - 1 - mmShift;
 
   // Step 3: Convert to a decimal power base using 64-bit arithmetic.
-  uint32_t vr;
-  uint32_t vp, vm;
+  uint32_t vr, vp, vm;
   int32_t e10;
   bool vmIsTrailingZeros = false;
   bool vrIsTrailingZeros = false;
   uint8_t lastRemovedDigit = 0;
   if (e2 >= 0) {
-    const int32_t q = log10Pow2(e2);
+    const uint32_t q = log10Pow2(e2);
     e10 = q;
     const int32_t k = FLOAT_POW5_INV_BITCOUNT + pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
@@ -200,10 +192,10 @@ int f2s_buffered_n(float f, char* result) {
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
 #ifdef RYU_DEBUG
-    printf("%d * 2^%d / 10^%d\n", mv, e2, q);
-    printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
+    printf("%u * 2^%d / 10^%u\n", mv, e2, q);
+    printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
-    if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
+    if (q != 0 && (vp - 1) / 10 <= vm / 10) {
       // We need to know one removed digit even if we are not going to loop below. We could use
       // q = X - 1 above, except that would require 33 bits for the result, and we've found that
       // 32-bit arithmetic is faster even on 64-bit machines.
@@ -211,19 +203,18 @@ int f2s_buffered_n(float f, char* result) {
       lastRemovedDigit = (uint8_t) (mulPow5InvDivPow2(mv, q - 1, -e2 + q - 1 + l) % 10);
     }
     if (q <= 9) {
+      // The largest power of 5 that fits in 24 bits is 5^10, but q <= 9 seems to be safe as well.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
       if (mv % 5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
+      } else if (acceptBounds) {
+        vmIsTrailingZeros = multipleOfPowerOf5(mm, q);
       } else {
-        if (acceptBounds) {
-          vmIsTrailingZeros = multipleOfPowerOf5(mm, q);
-        } else {
-          vp -= multipleOfPowerOf5(mp, q);
-        }
+        vp -= multipleOfPowerOf5(mp, q);
       }
     }
   } else {
-    const int32_t q = log10Pow5(-e2);
+    const uint32_t q = log10Pow5(-e2);
     e10 = q + e2;
     const int32_t i = -e2 - q;
     const int32_t k = pow5bits(i) - FLOAT_POW5_BITCOUNT;
@@ -232,23 +223,30 @@ int f2s_buffered_n(float f, char* result) {
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
 #ifdef RYU_DEBUG
-    printf("%d * 5^%d / 10^%d\n", mv, -e2, q);
-    printf("%d %d %d %d\n", q, i, k, j);
-    printf("V+=%d\nV =%d\nV-=%d\n", vp, vr, vm);
+    printf("%u * 5^%d / 10^%u\n", mv, -e2, q);
+    printf("%u %d %d %d\n", q, i, k, j);
+    printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
 #endif
-    if (q != 0 && ((vp - 1) / 10 <= vm / 10)) {
+    if (q != 0 && (vp - 1) / 10 <= vm / 10) {
       j = q - 1 - (pow5bits(i + 1) - FLOAT_POW5_BITCOUNT);
       lastRemovedDigit = (uint8_t) (mulPow5divPow2(mv, i + 1, j) % 10);
     }
     if (q <= 1) {
-      vrIsTrailingZeros = (~mv & 1) >= (uint32_t) q;
+      // {vr,vp,vm} is trailing zeros if {mv,mp,mm} has at least q trailing 0 bits.
+      // mv = 4 * m2, so it always has at least two trailing 0 bits.
+      vrIsTrailingZeros = true;
       if (acceptBounds) {
-        vmIsTrailingZeros = (~mm & 1) >= (uint32_t) q;
+        // mm = mv - 1 - mmShift, so it has 1 trailing 0 bit iff mmShift == 1.
+        vmIsTrailingZeros = mmShift == 1;
       } else {
+        // mp = mv + 2, so it always has at least one trailing 0 bit.
         --vp;
       }
     } else if (q < 31) { // TODO(ulfjack): Use a tighter bound here.
-      vrIsTrailingZeros = (mv & ((1u << (q - 1)) - 1)) == 0;
+      vrIsTrailingZeros = multipleOfPowerOf2(mv, q - 1);
+#ifdef RYU_DEBUG
+      printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
     }
   }
 #ifdef RYU_DEBUG
@@ -262,9 +260,15 @@ int f2s_buffered_n(float f, char* result) {
   uint32_t removed = 0;
   uint32_t output;
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
-    // General case, which happens rarely.
+    // General case, which happens rarely (~4.0%).
     while (vp / 10 > vm / 10) {
+#ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=23106
+      // The compiler does not realize that vm % 10 can be computed from vm / 10
+      // as vm - (vm / 10) * 10.
+      vmIsTrailingZeros &= vm - (vm / 10) * 10 == 0;
+#else
       vmIsTrailingZeros &= vm % 10 == 0;
+#endif
       vrIsTrailingZeros &= lastRemovedDigit == 0;
       lastRemovedDigit = (uint8_t) (vr % 10);
       vr /= 10;
@@ -272,6 +276,10 @@ int f2s_buffered_n(float f, char* result) {
       vm /= 10;
       ++removed;
     }
+#ifdef RYU_DEBUG
+    printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
+    printf("d-10=%s\n", vmIsTrailingZeros ? "true" : "false");
+#endif
     if (vmIsTrailingZeros) {
       while (vm % 10 == 0) {
         vrIsTrailingZeros &= lastRemovedDigit == 0;
@@ -282,15 +290,21 @@ int f2s_buffered_n(float f, char* result) {
         ++removed;
       }
     }
-    if (vrIsTrailingZeros && (lastRemovedDigit == 5) && (vr % 2 == 0)) {
-      // Round down not up if the number ends in X50000.
+#ifdef RYU_DEBUG
+    printf("%u %d\n", vr, lastRemovedDigit);
+    printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
+    if (vrIsTrailingZeros && lastRemovedDigit == 5 && vr % 2 == 0) {
+      // Round even if the exact number is .....50..0.
       lastRemovedDigit = 4;
     }
-    // We need to take vr+1 if vr is outside bounds or we need to round up.
+    // We need to take vr + 1 if vr is outside bounds or we need to round up.
     output = vr +
-        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
+        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
-    // Common case.
+    // Specialized for the common case (~96.0%). Percentages below are relative to this.
+    // Loop iterations below (approximately):
+    // 0: 13.6%, 1: 70.7%, 2: 14.1%, 3: 1.39%, 4: 0.14%, 5+: 0.01%
     while (vp / 10 > vm / 10) {
       lastRemovedDigit = (uint8_t) (vr % 10);
       vr /= 10;
@@ -298,21 +312,50 @@ int f2s_buffered_n(float f, char* result) {
       vm /= 10;
       ++removed;
     }
-    // We need to take vr+1 if vr is outside bounds or we need to round up.
-    output = vr + ((vr == vm) || (lastRemovedDigit >= 5));
+#ifdef RYU_DEBUG
+    printf("%u %d\n", vr, lastRemovedDigit);
+    printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
+#endif
+    // We need to take vr + 1 if vr is outside bounds or we need to round up.
+    output = vr + (vr == vm || lastRemovedDigit >= 5);
   }
-  const uint32_t olength = decimalLength(output);
-  const uint32_t vplength = olength + removed;
-  int32_t exp = e10 + vplength - 1;
+  const int32_t exp = e10 + removed;
 
+#ifdef RYU_DEBUG
+  printf("V+=%u\nV =%u\nV-=%u\n", vp, vr, vm);
+  printf("O=%u\n", output);
+  printf("EXP=%d\n", exp);
+#endif
+
+  floating_decimal_32 fd;
+  fd.exponent = exp;
+  fd.mantissa = output;
+  return fd;
+}
+
+static inline int to_chars(const floating_decimal_32 v, const bool sign, char* const result) {
   // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
     result[index++] = '-';
   }
 
-#ifndef NO_DIGIT_TABLE
-  // Print decimal digits after the decimal point.
+  uint32_t output = v.mantissa;
+  const uint32_t olength = decimalLength(output);
+
+#ifdef RYU_DEBUG
+  printf("DIGITS=%u\n", v.mantissa);
+  printf("OLEN=%u\n", olength);
+  printf("EXP=%u\n", v.exponent + olength);
+#endif
+
+  // Print the decimal digits.
+  // The following code is equivalent to:
+  // for (uint32_t i = 0; i < olength - 1; ++i) {
+  //   const uint32_t c = output % 10; output /= 10;
+  //   result[index + olength - i] = (char) ('0' + c);
+  // }
+  // result[index] = '0' + output % 10;
   uint32_t i = 0;
   while (output >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
@@ -335,21 +378,12 @@ int f2s_buffered_n(float f, char* result) {
   }
   if (output >= 10) {
     const uint32_t c = output << 1;
+    // We can't use memcpy here: the decimal dot goes between these two digits.
     result[index + olength - i] = DIGIT_TABLE[c + 1];
     result[index] = DIGIT_TABLE[c];
   } else {
-    // Print the leading decimal digit.
     result[index] = (char) ('0' + output);
   }
-#else
-  // Print decimal digits after the decimal point.
-  for (uint32_t i = 0; i < olength - 1; ++i) {
-    const uint32_t c = output % 10; output /= 10;
-    result[index + olength - i] = (char) ('0' + c);
-  }
-  // Print the leading decimal digit.
-  result[index] = '0' + output % 10;
-#endif // NO_DIGIT_TABLE
 
   // Print decimal point if needed.
   if (olength > 1) {
@@ -361,30 +395,50 @@ int f2s_buffered_n(float f, char* result) {
 
   // Print the exponent.
   result[index++] = 'E';
+  int32_t exp = v.exponent + olength - 1;
   if (exp < 0) {
     result[index++] = '-';
     exp = -exp;
   }
 
-#ifndef NO_DIGIT_TABLE
   if (exp >= 10) {
-    memcpy(result + index, DIGIT_TABLE + (2 * exp), 2);
+    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
     index += 2;
   } else {
     result[index++] = (char) ('0' + exp);
   }
-#else
-  if (exp >= 10) {
-    result[index++] = '0' + (exp / 10) % 10;
-  }
-  result[index++] = '0' + exp % 10;
-#endif // NO_DIGIT_TABLE
 
   return index;
 }
 
+int f2s_buffered_n(float f, char* result) {
+  // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
+  const uint32_t bits = float_to_bits(f);
+
+#ifdef RYU_DEBUG
+  printf("IN=");
+  for (int32_t bit = 31; bit >= 0; --bit) {
+    printf("%u", (bits >> bit) & 1);
+  }
+  printf("\n");
+#endif
+
+  // Decode bits into sign, mantissa, and exponent.
+  const bool ieeeSign = ((bits >> (FLOAT_MANTISSA_BITS + FLOAT_EXPONENT_BITS)) & 1) != 0;
+  const uint32_t ieeeMantissa = bits & ((1u << FLOAT_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (bits >> FLOAT_MANTISSA_BITS) & ((1u << FLOAT_EXPONENT_BITS) - 1);
+
+  // Case distinction; exit early for the easy cases.
+  if (ieeeExponent == ((1u << FLOAT_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+    return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
+  }
+
+  const floating_decimal_32 v = f2d(ieeeMantissa, ieeeExponent);
+  return to_chars(v, ieeeSign, result);
+}
+
 void f2s_buffered(float f, char* result) {
-  int index = f2s_buffered_n(f, result);
+  const int index = f2s_buffered_n(f, result);
 
   // Terminate the string.
   result[index] = '\0';

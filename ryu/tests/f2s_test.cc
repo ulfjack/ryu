@@ -105,3 +105,24 @@ TEST(F2sTest, Regression) {
   ASSERT_STREQ("2E2", f2s(200.0f));
   ASSERT_STREQ("3.3554432E7", f2s(3.3554432E7f));
 }
+
+TEST(F2sTest, LooksLikePow5) {
+  // These numbers have a mantissa that is the largest power of 5 that fits,
+  // and an exponent that causes the computation for q to result in 10, which is a corner
+  // case for Ryu.
+  ASSERT_STREQ("6.7108864E17", f2s(int32Bits2Float(0x5D1502F9)));
+  ASSERT_STREQ("1.3421773E18", f2s(int32Bits2Float(0x5D9502F9)));
+  ASSERT_STREQ("2.6843546E18", f2s(int32Bits2Float(0x5E1502F9)));
+}
+
+TEST(F2sTest, OutputLength) {
+  ASSERT_STREQ("1E0", f2s(1.0f)); // already tested in Basic
+  ASSERT_STREQ("1.2E0", f2s(1.2f));
+  ASSERT_STREQ("1.23E0", f2s(1.23f));
+  ASSERT_STREQ("1.234E0", f2s(1.234f));
+  ASSERT_STREQ("1.2345E0", f2s(1.2345f));
+  ASSERT_STREQ("1.23456E0", f2s(1.23456f));
+  ASSERT_STREQ("1.234567E0", f2s(1.234567f));
+  ASSERT_STREQ("1.2345678E0", f2s(1.2345678f));
+  ASSERT_STREQ("1.23456735E-36", f2s(1.23456735E-36f));
+}

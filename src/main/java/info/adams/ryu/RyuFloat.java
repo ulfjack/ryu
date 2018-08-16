@@ -83,7 +83,7 @@ public final class RyuFloat {
 
   public static void main(String[] args) {
     DEBUG = true;
-    float f = 3.3554432E7f;
+    float f = 0.33007812f;
     String result = floatToString(f, RoundingMode.ROUND_EVEN);
     System.out.println(result + " " + f);
   }
@@ -160,7 +160,7 @@ public final class RyuFloat {
     // -151 = 1 - 127 - 23 - 2 <= e_2 - 2 <= 254 - 127 - 23 - 2 = 102
     int dp, dv, dm;
     int e10;
-    boolean dpIsTrailingZeros, dmIsTrailingZeros;
+    boolean dpIsTrailingZeros, dvIsTrailingZeros, dmIsTrailingZeros;
     int lastRemovedDigit = 0;
     if (e2 >= 0) {
       // Compute m * 2^e_2 / 10^q = m * 2^(e_2 - q) / 5^q
@@ -183,6 +183,7 @@ public final class RyuFloat {
       }
 
       dpIsTrailingZeros = pow5Factor(mp) >= q;
+      dvIsTrailingZeros = pow5Factor(mv) >= q;
       dmIsTrailingZeros = pow5Factor(mm) >= q;
     } else {
       // Compute m * 5^(-e_2) / 10^q = m * 5^(-e_2 - q) / 2^q
@@ -203,6 +204,7 @@ public final class RyuFloat {
       }
 
       dpIsTrailingZeros = 1 >= q;
+      dvIsTrailingZeros = (q < FLOAT_MANTISSA_BITS) && (mv & ((1 << (q - 1)) - 1)) == 0;
       dmIsTrailingZeros = (mm % 2 == 1 ? 0 : 1) >= q;
     }
     if (DEBUG) {
@@ -213,6 +215,7 @@ public final class RyuFloat {
       System.out.println("  last removed=" + lastRemovedDigit);
       System.out.println("  e10=" + e10);
       System.out.println("  d+10=" + dpIsTrailingZeros);
+      System.out.println("  d   =" + dvIsTrailingZeros);
       System.out.println("  d-10=" + dmIsTrailingZeros);
     }
 
@@ -261,6 +264,10 @@ public final class RyuFloat {
       }
     }
 
+    if (dvIsTrailingZeros && (lastRemovedDigit == 5) && (dv % 2 == 0)) {
+      // Round down not up if the number ends in X50000 and the number is even.
+      lastRemovedDigit = 4;
+    }
     int output = dv +
         ((dv == dm && !(dmIsTrailingZeros && roundingMode.acceptLowerBound(even))) || (lastRemovedDigit >= 5) ? 1 : 0);
     int olength = dplength - removed;
