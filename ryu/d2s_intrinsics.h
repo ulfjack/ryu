@@ -110,19 +110,19 @@ static inline uint64_t umulh(const uint64_t a, const uint64_t b) {
 // for expressions like x/5, x/10, etc.
 
 static inline uint64_t div5(const uint64_t x) {
-  return umulh(x, 0xCCCCCCCCCCCCCCCD) >> 2;
+  return umulh(x, 0xCCCCCCCCCCCCCCCDu) >> 2;
 }
 
 static inline uint64_t div10(const uint64_t x) {
-  return umulh(x, 0xCCCCCCCCCCCCCCCD) >> 3;
+  return umulh(x, 0xCCCCCCCCCCCCCCCDu) >> 3;
 }
 
 static inline uint64_t div100(const uint64_t x) {
-  return umulh(x >> 2, 0x28F5C28F5C28F5C3) >> 2;
+  return umulh(x >> 2, 0x28F5C28F5C28F5C3u) >> 2;
 }
 
 static inline uint64_t div100000000(const uint64_t x) {
-  return umulh(x, 0xABCC77118461CEFD) >> 26;
+  return umulh(x, 0xABCC77118461CEFDu) >> 26;
 }
 
 #else
