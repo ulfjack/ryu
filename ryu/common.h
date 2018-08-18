@@ -20,6 +20,10 @@
 #include <assert.h>
 #include <stdint.h>
 
+#if defined(_M_IX86) || defined(_M_ARM)
+#define RYU_32_BIT_PLATFORM
+#endif
+
 // Returns e == 0 ? 1 : ceil(log_2(5^e)).
 static inline uint32_t pow5bits(const int32_t e) {
   // This approximation works up to the point that the multiplication overflows at e = 3529.

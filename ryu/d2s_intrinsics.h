@@ -20,6 +20,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "ryu/common.h"
+
 #if defined(HAS_64_BIT_INTRINSICS)
 
 #include <intrin.h>
@@ -33,7 +35,7 @@ static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const
   // modulo 64.
   // In the current implementation of the double-precision version
   // of Ryu, the shift value is always < 64. (In the case
-  // RYU_OPTIMIZE_SIZE == 0, the shift value is in the range [50, 58].
+  // RYU_OPTIMIZE_SIZE == 0, the shift value is in the range [49, 58].
   // Otherwise in the range [2, 59].)
   // Check this here in case a future change requires larger shift
   // values. In this case this function needs to be adjusted.
@@ -75,14 +77,20 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
 
 static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const uint32_t dist) {
   // We don't need to handle the case dist >= 64 here (see above).
-  assert(dist > 0);
   assert(dist < 64);
+#if defined(RYU_OPTIMIZE_SIZE) || !defined(RYU_32_BIT_PLATFORM)
+  assert(dist > 0);
   return (hi << (64 - dist)) | (lo >> dist);
+#else
+  // Avoid a 64-bit shift by taking advantage of the range of shift values.
+  assert(dist >= 32);
+  return (hi << (64 - dist)) | ((uint32_t)(lo >> 32) >> (dist - 32));
+#endif
 }
 
 #endif // defined(HAS_64_BIT_INTRINSICS)
 
-#if defined(_M_IX86)
+#ifdef RYU_32_BIT_PLATFORM
 
 // Returns the high 64 bits of the 128-bit product of a and b.
 static inline uint64_t umulh(const uint64_t a, const uint64_t b) {
@@ -94,7 +102,7 @@ static inline uint64_t umulh(const uint64_t a, const uint64_t b) {
   return hi;
 }
 
-// On x86 platforms, compilers typically generate calls to library
+// On 32-bit platforms, compilers typically generate calls to library
 // functions for 64-bit divisions, even if the divisor is a constant.
 //
 // E.g.:
@@ -125,7 +133,7 @@ static inline uint64_t div100000000(const uint64_t x) {
   return umulh(x, 0xABCC77118461CEFD) >> 26;
 }
 
-#else
+#else // RYU_32_BIT_PLATFORM
 
 static inline uint64_t div5(const uint64_t x) {
   return x / 5;
@@ -143,6 +151,6 @@ static inline uint64_t div100000000(const uint64_t x) {
   return x / 100000000;
 }
 
-#endif
+#endif // RYU_32_BIT_PLATFORM
 
 #endif // RYU_D2S_INTRINSICS_H
