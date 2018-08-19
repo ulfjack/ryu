@@ -26,6 +26,13 @@ static double int64Bits2Double(uint64_t bits) {
   return f;
 }
 
+static double ieeeParts2Double(const bool sign, const uint32_t ieeeExponent, const uint64_t ieeeMantissa) {
+  assert(ieeeExponent <= 2047);
+  assert(ieeeMantissa <= ((uint64_t)1 << 53) - 1);
+  return int64Bits2Double(((uint64_t)sign << 63) | ((uint64_t)ieeeExponent << 52) | ieeeMantissa);
+}
+
+#if 0
 TEST(D2sTest, Basic) {
   ASSERT_STREQ("0E0", d2s(0.0));
   ASSERT_STREQ("-0E0", d2s(-0.0));
@@ -94,4 +101,59 @@ TEST(D2sTest, OutputLength) {
   ASSERT_STREQ("4.294967296E0", d2s(4.294967296)); // 2^32
   ASSERT_STREQ("4.294967297E0", d2s(4.294967297)); // 2^32 + 1
   ASSERT_STREQ("4.294967298E0", d2s(4.294967298)); // 2^32 + 2
+}
+#endif
+
+// Test min, max shift values in shiftright128
+TEST(D2sTest, MinMaxShift) {
+  const uint64_t maxMantissa = ((uint64_t)1 << 53) - 1;
+
+  // 32-bit opt-size=0:  49 <= dist <= 50
+  // 32-bit opt-size=1:  30 <= dist <= 50
+  // 64-bit opt-size=0:  50 <= dist <= 50
+  // 64-bit opt-size=1:  30 <= dist <= 50
+  ASSERT_STREQ("1.7800590868057611E-307", d2s(ieeeParts2Double(false, 4, 0)));
+  // 32-bit opt-size=0:  49 <= dist <= 49
+  // 32-bit opt-size=1:  28 <= dist <= 49
+  // 64-bit opt-size=0:  50 <= dist <= 50
+  // 64-bit opt-size=1:  28 <= dist <= 50
+  ASSERT_STREQ("2.8480945388892175E-306", d2s(ieeeParts2Double(false, 6, maxMantissa)));
+  // 32-bit opt-size=0:  52 <= dist <= 53
+  // 32-bit opt-size=1:   2 <= dist <= 53
+  // 64-bit opt-size=0:  53 <= dist <= 53
+  // 64-bit opt-size=1:   2 <= dist <= 53
+  ASSERT_STREQ("2.446494580089078E-296", d2s(ieeeParts2Double(false, 41, 0)));
+  // 32-bit opt-size=0:  52 <= dist <= 52
+  // 32-bit opt-size=1:   2 <= dist <= 52
+  // 64-bit opt-size=0:  53 <= dist <= 53
+  // 64-bit opt-size=1:   2 <= dist <= 53
+  ASSERT_STREQ("4.8929891601781557E-296", d2s(ieeeParts2Double(false, 40, maxMantissa)));
+
+  // 32-bit opt-size=0:  57 <= dist <= 58
+  // 32-bit opt-size=1:  57 <= dist <= 58
+  // 64-bit opt-size=0:  58 <= dist <= 58
+  // 64-bit opt-size=1:  58 <= dist <= 58
+  ASSERT_STREQ("1.8014398509481984E16", d2s(ieeeParts2Double(false, 1077, 0)));
+  // 32-bit opt-size=0:  57 <= dist <= 57
+  // 32-bit opt-size=1:  57 <= dist <= 57
+  // 64-bit opt-size=0:  58 <= dist <= 58
+  // 64-bit opt-size=1:  58 <= dist <= 58
+  ASSERT_STREQ("3.6028797018963964E16", d2s(ieeeParts2Double(false, 1076, maxMantissa)));
+  // 32-bit opt-size=0:  51 <= dist <= 52
+  // 32-bit opt-size=1:  51 <= dist <= 59
+  // 64-bit opt-size=0:  52 <= dist <= 52
+  // 64-bit opt-size=1:  52 <= dist <= 59
+  ASSERT_STREQ("2.900835519859558E-216", d2s(ieeeParts2Double(false, 307, 0)));
+  // 32-bit opt-size=0:  51 <= dist <= 51
+  // 32-bit opt-size=1:  51 <= dist <= 59
+  // 64-bit opt-size=0:  52 <= dist <= 52
+  // 64-bit opt-size=1:  52 <= dist <= 59
+  ASSERT_STREQ("5.801671039719115E-216", d2s(ieeeParts2Double(false, 306, maxMantissa)));
+
+  // https://github.com/ulfjack/ryu/commit/19e44d16d80236f5de25800f56d82606d1be00b9#commitcomment-30146483
+  // 32-bit opt-size=0:  49 <= dist <= 49
+  // 32-bit opt-size=1:  44 <= dist <= 49
+  // 64-bit opt-size=0:  50 <= dist <= 50
+  // 64-bit opt-size=1:  44 <= dist <= 50
+  ASSERT_STREQ("3.196104012172126E-27", d2s(ieeeParts2Double(false, 934, 0x000FA7161A4D6E0Cu)));
 }
