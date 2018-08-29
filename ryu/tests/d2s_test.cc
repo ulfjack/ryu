@@ -32,7 +32,6 @@ static double ieeeParts2Double(const bool sign, const uint32_t ieeeExponent, con
   return int64Bits2Double(((uint64_t)sign << 63) | ((uint64_t)ieeeExponent << 52) | ieeeMantissa);
 }
 
-#if 0
 TEST(D2sTest, Basic) {
   ASSERT_STREQ("0E0", d2s(0.0));
   ASSERT_STREQ("-0E0", d2s(-0.0));
@@ -102,7 +101,6 @@ TEST(D2sTest, OutputLength) {
   ASSERT_STREQ("4.294967297E0", d2s(4.294967297)); // 2^32 + 1
   ASSERT_STREQ("4.294967298E0", d2s(4.294967298)); // 2^32 + 2
 }
-#endif
 
 // Test min, max shift values in shiftright128
 TEST(D2sTest, MinMaxShift) {
