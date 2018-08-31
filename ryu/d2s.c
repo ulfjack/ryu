@@ -255,7 +255,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   printf("-> %" PRIu64 " * 2^%d\n", m2, e2 + 2);
 #endif
 
-  // Step 2: Determine the interval of legal decimal representations.
+  // Step 2: Determine the interval of valid decimal representations.
   const uint64_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
   const uint32_t mmShift = ieeeMantissa != 0 || ieeeExponent <= 1;
@@ -352,7 +352,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
 
-  // Step 4: Find the shortest decimal representation in the interval of legal representations.
+  // Step 4: Find the shortest decimal representation in the interval of valid representations.
   uint32_t removed = 0;
   uint8_t lastRemovedDigit = 0;
   uint64_t output;

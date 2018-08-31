@@ -170,7 +170,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
   printf("-> %u * 2^%d\n", m2, e2 + 2);
 #endif
 
-  // Step 2: Determine the interval of legal decimal representations.
+  // Step 2: Determine the interval of valid decimal representations.
   const uint32_t mv = 4 * m2;
   const uint32_t mp = 4 * m2 + 2;
   // Implicit bool -> int conversion. True is 1, false is 0.
@@ -256,7 +256,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
 
-  // Step 4: Find the shortest decimal representation in the interval of legal representations.
+  // Step 4: Find the shortest decimal representation in the interval of valid representations.
   uint32_t removed = 0;
   uint32_t output;
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
