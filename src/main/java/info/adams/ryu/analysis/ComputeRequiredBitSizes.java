@@ -68,7 +68,7 @@ public final class ComputeRequiredBitSizes {
       // max(w) = 4 * ((1 << format.mantissaBits()) * 2 - 1) + 2
       //        = (1 << (format.mantissaBits() + 3)) - 2
       BigInteger mxM = BigInteger.ONE.shiftLeft(mbits).subtract(TWO);
-      BigInteger min = min(pow5, pow2, mxM);
+      BigInteger min = EuclidMinMax.min(pow5, pow2, mxM.subtract(BigInteger.ONE));
 //      BigInteger min2 = minSlow(pow5, pow2, mxM);
 //      if (!min.equals(min2)) {
 //        new IllegalStateException(min + " " + min2).printStackTrace(System.out);
@@ -98,7 +98,7 @@ public final class ComputeRequiredBitSizes {
       // max(w) = 4 * ((1 << format.mantissaBits()) * 2 - 1) + 2
       //        = (1 << (format.mantissaBits() + 3)) - 2
       BigInteger mxM = BigInteger.ONE.shiftLeft(mbits).subtract(TWO);
-      BigInteger max = max(pow2, pow5, mxM);
+      BigInteger max = EuclidMinMax.max(pow2, pow5, mxM.subtract(BigInteger.ONE));
 //      BigInteger max2 = maxSlow(pow2, pow5, mxM);
 //      if (!max.equals(max2)) {
 //        new IllegalStateException(max + " " + max2).printStackTrace(System.out);
@@ -120,109 +120,5 @@ public final class ComputeRequiredBitSizes {
       System.out.println();
     }
     System.out.printf("%s,%d,%d\n", format, Integer.valueOf(b0), Integer.valueOf(b1));
-  }
-
-  private static BigInteger min(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
-    if (maximum.compareTo(modulo) >= 0) {
-      return BigInteger.ONE;
-    }
-    BigInteger a = multiplier;
-    BigInteger b = modulo;
-    BigInteger s = BigInteger.ONE;
-    BigInteger t = BigInteger.ZERO;
-    BigInteger u = BigInteger.ZERO;
-    BigInteger v = BigInteger.ONE;
-    while (true) {
-      while (b.compareTo(a) >= 0) {
-        b = b.subtract(a);
-        u = u.subtract(s);
-        v = v.subtract(t);
-        if (u.negate().compareTo(maximum) >= 0) {
-          return a;
-        }
-      }
-      if (b.equals(BigInteger.ZERO)) {
-        return BigInteger.ONE;
-      }
-      while (a.compareTo(b) >= 0) {
-        BigInteger oldA = a;
-        a = a.subtract(b);
-        s = s.subtract(u);
-        t = t.subtract(v);
-        if (s.compareTo(maximum) >= 0) {
-          return oldA;
-        }
-      }
-      if (a.equals(BigInteger.ZERO)) {
-        return BigInteger.ONE;
-      }
-    }
-  }
-
-  @SuppressWarnings("unused")
-  private static BigInteger minSlow(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
-    if (maximum.compareTo(modulo) >= 0) {
-      return BigInteger.ONE;
-    }
-    BigInteger result = multiplier.mod(modulo);
-    for (long l = 2; l < maximum.longValueExact(); l++) {
-      BigInteger cand = BigInteger.valueOf(l).multiply(multiplier).mod(modulo);
-      if (cand.compareTo(result) < 0) {
-        result = cand;
-      }
-    }
-    return result;
-  }
-
-  private static BigInteger max(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
-    if (maximum.compareTo(modulo) >= 0) {
-      return modulo.subtract(BigInteger.ONE);
-    }
-    BigInteger a = multiplier;
-    BigInteger b = modulo;
-    BigInteger s = BigInteger.ONE;
-    BigInteger t = BigInteger.ZERO;
-    BigInteger u = BigInteger.ZERO;
-    BigInteger v = BigInteger.ONE;
-    while (true) {
-      while (b.compareTo(a) >= 0) {
-        BigInteger oldB = b;
-        b = b.subtract(a);
-        u = u.subtract(s);
-        v = v.subtract(t);
-        if (u.negate().compareTo(maximum) >= 0) {
-          return oldB.negate().add(modulo);
-        }
-      }
-      if (b.equals(BigInteger.ZERO)) {
-        return BigInteger.ONE;
-      }
-      while (a.compareTo(b) >= 0) {
-        a = a.subtract(b);
-        s = s.subtract(u);
-        t = t.subtract(v);
-        if (s.compareTo(maximum) >= 0) {
-          return b.negate().add(modulo);
-        }
-      }
-      if (a.equals(BigInteger.ZERO)) {
-        return BigInteger.ONE;
-      }
-    }
-  }
-
-  @SuppressWarnings("unused")
-  private static BigInteger maxSlow(BigInteger multiplier, BigInteger modulo, BigInteger maximum) {
-    if (maximum.compareTo(modulo) >= 0) {
-      return modulo.subtract(BigInteger.ONE);
-    }
-    BigInteger result = multiplier.mod(modulo);
-    for (long l = 2; l < maximum.longValueExact(); l++) {
-      BigInteger cand = BigInteger.valueOf(l).multiply(multiplier).mod(modulo);
-      if (cand.compareTo(result) > 0) {
-        result = cand;
-      }
-    }
-    return result;
   }
 }
