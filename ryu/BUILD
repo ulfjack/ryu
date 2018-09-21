@@ -15,6 +15,18 @@ cc_library(
 )
 
 cc_library(
+  name = "ryu2",
+  srcs = [
+    "d2fixed.c",
+#    "d2fixed.h",
+    "d2fixed_full_table.h",
+    "digit_table.h",
+    "common.h",
+  ],
+  hdrs = ["ryu2.h"],
+)
+
+cc_library(
   name = "generic_128",
   srcs = [
     "generic_128.c",

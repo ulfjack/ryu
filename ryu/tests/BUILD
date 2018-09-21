@@ -27,6 +27,15 @@ cc_test(
 )
 
 cc_test(
+  name = "d2fixed_test",
+  srcs = ["d2fixed_test.cc"],
+  deps = [
+    "//ryu:ryu2",
+    "//third_party/gtest",
+  ],
+)
+
+cc_test(
   name = "generic_128_test",
   srcs = ["generic_128_test.cc"],
   deps = [
