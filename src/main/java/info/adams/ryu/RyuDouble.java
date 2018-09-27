@@ -29,15 +29,6 @@ public final class RyuDouble {
   private static final int DOUBLE_EXPONENT_MASK = (1 << DOUBLE_EXPONENT_BITS) - 1;
   private static final int DOUBLE_EXPONENT_BIAS = (1 << (DOUBLE_EXPONENT_BITS - 1)) - 1;
 
-  private static final long LOG10_2_DENOMINATOR = 10000000L;
-  private static final long LOG10_2_NUMERATOR = (long) (LOG10_2_DENOMINATOR * Math.log10(2));
-
-  private static final long LOG10_5_DENOMINATOR = 10000000L;
-  private static final long LOG10_5_NUMERATOR = (long) (LOG10_5_DENOMINATOR * Math.log10(5));
-
-  private static final long LOG2_5_DENOMINATOR = 10000000L;
-  private static final long LOG2_5_NUMERATOR = (long) (LOG2_5_DENOMINATOR * (Math.log(5)/Math.log(2)));
-
   private static final int POS_TABLE_SIZE = 326;
   private static final int NEG_TABLE_SIZE = 291;
 
@@ -172,7 +163,7 @@ public final class RyuDouble {
     final int e10;
     boolean dmIsTrailingZeros = false, dvIsTrailingZeros = false;
     if (e2 >= 0) {
-      final int q = Math.max(0, (int) (e2 * LOG10_2_NUMERATOR / LOG10_2_DENOMINATOR) - 1);
+      final int q = Math.max(0, ((e2 * 78913) >>> 18) - 1);
       // k = constant + floor(log_2(5^q))
       final int k = POW5_INV_BITCOUNT + pow5bits(q) - 1;
       final int i = -e2 + q + k;
@@ -206,7 +197,7 @@ public final class RyuDouble {
         }
       }
     } else {
-      final int q = Math.max(0, (int) (-e2 * LOG10_5_NUMERATOR / LOG10_5_DENOMINATOR) - 1);
+      final int q = Math.max(0, ((-e2 * 732923) >>> 20) - 1);
       final int i = -e2 - q;
       final int k = pow5bits(i) - POW5_BITCOUNT;
       final int j = q - k;
@@ -399,7 +390,7 @@ public final class RyuDouble {
   }
 
   private static int pow5bits(int e) {
-    return e == 0 ? 1 : (int) ((e * LOG2_5_NUMERATOR + LOG2_5_DENOMINATOR - 1)/LOG2_5_DENOMINATOR);
+    return ((e * 1217359) >>> 19) + 1;
   }
 
   private static int decimalLength(long v) {
