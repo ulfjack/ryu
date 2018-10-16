@@ -35,19 +35,19 @@ static inline int32_t pow5bits(const int32_t e) {
 }
 
 // Returns floor(log_10(2^e)).
-static inline int32_t log10Pow2(const int32_t e) {
+static inline uint32_t log10Pow2(const int32_t e) {
   // The first value this approximation fails for is 2^1651 which is just greater than 10^297.
   assert(e >= 0);
   assert(e <= 1650);
-  return (int32_t) ((((uint32_t) e) * 78913) >> 18);
+  return (((uint32_t) e) * 78913) >> 18;
 }
 
 // Returns floor(log_10(5^e)).
-static inline int32_t log10Pow5(const int32_t e) {
+static inline uint32_t log10Pow5(const int32_t e) {
   // The first value this approximation fails for is 5^2621 which is just greater than 10^1832.
   assert(e >= 0);
   assert(e <= 2620);
-  return (int32_t) ((((uint32_t) e) * 732923) >> 20);
+  return (((uint32_t) e) * 732923) >> 20;
 }
 
 static inline int copy_special_str(char * const result, const bool sign, const bool exponent, const bool mantissa) {
