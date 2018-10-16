@@ -151,7 +151,7 @@ typedef struct floating_decimal_32 {
 } floating_decimal_32;
 
 static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_t ieeeExponent) {
-  const uint32_t bias = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
+  const int32_t bias = (1u << (FLOAT_EXPONENT_BITS - 1)) - 1;
 
   int32_t e2;
   uint32_t m2;
@@ -160,7 +160,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     e2 = 1 - bias - FLOAT_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - bias - FLOAT_MANTISSA_BITS - 2;
+    e2 = (int32_t) ieeeExponent - bias - FLOAT_MANTISSA_BITS - 2;
     m2 = (1u << FLOAT_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
