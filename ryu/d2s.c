@@ -353,7 +353,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of valid representations.
-  uint32_t removed = 0;
+  int32_t removed = 0;
   uint8_t lastRemovedDigit = 0;
   uint64_t output;
   // On average, we remove ~2 digits.

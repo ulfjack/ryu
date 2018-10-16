@@ -257,7 +257,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
 #endif
 
   // Step 4: Find the shortest decimal representation in the interval of valid representations.
-  uint32_t removed = 0;
+  int32_t removed = 0;
   uint32_t output;
   if (vmIsTrailingZeros || vrIsTrailingZeros) {
     // General case, which happens rarely (~4.0%).
