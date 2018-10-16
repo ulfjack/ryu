@@ -182,13 +182,13 @@ static inline uint64_t mulShiftAll(
   const uint64_t lo2 = lo + mul[0];
   const uint64_t mid2 = mid + mul[1] + (lo2 < lo);
   const uint64_t hi2 = hi + (mid2 < mid);
-  *vp = shiftright128(mid2, hi2, j - 64 - 1);
+  *vp = shiftright128(mid2, hi2, (uint32_t) (j - 64 - 1));
 
   if (mmShift == 1) {
     const uint64_t lo3 = lo - mul[0];
     const uint64_t mid3 = mid - mul[1] - (lo3 > lo);
     const uint64_t hi3 = hi - (mid3 > mid);
-    *vm = shiftright128(mid3, hi3, j - 64 - 1);
+    *vm = shiftright128(mid3, hi3, (uint32_t) (j - 64 - 1));
   } else {
     const uint64_t lo3 = lo + lo;
     const uint64_t mid3 = mid + mid + (lo3 < lo);
@@ -196,10 +196,10 @@ static inline uint64_t mulShiftAll(
     const uint64_t lo4 = lo3 - mul[0];
     const uint64_t mid4 = mid3 - mul[1] - (lo4 > lo3);
     const uint64_t hi4 = hi3 - (mid4 > mid3);
-    *vm = shiftright128(mid4, hi4, j - 64);
+    *vm = shiftright128(mid4, hi4, (uint32_t) (j - 64));
   }
 
-  return shiftright128(mid, hi, j - 64 - 1);
+  return shiftright128(mid, hi, (uint32_t) (j - 64 - 1));
 }
 
 #endif // HAS_64_BIT_INTRINSICS
