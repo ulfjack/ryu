@@ -185,9 +185,9 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
   uint8_t lastRemovedDigit = 0;
   if (e2 >= 0) {
     const uint32_t q = log10Pow2(e2);
-    e10 = q;
-    const int32_t k = FLOAT_POW5_INV_BITCOUNT + pow5bits(q) - 1;
-    const int32_t i = -e2 + q + k;
+    e10 = (int32_t) q;
+    const int32_t k = FLOAT_POW5_INV_BITCOUNT + pow5bits((int32_t) q) - 1;
+    const int32_t i = -e2 + (int32_t) q + k;
     vr = mulPow5InvDivPow2(mv, q, i);
     vp = mulPow5InvDivPow2(mp, q, i);
     vm = mulPow5InvDivPow2(mm, q, i);
@@ -215,10 +215,10 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
     }
   } else {
     const uint32_t q = log10Pow5(-e2);
-    e10 = q + e2;
-    const int32_t i = -e2 - q;
+    e10 = (int32_t) q + e2;
+    const int32_t i = -e2 - (int32_t) q;
     const int32_t k = pow5bits(i) - FLOAT_POW5_BITCOUNT;
-    int32_t j = q - k;
+    int32_t j = (int32_t) q - k;
     vr = mulPow5divPow2(mv, i, j);
     vp = mulPow5divPow2(mp, i, j);
     vm = mulPow5divPow2(mm, i, j);
