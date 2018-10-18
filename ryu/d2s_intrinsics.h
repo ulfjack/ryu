@@ -129,7 +129,7 @@ static inline uint64_t div100(const uint64_t x) {
   return umulh(x >> 2, 0x28F5C28F5C28F5C3u) >> 2;
 }
 
-static inline uint64_t div100000000(const uint64_t x) {
+static inline uint64_t div1e8(const uint64_t x) {
   return umulh(x, 0xABCC77118461CEFDu) >> 26;
 }
 
@@ -147,7 +147,7 @@ static inline uint64_t div100(const uint64_t x) {
   return x / 100;
 }
 
-static inline uint64_t div100000000(const uint64_t x) {
+static inline uint64_t div1e8(const uint64_t x) {
   return x / 100000000;
 }
 

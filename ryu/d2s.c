@@ -492,7 +492,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   // so the rest will fit into uint32_t.
   if ((output >> 32) != 0) {
     // Expensive 64-bit division.
-    const uint64_t q = div100000000(output);
+    const uint64_t q = div1e8(output);
     uint32_t output2 = (uint32_t) (output - 100000000 * q);
     output = q;
 
