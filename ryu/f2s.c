@@ -299,8 +299,7 @@ static inline floating_decimal_32 f2d(const uint32_t ieeeMantissa, const uint32_
       lastRemovedDigit = 4;
     }
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
-    output = vr +
-        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
+    output = vr + ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
     // Specialized for the common case (~96.0%). Percentages below are relative to this.
     // Loop iterations below (approximately):

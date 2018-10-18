@@ -126,8 +126,8 @@ static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, con
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
 
-static inline uint64_t mulShiftAll(
-    const uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
+static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
+  uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
 //  m <<= 2;
 //  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
 //  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
@@ -160,8 +160,8 @@ static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, con
   return shiftright128(sum, high1, j - 64);
 }
 
-static inline uint64_t mulShiftAll(
-    const uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
+static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
+  uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   *vp = mulShift(4 * m + 2, mul, j);
   *vm = mulShift(4 * m - 1 - mmShift, mul, j);
   return mulShift(4 * m, mul, j);
@@ -169,8 +169,8 @@ static inline uint64_t mulShiftAll(
 
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
-static inline uint64_t mulShiftAll(
-    uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
+static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const int32_t j,
+  uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   m <<= 1;
   // m is maximum 55 bits
   uint64_t tmp;
@@ -407,8 +407,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       lastRemovedDigit = 4;
     }
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
-    output = vr +
-        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
+    output = vr + ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
     // Specialized for the common case (~99.3%). Percentages below are relative to this.
     bool roundUp = false;
