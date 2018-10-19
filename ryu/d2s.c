@@ -236,16 +236,14 @@ typedef struct floating_decimal_64 {
 } floating_decimal_64;
 
 static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
-  const int32_t bias = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
-
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - bias - DOUBLE_MANTISSA_BITS - 2;
+    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = (int32_t) ieeeExponent - bias - DOUBLE_MANTISSA_BITS - 2;
+    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
     m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
