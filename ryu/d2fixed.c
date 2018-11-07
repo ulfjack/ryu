@@ -507,7 +507,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       }
       uint32_t digits = mulShift2(m2, POW10_SPLIT_2[p], j);
 #ifdef RYU_DEBUG
-      printf("digits=%d\n", e2);
+      printf("digits=%u\n", digits);
       printf("idx=%d\n", idx);
 #endif
       if (i < blocks - 1) {
