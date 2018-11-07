@@ -21,9 +21,11 @@
 extern "C" {
 #endif
 
-int d2fixed_buffered_n(double d, char* result);
-//void d2fixed_buffered(double d, char* result);
-char* d2fixed(double d);
+#include <inttypes.h>
+
+int d2fixed_buffered_n(double d, uint32_t precision, char* result);
+void d2fixed_buffered(double d, uint32_t precision, char* result);
+char* d2fixed(double d, uint32_t precision);
 
 #ifdef __cplusplus
 }
