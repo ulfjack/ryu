@@ -50,6 +50,7 @@ typedef __uint128_t uint128_t;
 
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
+#define DOUBLE_BIAS 1023
 
 #define POW10_ADDITIONAL_BITS 120
 #define BITS (POW10_ADDITIONAL_BITS + 16)
@@ -73,8 +74,32 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     uint128_t m1 = ((m0 << 64) | (r0 >> 64)) % 1000000000;
     uint128_t m2 = ((m1 << 64) | (r0 & 0xffffffffffffffffull)) % 1000000000;
     return (uint32_t) m2;
-  } else {
+  } else if (j == 128) {
+    return (uint32_t) (s1 % 1000000000);
+  } else if (j < 256) {
+    return (uint32_t) ((s1 >> (j - 128)) % 1000000000);
+  }
+  return 0;
+}
+
+static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+  const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
+  const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
+  uint128_t s0 = b0 + (b1 << 64); // 0
+  uint128_t s1 = (b1 >> 64) + (s0 < b0); // 128
+  if (j == 0) {
     assert(false);
+  } else if (j < 128) {
+    uint128_t r0 = (s0 >> j) | (s1 << (128 - j));
+    uint128_t r1 = s1 >> j;
+    uint128_t m0 = r1 % 1000000000;
+    uint128_t m1 = ((m0 << 64) | (r0 >> 64)) % 1000000000;
+    uint128_t m2 = ((m1 << 64) | (r0 & 0xffffffffffffffffull)) % 1000000000;
+    return (uint32_t) m2;
+  } else if (j == 128) {
+    return (uint32_t) (s1 % 1000000000);
+  } else if (j < 256) {
+    return (uint32_t) ((s1 >> (j - 128)) % 1000000000);
   }
   return 0;
 }
@@ -137,10 +162,26 @@ static inline uint32_t append_n_digits(uint32_t digits, char* const result) {
   return olength;
 }
 
+static inline uint32_t append_c_digits(uint32_t count, uint32_t digits, char* const result) {
+#ifdef RYU_DEBUG
+  printf("DIGITS=%d\n", digits);
+#endif
+  for (int i = 0; i < count; i++) {
+    char c = '0' + (digits % 10);
+    digits /= 10;
+    result[count - i - 1] = c;
+  }
+  return count;
+}
+
 static inline void append_nine_digits(uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
+  if (digits == 0) {
+    memset(result, '0', 9);
+    return;
+  }
 
   for (uint32_t i = 0; i < 5; i += 4) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
@@ -171,7 +212,29 @@ static uint32_t lengthForIndex(uint32_t idx) {
   return ((uint32_t) (((16 * idx) * 1292913986ull) >> 32) + 1 + 16 + 8) / 9;
 }
 
-int d2fixed_buffered_n(double d, char* result) {
+// Returns true if value is divisible by 2^p.
+static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
+  // return __builtin_ctzll(value) >= p;
+  return (value & ((1ull << p) - 1)) == 0;
+}
+
+static inline int copy_special_str_printf(char * const result, const bool sign, const bool exponent, const bool mantissa) {
+  if (sign) {
+    result[0] = '-';
+  }
+  if (mantissa) {
+    memcpy(result + sign, "nan", 3);
+    return sign + 3;
+  }
+  if (exponent) {
+    memcpy(result + sign, "Infinity", 8);
+    return sign + 8;
+  }
+  memcpy(result + sign, "0", 1);
+  return sign + 1;
+}
+
+int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   const uint64_t bits = double_to_bits(d);
 #ifdef RYU_DEBUG
   printf("IN=");
@@ -185,20 +248,31 @@ int d2fixed_buffered_n(double d, char* result) {
   const bool ieeeSign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
   const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
   const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
-  // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
-  }
 
-  const uint32_t bias = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
+  // Case distinction; exit early for the easy cases.
+  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u)) {
+    return copy_special_str_printf(result, ieeeSign, ieeeExponent, ieeeMantissa);
+  }
+  if (ieeeExponent == 0 && ieeeMantissa == 0) {
+    int index = 0;
+    if (ieeeSign) {
+      result[index++] = '-';
+    }
+    result[index++] = '0';
+    result[index++] = '.';
+    for (int i = 0; i < precision; i++) {
+      result[index++] = '0';
+    }
+    return index;
+  }
 
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
-    e2 = 1 - bias - DOUBLE_MANTISSA_BITS;
+    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - bias - DOUBLE_MANTISSA_BITS;
+    e2 = ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
     m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
 
@@ -206,11 +280,18 @@ int d2fixed_buffered_n(double d, char* result) {
   printf("-> %" PRIu64 " * 2^%d\n", m2, e2);
 #endif
 
-  uint32_t idx = indexForExponent(e2);
-  uint32_t p10bits = pow10BitsForIndex(idx);
-  uint32_t len = lengthForIndex(idx);
+  int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
+  int32_t p10bits = pow10BitsForIndex(idx);
+  int32_t len = lengthForIndex(idx);
   int index = 0;
   bool nonzero = false;
+#ifdef RYU_DEBUG
+  printf("idx=%d\n", idx);
+  printf("len=%d\n", len);
+#endif
+  if (ieeeSign) {
+    result[index++] = '-';
+  }
   for (int i = len - 1; i >= 0; i--) {
     uint32_t j = p10bits - e2;
     uint32_t digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
@@ -222,12 +303,110 @@ int d2fixed_buffered_n(double d, char* result) {
       nonzero = true;
     }
   }
+  if (!nonzero) {
+    result[index++] = '0';
+  }
+  result[index++] = '.';
+  if (e2 < 0) {
+    idx = -e2 / 16;
+#ifdef RYU_DEBUG
+    printf("e2=%d\n", e2);
+    printf("idx=%d\n", idx);
+#endif
+    int32_t blocks = precision / 9 + 1;
+    // 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
+    int roundUp = 0;
+    int32_t i = 0;
+    if (i < MIN_BLOCK_2[idx]) {
+      i = blocks < MIN_BLOCK_2[idx] ? blocks : MIN_BLOCK_2[idx];
+      memset(result + index, '0', 9 * i);
+      index += 9 * i;
+    }
+    for (; i < blocks; i++) {
+      int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
+      int32_t p = POW10_OFFSET_2[idx] + i;
+      if (p >= POW10_OFFSET_2[idx + 1]) {
+        // If the remaining digits are all 0, then we might as well use memset.
+        // No rounding required in this case.
+        int32_t fill = precision - 9 * i;
+        memset(result + index, '0', fill);
+        index += fill;
+        break;
+      }
+      uint32_t digits = mulShift2(m2, POW10_SPLIT_2[p], j);
+#ifdef RYU_DEBUG
+      printf("digits=%d\n", e2);
+      printf("idx=%d\n", idx);
+#endif
+      if (i < blocks - 1) {
+        append_nine_digits(digits, result + index);
+        index += 9;
+      } else {
+        int32_t max = precision - 9 * i;
+        int32_t lastDigit = 0;
+        for (int32_t k = 0; k < 9 - max; k++) {
+          lastDigit = digits % 10;
+          digits /= 10;
+        }
+#ifdef RYU_DEBUG
+        printf("lastDigit=%d\n", lastDigit);
+#endif
+        if (lastDigit != 5) {
+          roundUp = lastDigit > 5;
+        } else {
+          // Is m * 10^(additionalDigits + 1) / 2^(-e2) integer?
+          int32_t requiredTwos = -e2 - precision - 1;
+          bool trailingZeros = requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos);
+          roundUp = trailingZeros ? 2 : 1;
+#ifdef RYU_DEBUG
+          printf("requiredTwos=%d\n", requiredTwos);
+          printf("trailingZeros=%s\n", trailingZeros ? "true" : "false");
+#endif
+        }
+        if (max > 0) {
+          index += append_c_digits(max, digits, result + index);
+        }
+        break;
+      }
+    }
+#ifdef RYU_DEBUG
+    printf("roundUp=%d\n", roundUp);
+#endif
+    if (roundUp != 0) {
+      int roundIndex = index;
+      while (true) {
+        roundIndex--;
+        char c = result[roundIndex];
+        if (c == '.') {
+          continue;
+        } else if (c == '9') {
+          result[roundIndex] = '0';
+          roundUp = 1;
+          continue;
+        } else {
+          if ((roundUp == 2) && (c % 2 == 0)) {
+            break;
+          }
+          result[roundIndex] = c + 1;
+          break;
+        }
+      }
+    }
+  } else {
+    memset(result + index, '0', precision);
+    index += precision;
+  }
   return index;
 }
 
-char* d2fixed(double d) {
+void d2fixed_buffered(double d, uint32_t precision, char* result) {
+  int len = d2fixed_buffered_n(d, precision, result);
+  result[len] = '\0';
+}
+
+char* d2fixed(double d, uint32_t precision) {
   char* buffer = malloc(2000);
-  int index = d2fixed_buffered_n(d, buffer);
+  int index = d2fixed_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
   return buffer;
 }
