@@ -32,7 +32,7 @@ CONVERSION_CMD="".join([
   name = "fixed-" + t + "-" + f + "-csv",
   tools = [dep],
   outs = ["fixed-" + t + "-" + f + ".csv"],
-  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=800 -v > $@",
+  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=100 -v > $@",
 ) for (t,f,o,dep) in [
     ("c", "double", "-64", "//ryu/benchmark:benchmark_fixed"),
 ]]
@@ -42,6 +42,23 @@ CONVERSION_CMD="".join([
   srcs = ["fixed-" + t + "-" + f + ".csv"],
   tools = [f + ".template"],
   outs = ["fixed-" + t + "-" + f + ".pdf"],
+  cmd = CONVERSION_CMD % (f, c, d),
+) for (t,c,d) in [("c","printf","")] for f in ["double"]]
+
+[genrule(
+  name = "exp-" + t + "-" + f + "-csv",
+  tools = [dep],
+  outs = ["exp-" + t + "-" + f + ".csv"],
+  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=100 -v -exp > $@",
+) for (t,f,o,dep) in [
+    ("c", "double", "-64", "//ryu/benchmark:benchmark_fixed"),
+]]
+
+[genrule(
+  name = "exp-" + t + "-" + f + "-pdf",
+  srcs = ["exp-" + t + "-" + f + ".csv"],
+  tools = [f + ".template"],
+  outs = ["exp-" + t + "-" + f + ".pdf"],
   cmd = CONVERSION_CMD % (f, c, d),
 ) for (t,c,d) in [("c","printf","")] for f in ["double"]]
 
