@@ -37,7 +37,7 @@
 #include "ryu/ryu2.h"
 #include "third_party/mersenne/random.h"
 
-static int BUFFER_SIZE = 2000;
+#define BUFFER_SIZE 2000
 
 static double int64Bits2Double(uint64_t bits) {
   double f;
