@@ -106,7 +106,124 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
 
 #elif defined(HAS_64_BIT_INTRINSICS)
 
-#error "Not implemented"
+#include <intrin.h>
+
+static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* const productHi) {
+  return _umul128(a, b, productHi);
+}
+
+static inline uint32_t rem10e9(const uint64_t r0, const uint64_t r1, const uint64_t r2, const uint64_t r3) {
+  const uint64_t m0 = r3 % 1000000000;
+  const uint64_t m1 = ((m0 << 32) | (r2 >> 32)) % 1000000000;
+  const uint64_t m2 = ((m1 << 32) | (r2 & 0xffffffff)) % 1000000000;
+  const uint64_t m3 = ((m2 << 32) | (r1 >> 32)) % 1000000000;
+  const uint64_t m4 = ((m3 << 32) | (r1 & 0xffffffff)) % 1000000000;
+  const uint64_t m5 = ((m4 << 32) | (r0 >> 32)) % 1000000000;
+  const uint64_t m6 = ((m5 << 32) | (r0 & 0xffffffff)) % 1000000000;
+  return m6;
+}
+
+static inline uint64_t mix(const uint64_t v0, const uint64_t v1, const uint32_t j) {
+  assert(j > 0);
+  assert(j < 64);
+  return (v0 >> j) | (v1 << (64 - j));
+}
+
+static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+  uint64_t high0;                                   // 64
+  const uint64_t low0 = umul128(m, mul[0], &high0); // 0
+  uint64_t high1;                                   // 128
+  const uint64_t low1 = umul128(m, mul[1], &high1); // 64
+  uint64_t high2;                                   // 192
+  const uint64_t low2 = umul128(m, mul[2], &high2); // 128
+  const uint64_t s0low = low0;              // 0
+  const uint64_t s0high = high0 + low1;     // 64
+  const uint64_t c1 = s0high < high0;
+  const uint64_t s1low = high1 + low2 + c1; // 128
+  const uint64_t c2 = s1low < high1;
+  const uint64_t s1high = high2 + c2;       // 192
+  // printf("m=%" PRIu64 "\n", m);
+  // printf("mul[0]=%" PRIu64 "\n", mul[0]);
+  // printf("mul[1]=%" PRIu64 "\n", mul[1]);
+  // printf("mul[2]=%" PRIu64 "\n", mul[2]);
+  // printf("sum0=%" PRIu64 "\n", high0 + low1);
+  // printf("high0=%" PRIu64 "\n", high0);
+  // printf("sum1=%" PRIu64 "\n", high1 + low2);
+  // printf("s0low=%" PRIu64 "\n", s1low);
+  // printf("s0high=%" PRIu64 "\n", s0high);
+  // printf("s1low=%" PRIu64 "\n", s1low);
+  // printf("s1high=%" PRIu64 "\n", s1high);
+  // printf("j=%d\n", j);
+  if (j == 0) {
+    assert(false);
+  } else if (j < 64) {
+    const uint64_t r0 = mix(s0low, s0high, j);
+    const uint64_t r1 = mix(s0high, s1low, j);
+    const uint64_t r2 = mix(s1low, s1high, j);
+    const uint64_t r3 = mix(s1high, 0, j);
+    return rem10e9(r0, r1, r2, r3);
+  } else if (j == 64) {
+    return rem10e9(s0high, s1low, s1high, 0);
+  } else if (j < 128) {
+    const uint64_t r0 = mix(s0high, s1low, j - 64);
+    const uint64_t r1 = mix(s1low, s1high, j - 64);
+    const uint64_t r2 = mix(s1high, 0, j - 64);
+    return rem10e9(r0, r1, r2, 0);
+  } else if (j == 128) {
+    return rem10e9(s1low, s1high, 0, 0);
+  } else if (j < 192) {
+    const uint64_t r0 = mix(s1low, s1high, j - 128);
+    const uint64_t r1 = mix(s1high, 0, j - 128);
+    return rem10e9(r0, r1, 0, 0);
+  } else if (j == 192) {
+    return rem10e9(s1high, 0, 0, 0);
+  } else if (j < 256) {
+    return (s1high << (j - 192)) % 1000000000;
+  }
+  return 0;
+}
+
+static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+  uint64_t high0;                                   // 64
+  const uint64_t low0 = umul128(m, mul[0], &high0); // 0
+  uint64_t high1;                                   // 128
+  const uint64_t low1 = umul128(m, mul[1], &high1); // 64
+  const uint64_t high2 = 0;                         // 192
+  const uint64_t low2 = 0;                          // 128
+  const uint64_t s0low = low0;              // 0
+  const uint64_t s0high = high0 + low1;     // 64
+  const uint64_t c1 = s0high < high0;
+  const uint64_t s1low = high1 + low2 + c1; // 128
+  const uint64_t c2 = s1low < high1;
+  const uint64_t s1high = high2 + c2;       // 192
+  if (j == 0) {
+    assert(false);
+  } else if (j < 64) {
+    const uint64_t r0 = mix(s0low, s0high, j);
+    const uint64_t r1 = mix(s0high, s1low, j);
+    const uint64_t r2 = mix(s1low, s1high, j);
+    const uint64_t r3 = mix(s1high, 0, j);
+    return rem10e9(r0, r1, r2, r3);
+  } else if (j == 64) {
+    return rem10e9(s0high, s1low, s1high, 0);
+  } else if (j < 128) {
+    const uint64_t r0 = mix(s0high, s1low, j - 64);
+    const uint64_t r1 = mix(s1low, s1high, j - 64);
+    const uint64_t r2 = mix(s1high, 0, j - 64);
+    return rem10e9(r0, r1, r2, 0);
+  } else if (j == 128) {
+    return rem10e9(s1low, s1high, 0, 0);
+  } else if (j < 192) {
+    const uint64_t r0 = mix(s1low, s1high, j - 128);
+    const uint64_t r1 = mix(s1high, 0, j - 128);
+    return rem10e9(r0, r1, 0, 0);
+  } else if (j == 192) {
+    return rem10e9(s1high, 0, 0, 0);
+  } else if (j < 256) {
+    return (s1high << (j - 192)) % 1000000000;
+  }
+  return 0;
+}
 
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
