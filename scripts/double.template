@@ -1,0 +1,13 @@
+set title ""
+set datafile separator ","
+set linetype 1 lc rgb '#396AB1'
+set linetype 2 lc rgb '#DA7C30'
+set linetype 3 lc rgb '#3E9651'
+set term pdf size 25cm, 15cm
+set key above left horizontal Left reverse samplen 0.1
+set ylabel "Time in ns"
+set xrange [0:18446744073709551616.0]
+set xtics ("0" 0, "2^{62}" 4611686018427387904.0, "2^{63}" 9223372036854775808.0, "2^{63}+2^{62}" 13835058055282163712.0, "2^{64}" 18446744073709551616.0)
+plot "INPUT_FILE" using 2:3 with points ps 0.5 title "Ryū", \
+     "INPUT_FILE" using 2:4 with points ps 0.5 title "COMPARISON_NAME_1", \
+     "INPUT_FILE" using 2:5 with points ps 0.5 title "COMPARISON_NAME_2",

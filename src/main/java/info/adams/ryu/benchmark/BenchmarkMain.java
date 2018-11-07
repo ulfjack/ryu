@@ -44,7 +44,7 @@ public class BenchmarkMain {
     }
 
     if (verbose) {
-      System.out.println("float_bits_as_int,ryu_time_in_ns,jdk_time_in_ns,jaffer_time_in_ns");
+      System.out.println("output_ryu,float_bits_as_int,ryu_time_in_ns,jdk_time_in_ns,jaffer_time_in_ns");
     } else {
       System.out.printf("    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer\n");
     }
@@ -111,7 +111,12 @@ public class BenchmarkMain {
       double delta2 = (stop - start) / (double) iterations;
       mv2.update(delta2);
       if (verbose) {
-        System.out.println(Integer.toUnsignedString(r) + "," + delta1 + "," + delta2 + ",");
+        System.out.printf(
+            "%s,%s,%s,%s,\n",
+            RyuFloat.floatToString(f),
+            Integer.toUnsignedString(r),
+            Double.valueOf(delta1),
+            Double.valueOf(delta2));
       }
     }
     if (!verbose) {
@@ -185,7 +190,13 @@ public class BenchmarkMain {
       double delta3 = (stop - start) / (double) iterations;
       mv3.update(delta3);
       if (verbose) {
-        System.out.println(Long.toUnsignedString(r) + "," + delta1 + "," + delta2 + "," + delta3);
+        System.out.printf(
+            "%s,%s,%s,%s,%s\n",
+            RyuDouble.doubleToString(f),
+            Long.toUnsignedString(r),
+            Double.valueOf(delta1),
+            Double.valueOf(delta2),
+            Double.valueOf(delta3));
       }
     }
     if (!verbose) {
