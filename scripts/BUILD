@@ -1,7 +1,7 @@
 [genrule(
-  name = "generate-" + t + "-" + f + "-csv",
+  name = "shortest-" + t + "-" + f + "-csv",
   tools = [dep],
-  outs = [t + "-" + f + ".csv"],
+  outs = ["shortest-" + t + "-" + f + ".csv"],
   cmd = "$(location " + dep + ") " + o + " -classic -samples=1000 -v > $@",
 ) for (t,f,o,dep) in [
     ("c", "float", "-32", "//ryu/benchmark"),
@@ -22,9 +22,26 @@ CONVERSION_CMD="".join([
 
 [genrule(
   name = "generate-" + t + "-" + f + "-pdf",
-  srcs = [t + "-" + f + ".csv"],
+  srcs = ["shortest-" + t + "-" + f + ".csv"],
   tools = [f + ".template"],
-  outs = [t + "-" + f + ".pdf"],
+  outs = ["shortest-" + t + "-" + f + ".pdf"],
   cmd = CONVERSION_CMD % (f, c, d),
 ) for (t,c,d) in [("c","Grisu3",""),("java","Jdk","Jaffer")] for f in ["float","double"]]
+
+[genrule(
+  name = "fixed-" + t + "-" + f + "-csv",
+  tools = [dep],
+  outs = ["fixed-" + t + "-" + f + ".csv"],
+  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=800 -v > $@",
+) for (t,f,o,dep) in [
+    ("c", "double", "-64", "//ryu/benchmark:benchmark_fixed"),
+]]
+
+[genrule(
+  name = "fixed-" + t + "-" + f + "-pdf",
+  srcs = ["fixed-" + t + "-" + f + ".csv"],
+  tools = [f + ".template"],
+  outs = ["fixed-" + t + "-" + f + ".pdf"],
+  cmd = CONVERSION_CMD % (f, c, d),
+) for (t,c,d) in [("c","printf","")] for f in ["double"]]
 
