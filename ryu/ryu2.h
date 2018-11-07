@@ -27,6 +27,10 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result);
 void d2fixed_buffered(double d, uint32_t precision, char* result);
 char* d2fixed(double d, uint32_t precision);
 
+int d2exp_buffered_n(double d, uint32_t precision, char* result);
+void d2exp_buffered(double d, uint32_t precision, char* result);
+char* d2exp(double d, uint32_t precision);
+
 #ifdef __cplusplus
 }
 #endif

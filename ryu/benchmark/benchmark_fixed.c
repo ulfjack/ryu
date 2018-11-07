@@ -15,6 +15,10 @@
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
 
+#if defined(__linux__)
+#define _GNU_SOURCE
+#endif
+
 #include <math.h>
 #include <stdbool.h>
 #include <inttypes.h>
@@ -27,6 +31,7 @@
 #if defined(__linux__)
 #include <sys/types.h>
 #include <unistd.h>
+#include <sched.h>
 #endif
 
 #include "ryu/ryu2.h"
@@ -76,7 +81,7 @@ double generate_double(uint64_t* r) {
   return f;
 }
 
-static int bench64(const uint32_t samples, const uint32_t iterations, const int32_t precision, const bool verbose) {
+static int bench64_fixed(const uint32_t samples, const uint32_t iterations, const int32_t precision, const bool verbose) {
   char bufferown[BUFFER_SIZE];
   char buffer[BUFFER_SIZE];
   char fmt[100];
@@ -129,16 +134,76 @@ static int bench64(const uint32_t samples, const uint32_t iterations, const int3
   return throwaway;
 }
 
-int main(int argc, char** argv) {
-  if (false) {
-    double d = int64Bits2Double(0xC2865737987A884E);
-    printf("%s\n", d2fixed(d, 9));
-    return 0;
+static int bench64_exp(const uint32_t samples, const uint32_t iterations, const int32_t precision, const bool verbose) {
+  char bufferown[BUFFER_SIZE];
+  char buffer[BUFFER_SIZE];
+  char fmt[100];
+  snprintf(fmt, 100, "%%.%de", precision);
+
+  RandomInit(12345);
+  mean_and_variance mv1;
+  init(&mv1);
+  mean_and_variance mv2;
+  init(&mv2);
+  int throwaway = 0;
+  for (int i = 0; i < samples; ++i) {
+    uint64_t r = 0;
+    const double f = generate_double(&r);
+
+//    printf("%.20e\n", f);
+//    printf("For %16" PRIX64 "\n", r);
+    clock_t t1 = clock();
+    for (int j = 0; j < iterations; ++j) {
+      d2exp_buffered(f, precision, bufferown);
+      throwaway += bufferown[2];
+    }
+    clock_t t2 = clock();
+    double delta1 = (t2 - t1) / (double) iterations / CLOCKS_PER_SEC * 1000000000.0;
+    update(&mv1, delta1);
+
+    double delta2 = 0.0;
+    t1 = clock();
+    for (int j = 0; j < iterations; ++j) {
+      snprintf(buffer, BUFFER_SIZE, fmt, f);
+      throwaway += buffer[2];
+    }
+    t2 = clock();
+    delta2 = (t2 - t1) / (double) iterations / CLOCKS_PER_SEC * 1000000000.0;
+    update(&mv2, delta2);
+
+    if (verbose) {
+      printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
+    }
+
+//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    if (strcmp(bufferown, buffer) != 0) {
+      printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    }
   }
+  if (!verbose) {
+    printf("64: %8.3f %8.3f", mv1.mean, stddev(&mv1));
+    printf("     %8.3f %8.3f", mv2.mean, stddev(&mv2));
+    printf("\n");
+  }
+  return throwaway;
+}
+
+int main(int argc, char** argv) {
+#if defined(__linux__)
+  // Also disable hyperthreading with something like this:
+  // cat /sys/devices/system/cpu/cpu*/topology/core_id
+  // sudo /bin/bash -c "echo 0 > /sys/devices/system/cpu/cpu6/online"
+  cpu_set_t my_set;
+  CPU_ZERO(&my_set);
+  CPU_SET(2, &my_set);
+  sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
+#endif
+
   int32_t samples = 1000;
   int32_t iterations = 1000;
   int32_t precision = 800;
   bool verbose = false;
+  bool fixed = true;
   for (int i = 1; i < argc; i++) {
     char* arg = argv[i];
     if (strcmp(arg, "-v") == 0) {
@@ -149,7 +214,14 @@ int main(int argc, char** argv) {
       sscanf(arg, "-iterations=%i", &iterations);
     } else if (strncmp(arg, "-precision=", 11) == 0) {
       sscanf(arg, "-precision=%i", &precision);
+    } else if (strcmp(arg, "-exp") == 0) {
+      fixed = false;
     }
+  }
+  if (false) {
+    double d = int64Bits2Double(0x31D09A9A8246B154);
+    printf("%s\n", d2exp(d, precision));
+    return 0;
   }
 
   if (!verbose) {
@@ -163,7 +235,11 @@ int main(int argc, char** argv) {
     printf("    Average & Stddev Ryu%s\n", "  Average & Stddev Grisu3");
   }
   int throwaway = 0;
-  throwaway += bench64(samples, iterations, precision, verbose);
+  if (fixed) {
+    throwaway += bench64_fixed(samples, iterations, precision, verbose);
+  } else {
+    throwaway += bench64_exp(samples, iterations, precision, verbose);
+  }
   if (argc == 1000) {
     // Prevent the compiler from optimizing the code away.
     printf("%d\n", throwaway);
