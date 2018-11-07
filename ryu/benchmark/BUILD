@@ -13,8 +13,9 @@ cc_binary(
 
 cc_binary(
   name = "benchmark_fixed",
-  srcs = ["benchmark_fixed.cc"],
+  srcs = ["benchmark_fixed.c"],
   deps = [
     "//ryu:ryu2",
+    "//third_party/mersenne",
   ],
 )
