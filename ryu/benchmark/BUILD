@@ -10,3 +10,11 @@ cc_binary(
     "//third_party/double-conversion",
   ],
 )
+
+cc_binary(
+  name = "benchmark_fixed",
+  srcs = ["benchmark_fixed.cc"],
+  deps = [
+    "//ryu:ryu2",
+  ],
+)
