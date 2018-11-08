@@ -299,7 +299,13 @@ static inline void append_c_digits(uint32_t count, uint32_t digits, char* const 
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
-  for (int i = 0; i < count; i++) {
+  int i = 0;
+  for (; i < count - 1; i += 2) {
+    const uint32_t c = (digits % 100) << 1;
+    digits /= 100;
+    memcpy(result + count - i - 2, DIGIT_TABLE + c, 2);
+  }
+  if (i < count) {
     char c = '0' + (digits % 10);
     digits /= 10;
     result[count - i - 1] = c;
