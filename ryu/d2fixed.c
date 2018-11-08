@@ -435,10 +435,6 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
 
   int index = 0;
   bool nonzero = false;
-#ifdef RYU_DEBUG
-  printf("idx=%d\n", idx);
-  printf("len=%d\n", len);
-#endif
   if (ieeeSign) {
     result[index++] = '-';
   }
@@ -446,6 +442,10 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
     int32_t p10bits = pow10BitsForIndex(idx);
     int32_t len = lengthForIndex(idx);
+#ifdef RYU_DEBUG
+    printf("idx=%d\n", idx);
+    printf("len=%d\n", len);
+#endif
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it above 128, which is
@@ -464,10 +464,12 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     result[index++] = '0';
   }
   result[index++] = '.';
+#ifdef RYU_DEBUG
+  printf("e2=%d\n", e2);
+#endif
   if (e2 < 0) {
     int32_t idx = -e2 / 16;
 #ifdef RYU_DEBUG
-    printf("e2=%d\n", e2);
     printf("idx=%d\n", idx);
 #endif
     int32_t blocks = precision / 9 + 1;
@@ -618,10 +620,6 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 
   precision++;
   int index = 0;
-#ifdef RYU_DEBUG
-  printf("idx=%d\n", idx);
-  printf("len=%d\n", len);
-#endif
   if (ieeeSign) {
     result[index++] = '-';
   }
@@ -633,6 +631,10 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
     int32_t p10bits = pow10BitsForIndex(idx);
     int32_t len = lengthForIndex(idx);
+#ifdef RYU_DEBUG
+    printf("idx=%d\n", idx);
+    printf("len=%d\n", len);
+#endif
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it above 128, which is
