@@ -62,21 +62,24 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
   const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
   const uint128_t b2 = ((uint128_t) m) * mul[2]; // 128
-  uint128_t s0 = b0 + (b1 << 64); // 0
-  uint128_t c1 = s0 < b0;
-  uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-  if (j == 0) {
+  if (j <= 64) {
     assert(false);
   } else if (j < 128) {
-    uint128_t r0 = (s0 >> j) | (s1 << (128 - j));
-    uint128_t r1 = s1 >> j;
-    uint128_t m0 = r1 % 1000000000;
-    uint128_t m1 = ((m0 << 64) | (r0 >> 64)) % 1000000000;
-    uint128_t m2 = ((m1 << 64) | (r0 & 0xffffffffffffffffull)) % 1000000000;
-    return (uint32_t) m2;
+    uint64_t b1lo = (uint64_t) b1;
+    uint64_t s0 = b1lo + (b0 >> 64); // 64
+    uint128_t c1 = s0 < b1lo;
+    uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
+    uint128_t r0 = ((s1 % 1000000000) << 64) + s0;
+    return (uint32_t) ((r0 >> (j - 64)) % 1000000000);
   } else if (j == 128) {
+    uint128_t s0 = b0 + (b1 << 64); // 0
+    uint128_t c1 = s0 < b0;
+    uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     return (uint32_t) (s1 % 1000000000);
   } else if (j < 256) {
+    uint128_t s0 = b0 + (b1 << 64); // 0
+    uint128_t c1 = s0 < b0;
+    uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     return (uint32_t) ((s1 >> (j - 128)) % 1000000000);
   }
   return 0;
@@ -85,21 +88,11 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
 static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
   const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
-  uint128_t s0 = b0 + (b1 << 64); // 0
-  uint128_t s1 = (b1 >> 64) + (s0 < b0); // 128
-  if (j == 0) {
+  if (j <= 64) {
     assert(false);
-  } else if (j < 128) {
-    uint128_t r0 = (s0 >> j) | (s1 << (128 - j));
-    uint128_t r1 = s1 >> j;
-    uint128_t m0 = r1 % 1000000000;
-    uint128_t m1 = ((m0 << 64) | (r0 >> 64)) % 1000000000;
-    uint128_t m2 = ((m1 << 64) | (r0 & 0xffffffffffffffffull)) % 1000000000;
-    return (uint32_t) m2;
-  } else if (j == 128) {
-    return (uint32_t) (s1 % 1000000000);
-  } else if (j < 256) {
-    return (uint32_t) ((s1 >> (j - 128)) % 1000000000);
+  } else if (j < 192) { // 64 < j < 192
+    uint128_t s = (b0 >> 64) + b1; // 64
+    return (uint32_t) ((s >> (j - 64)) % 1000000000);
   }
   return 0;
 }
@@ -455,7 +448,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     int32_t len = lengthForIndex(idx);
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
-      uint32_t digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
+      // Temporary: j is usually around 128, and by shifting a bit, we push it above 128, which is
+      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
+      uint32_t digits = mulShift(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
       if (nonzero) {
         append_nine_digits(digits, result + index);
         index += 9;
@@ -640,7 +635,9 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     int32_t len = lengthForIndex(idx);
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
-      digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
+      // Temporary: j is usually around 128, and by shifting a bit, we push it above 128, which is
+      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
+      digits = mulShift(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
       if (printedDigits != 0) {
         if (printedDigits + 9 > precision) {
           availableDigits = 9;
