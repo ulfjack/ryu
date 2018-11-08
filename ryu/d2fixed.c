@@ -724,6 +724,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   } else {
     // Is m * 2^e2 * 10^(precision + 1 - exp) integer?
     bool trailingZeros;
+    // precision was already increased by 1, so we don't need to write + 1 here.
     int32_t rexp = precision - exp;
     if (rexp < 0) {
       int32_t requiredTwos = -e2 - rexp;
