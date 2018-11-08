@@ -452,9 +452,6 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   printf("-> %" PRIu64 " * 2^%d\n", m2, e2);
 #endif
 
-  int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
-  int32_t p10bits = pow10BitsForIndex(idx);
-  int32_t len = lengthForIndex(idx);
   int index = 0;
   bool nonzero = false;
 #ifdef RYU_DEBUG
@@ -464,15 +461,20 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   if (ieeeSign) {
     result[index++] = '-';
   }
-  for (int i = len - 1; i >= 0; i--) {
-    uint32_t j = p10bits - e2;
-    uint32_t digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
-    if (nonzero) {
-      append_nine_digits(digits, result + index);
-      index += 9;
-    } else if (digits != 0) {
-      index += append_n_digits(digits, result + index);
-      nonzero = true;
+  if (e2 >= -53) {
+    int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
+    int32_t p10bits = pow10BitsForIndex(idx);
+    int32_t len = lengthForIndex(idx);
+    for (int i = len - 1; i >= 0; i--) {
+      uint32_t j = p10bits - e2;
+      uint32_t digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
+      if (nonzero) {
+        append_nine_digits(digits, result + index);
+        index += 9;
+      } else if (digits != 0) {
+        index += append_n_digits(digits, result + index);
+        nonzero = true;
+      }
     }
   }
   if (!nonzero) {
@@ -480,7 +482,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   }
   result[index++] = '.';
   if (e2 < 0) {
-    idx = -e2 / 16;
+    int32_t idx = -e2 / 16;
 #ifdef RYU_DEBUG
     printf("e2=%d\n", e2);
     printf("idx=%d\n", idx);
@@ -632,9 +634,6 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
 
   precision++;
-  int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
-  int32_t p10bits = pow10BitsForIndex(idx);
-  int32_t len = lengthForIndex(idx);
   int index = 0;
 #ifdef RYU_DEBUG
   printf("idx=%d\n", idx);
@@ -647,32 +646,37 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   uint32_t printedDigits = 0;
   uint32_t availableDigits = 0;
   int32_t exp = 0;
-  for (int i = len - 1; i >= 0; i--) {
-    uint32_t j = p10bits - e2;
-    digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
-    if (printedDigits != 0) {
-      if (printedDigits + 9 > precision) {
-        availableDigits = 9;
-        break;
+  if (e2 >= -52) {
+    int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
+    int32_t p10bits = pow10BitsForIndex(idx);
+    int32_t len = lengthForIndex(idx);
+    for (int i = len - 1; i >= 0; i--) {
+      uint32_t j = p10bits - e2;
+      digits = mulShift(m2, POW10_SPLIT[POW10_OFFSET[idx] + i], j);
+      if (printedDigits != 0) {
+        if (printedDigits + 9 > precision) {
+          availableDigits = 9;
+          break;
+        }
+        append_nine_digits(digits, result + index);
+        index += 9;
+        printedDigits += 9;
+      } else if (digits != 0) {
+        availableDigits = decimalLength(digits);
+        exp = i * 9 + availableDigits - 1;
+        if (printedDigits + availableDigits > precision) {
+          break;
+        }
+        append_d_digits(availableDigits, digits, result + index);
+        index += availableDigits + 1;
+        printedDigits += availableDigits;
+        availableDigits = 0;
       }
-      append_nine_digits(digits, result + index);
-      index += 9;
-      printedDigits += 9;
-    } else if (digits != 0) {
-      availableDigits = decimalLength(digits);
-      exp = i * 9 + availableDigits - 1;
-      if (printedDigits + availableDigits > precision) {
-        break;
-      }
-      append_d_digits(availableDigits, digits, result + index);
-      index += availableDigits + 1;
-      printedDigits += availableDigits;
-      availableDigits = 0;
     }
   }
 
   if (e2 < 0 && availableDigits == 0) {
-    idx = -e2 / 16;
+    int32_t idx = -e2 / 16;
 #ifdef RYU_DEBUG
     printf("e2=%d\n", e2);
     printf("idx=%d\n", idx);
