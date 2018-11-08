@@ -142,18 +142,6 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint64_t s1low = high1 + low2 + c1; // 128
   const uint64_t c2 = s1low < high1;
   const uint64_t s1high = high2 + c2;       // 192
-  // printf("m=%" PRIu64 "\n", m);
-  // printf("mul[0]=%" PRIu64 "\n", mul[0]);
-  // printf("mul[1]=%" PRIu64 "\n", mul[1]);
-  // printf("mul[2]=%" PRIu64 "\n", mul[2]);
-  // printf("sum0=%" PRIu64 "\n", high0 + low1);
-  // printf("high0=%" PRIu64 "\n", high0);
-  // printf("sum1=%" PRIu64 "\n", high1 + low2);
-  // printf("s0low=%" PRIu64 "\n", s1low);
-  // printf("s0high=%" PRIu64 "\n", s0high);
-  // printf("s1low=%" PRIu64 "\n", s1low);
-  // printf("s1high=%" PRIu64 "\n", s1high);
-  // printf("j=%d\n", j);
   if (j == 0) {
     assert(false);
   } else if (j < 64) {
