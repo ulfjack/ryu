@@ -219,8 +219,10 @@ int main(int argc, char** argv) {
     }
   }
   if (false) {
-    double d = int64Bits2Double(0x31D09A9A8246B154);
-    printf("%s\n", d2exp(d, precision));
+//    double d = int64Bits2Double(0x426E5FDA4A181F94);
+//    double d = int64Bits2Double(0xC27EF2838AD07A1A);
+    double d = int64Bits2Double(0x426C19FD2EFA7294);
+    printf("%s\n", d2fixed(d, precision));
     return 0;
   }
 
