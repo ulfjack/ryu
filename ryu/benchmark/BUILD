@@ -19,3 +19,12 @@ cc_binary(
     "//third_party/mersenne",
   ],
 )
+
+cc_binary(
+  name = "benchmark_fixed_cc",
+  srcs = ["benchmark_fixed.cc"],
+  deps = [
+    "//ryu:ryu2",
+    "//third_party/mersenne",
+  ],
+)
