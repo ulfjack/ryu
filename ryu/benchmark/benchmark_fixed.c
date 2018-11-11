@@ -199,9 +199,9 @@ int main(int argc, char** argv) {
   sched_setaffinity(getpid(), sizeof(cpu_set_t), &my_set);
 #endif
 
-  int32_t samples = 1000;
+  int32_t samples = 10000;
   int32_t iterations = 1000;
-  int32_t precision = 800;
+  int32_t precision = 6;
   bool verbose = false;
   bool fixed = true;
   for (int i = 1; i < argc; i++) {
