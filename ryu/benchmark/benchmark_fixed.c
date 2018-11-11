@@ -104,7 +104,7 @@ static int bench64_fixed(const uint32_t samples, const uint32_t iterations, cons
       throwaway += bufferown[2];
     }
     clock_t t2 = clock();
-    double delta1 = (t2 - t1) / (double) iterations / CLOCKS_PER_SEC * 1000000000.0;
+    double delta1 = ((t2 - t1) * 1000000000.0) / ((double) iterations) / ((double) CLOCKS_PER_SEC);
     update(&mv1, delta1);
 
     double delta2 = 0.0;
@@ -114,7 +114,7 @@ static int bench64_fixed(const uint32_t samples, const uint32_t iterations, cons
       throwaway += buffer[2];
     }
     t2 = clock();
-    delta2 = (t2 - t1) / ((double) iterations) / ((double) CLOCKS_PER_SEC) * 1000000000.0;
+    delta2 = ((t2 - t1) * 1000000000.0) / ((double) iterations) / ((double) CLOCKS_PER_SEC);
     update(&mv2, delta2);
 
     if (verbose) {
