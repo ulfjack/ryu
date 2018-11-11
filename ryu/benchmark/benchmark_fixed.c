@@ -218,10 +218,13 @@ int main(int argc, char** argv) {
       fixed = false;
     }
   }
-  if (false) {
+  if (true) {
 //    double d = int64Bits2Double(0x426E5FDA4A181F94);
 //    double d = int64Bits2Double(0xC27EF2838AD07A1A);
     double d = int64Bits2Double(0x426C19FD2EFA7294);
+    printf("%.10f\n", 1043657281728.98681640625);
+    printf("%.10f\n", -2126683614471.63134765625);
+    printf("%.10f\n", 965560858579.58056640625);
     printf("%s\n", d2fixed(d, precision));
     return 0;
   }
