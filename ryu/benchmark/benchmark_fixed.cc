@@ -87,6 +87,9 @@ public:
     } else if (strcmp(arg, "-64") == 0) {
       m_run32 = false;
       m_run64 = true;
+    } else if (strcmp(arg, "-exp") == 0) {
+      m_run32 = true;
+      m_run64 = false;
     } else if (strcmp(arg, "-v") == 0) {
       m_verbose = true;
     } else if (strcmp(arg, "-ryu") == 0) {
@@ -143,29 +146,6 @@ uint32_t exp10(const int x) {
   return ret;
 }
 
-//float generate_float(const benchmark_options& options, std::mt19937& mt32, uint32_t& r) {
-//  r = mt32();
-//
-//  if (options.small_digits() == 0) {
-//    float f = int32Bits2Float(r);
-//    return f;
-//  }
-//
-//  // Example:
-//  // options.small_digits() is 3
-//  // lower is 100
-//  // upper is 1000
-//  // r % (1000 - 100) + 100;
-//  // r % 900 + 100;
-//  // r is [0, 899] + 100
-//  // r is [100, 999]
-//  // r / 100 is [1.00, 9.99]
-//  const uint32_t lower = exp10(options.small_digits() - 1);
-//  const uint32_t upper = lower * 10;
-//  r = r % (upper - lower) + lower; // slightly biased, but reproducible
-//  return r / static_cast<float>(lower);
-//}
-
 double generate_double(const benchmark_options& options, std::mt19937& mt32, uint64_t& r) {
   r = mt32();
   r <<= 32;
@@ -186,7 +166,7 @@ double generate_double(const benchmark_options& options, std::mt19937& mt32, uin
 static char bufferown[BUFFER_SIZE];
 static char buffer[BUFFER_SIZE];
 
-static int bench64(const benchmark_options& options) {
+static int bench64_fixed(const benchmark_options& options) {
   int precision = options.precision();
   char fmt[100];
   snprintf(fmt, 100, "%%.%df", precision);
@@ -203,6 +183,64 @@ static int bench64(const benchmark_options& options) {
     auto t1 = steady_clock::now();
     for (int j = 0; j < options.iterations(); ++j) {
       d2fixed_buffered(f, precision, bufferown);
+      throwaway += bufferown[2];
+    }
+    auto t2 = steady_clock::now();
+    double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
+    mv1.update(delta1);
+
+    double delta2 = 0.0;
+    if (!options.ryu_only()) {
+      t1 = steady_clock::now();
+      for (int j = 0; j < options.iterations(); ++j) {
+        snprintf(buffer, BUFFER_SIZE, fmt, f);
+        throwaway += buffer[2];
+      }
+      t2 = steady_clock::now();
+      delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
+      mv2.update(delta2);
+    }
+
+    if (options.verbose()) {
+      if (options.ryu_only()) {
+        printf("%s,%" PRIu64 ",%f\n", bufferown, r, delta1);
+      } else {
+        printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
+      }
+    }
+
+//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
+      printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    }
+  }
+  if (!options.verbose()) {
+    printf("64: %8.3f %8.3f", mv1.mean, mv1.stddev());
+    if (!options.ryu_only()) {
+      printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
+    }
+    printf("\n");
+  }
+  return throwaway;
+}
+
+static int bench64_exp(const benchmark_options& options) {
+  int precision = options.precision();
+  char fmt[100];
+  snprintf(fmt, 100, "%%.%de", precision);
+
+  std::mt19937 mt32(12345);
+  mean_and_variance mv1;
+  mean_and_variance mv2;
+  int throwaway = 0;
+  for (int i = 0; i < options.samples(); ++i) {
+    uint64_t r = 0;
+    const double f = generate_double(options, mt32, r);
+
+//    printf("%f\n", f);
+    auto t1 = steady_clock::now();
+    for (int j = 0; j < options.iterations(); ++j) {
+      d2exp_buffered(f, precision, bufferown);
       throwaway += bufferown[2];
     }
     auto t2 = steady_clock::now();
@@ -278,7 +316,10 @@ int main(int argc, char** argv) {
   }
   int throwaway = 0;
   if (options.run64()) {
-    throwaway += bench64(options);
+    throwaway += bench64_fixed(options);
+  }
+  if (options.run32()) {
+    throwaway += bench64_exp(options);
   }
   if (argc == 1000) {
     // Prevent the compiler from optimizing the code away.
