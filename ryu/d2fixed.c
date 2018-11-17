@@ -123,12 +123,6 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
   return _umul128(a, b, productHi);
 }
 
-static inline uint64_t mix(const uint64_t v0, const uint64_t v1, const uint32_t j) {
-  assert(j > 0);
-  assert(j < 64);
-  return (v0 >> j) | (v1 << (64 - j));
-}
-
 static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   uint64_t high0;                                   // 64
   const uint64_t low0 = umul128(m, mul[0], &high0); // 0
