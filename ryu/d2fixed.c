@@ -105,17 +105,6 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
   return _umul128(a, b, productHi);
 }
 
-static inline uint32_t rem10e9(const uint64_t r0, const uint64_t r1, const uint64_t r2, const uint64_t r3) {
-  const uint64_t m0 = r3 % 1000000000;
-  const uint64_t m1 = ((m0 << 32) | (r2 >> 32)) % 1000000000;
-  const uint64_t m2 = ((m1 << 32) | (r2 & 0xffffffff)) % 1000000000;
-  const uint64_t m3 = ((m2 << 32) | (r1 >> 32)) % 1000000000;
-  const uint64_t m4 = ((m3 << 32) | (r1 & 0xffffffff)) % 1000000000;
-  const uint64_t m5 = ((m4 << 32) | (r0 >> 32)) % 1000000000;
-  const uint64_t m6 = ((m5 << 32) | (r0 & 0xffffffff)) % 1000000000;
-  return m6;
-}
-
 static inline uint64_t mix(const uint64_t v0, const uint64_t v1, const uint32_t j) {
   assert(j > 0);
   assert(j < 64);
@@ -135,29 +124,28 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint64_t s1low = high1 + low2 + c1; // 128
   const uint64_t c2 = s1low < high1;
   const uint64_t s1high = high2 + c2;       // 192
-  if (j == 0) {
+  if (j < 128) {
     assert(false);
-  } else if (j < 64) {
-    const uint64_t r0 = mix(s0low, s0high, j);
-    const uint64_t r1 = mix(s0high, s1low, j);
-    const uint64_t r2 = mix(s1low, s1high, j);
-    const uint64_t r3 = mix(s1high, 0, j);
-    return rem10e9(r0, r1, r2, r3);
-  } else if (j == 64) {
-    return rem10e9(s0high, s1low, s1high, 0);
-  } else if (j < 128) {
-    const uint64_t r0 = mix(s0high, s1low, j - 64);
-    const uint64_t r1 = mix(s1low, s1high, j - 64);
-    const uint64_t r2 = mix(s1high, 0, j - 64);
-    return rem10e9(r0, r1, r2, 0);
   } else if (j == 128) {
-    return rem10e9(s1low, s1high, 0, 0);
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
+    return r2 % 1000000000;
+  } else if (j < 160) {
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
+    return (r2 >> (j - 128)) % 1000000000;
+  } else if (j == 160) {
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
+    return r1 % 1000000000;
   } else if (j < 192) {
-    const uint64_t r0 = mix(s1low, s1high, j - 128);
-    const uint64_t r1 = mix(s1high, 0, j - 128);
-    return rem10e9(r0, r1, 0, 0);
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
+    return (r1 >> (j - 160)) % 1000000000;
   } else if (j == 192) {
-    return rem10e9(s1high, 0, 0, 0);
+    return s1high % 1000000000;
   } else if (j < 256) {
     return (s1high << (j - 192)) % 1000000000;
   }
@@ -177,29 +165,48 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
   const uint64_t s1low = high1 + low2 + c1; // 128
   const uint64_t c2 = s1low < high1;
   const uint64_t s1high = high2 + c2;       // 192
-  if (j == 0) {
+  if (j < 64) {
+    printf("%d\n", j);
     assert(false);
-  } else if (j < 64) {
-    const uint64_t r0 = mix(s0low, s0high, j);
-    const uint64_t r1 = mix(s0high, s1low, j);
-    const uint64_t r2 = mix(s1low, s1high, j);
-    const uint64_t r3 = mix(s1high, 0, j);
-    return rem10e9(r0, r1, r2, r3);
-  } else if (j == 64) {
-    return rem10e9(s0high, s1low, s1high, 0);
+  } else if (j < 96) {
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff)) % 1000000000;
+    const uint64_t r3 = ((r2 << 32) | (s0high >> 32)) % 1000000000;
+    const uint64_t r4 = ((r3 << 32) | (s0high & 0xffffffff));
+    return (r4 >> (j - 64)) % 1000000000;
+  } else if (j == 96) {
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff)) % 1000000000;
+    const uint64_t r3 = ((r2 << 32) | (s0high >> 32)) % 1000000000;
+    return r3 % 1000000000;
   } else if (j < 128) {
-    const uint64_t r0 = mix(s0high, s1low, j - 64);
-    const uint64_t r1 = mix(s1low, s1high, j - 64);
-    const uint64_t r2 = mix(s1high, 0, j - 64);
-    return rem10e9(r0, r1, r2, 0);
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff)) % 1000000000;
+    const uint64_t r3 = ((r2 << 32) | (s0high >> 32)) % 1000000000;
+    return (r3 >> (j - 64)) % 1000000000;
   } else if (j == 128) {
-    return rem10e9(s1low, s1high, 0, 0);
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
+    return r2 % 1000000000;
+  } else if (j < 160) {
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
+    return (r2 >> (j - 128)) % 1000000000;
+  } else if (j == 160) {
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
+    return r1 % 1000000000;
   } else if (j < 192) {
-    const uint64_t r0 = mix(s1low, s1high, j - 128);
-    const uint64_t r1 = mix(s1high, 0, j - 128);
-    return rem10e9(r0, r1, 0, 0);
+    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
+    return (r1 >> (j - 160)) % 1000000000;
   } else if (j == 192) {
-    return rem10e9(s1high, 0, 0, 0);
+    return s1high % 1000000000;
   } else if (j < 256) {
     return (s1high << (j - 192)) % 1000000000;
   }
