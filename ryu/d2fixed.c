@@ -64,9 +64,9 @@ typedef __uint128_t uint128_t;
 // and including version 8 as of this writing, according to godbolt.org).
 static inline uint128_t mod10e9(uint128_t v) {
   static uint128_t mask = (((uint128_t) 1) << 32) - 1;
-  uint128_t m0 = (v >> 64) % 1000000000;
-  uint128_t m1 = (m0 << 32 | ((v >> 32) & mask)) % 1000000000;
-  uint128_t m2 = (m1 << 32 | (v & mask)) % 1000000000;
+  uint128_t m0 = ((uint64_t) (v >> 64)) % 1000000000;
+  uint128_t m1 = ((uint64_t) (m0 << 32 | ((v >> 32) & mask))) % 1000000000;
+  uint128_t m2 = ((uint64_t) (m1 << 32 | (v & mask))) % 1000000000;
   return m2;
 }
 #else
