@@ -268,7 +268,7 @@ static int bench64_exp(const benchmark_options& options) {
     }
 
 //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
-    if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
+    if (!options.ryu_only() && !options.verbose() && strcmp(bufferown, buffer) != 0) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
   }

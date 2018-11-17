@@ -176,7 +176,7 @@ static int bench64_exp(const uint32_t samples, const uint32_t iterations, const 
     }
 
 //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
-    if (strcmp(bufferown, buffer) != 0) {
+    if ((strcmp(bufferown, buffer) != 0) && !verbose) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
   }
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
       fixed = false;
     }
   }
-  if (true) {
+  if (false) {
 //    double d = int64Bits2Double(0x426E5FDA4A181F94);
 //    double d = int64Bits2Double(0xC27EF2838AD07A1A);
     double d = int64Bits2Double(0x426C19FD2EFA7294);
