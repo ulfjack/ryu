@@ -57,23 +57,23 @@ typedef __uint128_t uint128_t;
 
 #if defined(HAS_UINT128)
 
-// Unfortunately, gcc/clang do not turn 128-bit integer division into
-// multiplications, so we loose some performance here.
-#if defined(__clang__)
-// Clang turns this into a sequence of multiplications, but gcc doesn't (up to
-// and including version 8 as of this writing, according to godbolt.org).
+// Unfortunately, gcc/clang do not automatically turn a 128-bit integer division
+// into a multiplication, so we have to do it manually.
 static inline uint128_t mod10e9(uint128_t v) {
-  static uint128_t mask = (((uint128_t) 1) << 32) - 1;
-  uint128_t m0 = ((uint64_t) (v >> 64)) % 1000000000;
-  uint128_t m1 = ((uint64_t) (m0 << 32 | ((v >> 32) & mask))) % 1000000000;
-  uint128_t m2 = ((uint64_t) (m1 << 32 | (v & mask))) % 1000000000;
+//  uint64_t m0 = (((uint64_t) (v >> 64)) % 1000000000) * 709551616;
+//  uint64_t s1 = m0 + (uint64_t) v;
+//  if (s1 < m0) {
+//    return (s1 % 1000000000 + 709551616) % 1000000000;
+//  } else {
+//    return s1 % 1000000000;
+//  }
+
+  uint64_t m0 = ((uint64_t) (v >> 64)) % 1000000000;
+  uint64_t m1 = ((uint64_t) v) % 1000000000;
+  // 2^64 % 1000000000 = 709551616
+  uint64_t m2 = (m0 * 709551616 + m1) % 1000000000;
   return m2;
 }
-#else
-static inline uint128_t mod10e9(uint128_t v) {
-  return v % 1000000000;
-}
-#endif
 
 // Best case: use 128-bit type.
 static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
