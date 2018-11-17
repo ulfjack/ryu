@@ -57,6 +57,14 @@ typedef __uint128_t uint128_t;
 
 #if defined(HAS_UINT128)
 
+static inline uint128_t mod10e9(uint128_t v) {
+  static uint128_t mask = (((uint128_t) 1) << 32) - 1;
+  uint128_t m0 = (v >> 64) % 1000000000;
+  uint128_t m1 = (m0 << 32 | ((v >> 32) & mask)) % 1000000000;
+  uint128_t m2 = (m1 << 32 | (v & mask)) % 1000000000;
+  return m2;
+}
+
 // Best case: use 128-bit type.
 static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
@@ -69,18 +77,18 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     uint64_t s0 = b1lo + (b0 >> 64); // 64
     uint128_t c1 = s0 < b1lo;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    uint128_t r0 = ((s1 % 1000000000) << 64) + s0;
-    return (uint32_t) ((r0 >> (j - 64)) % 1000000000);
+    uint128_t r0 = (mod10e9(s1) << 64) + s0;
+    return (uint32_t) mod10e9(r0 >> (j - 64));
   } else if (j == 128) {
     uint128_t s0 = b0 + (b1 << 64); // 0
     uint128_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    return (uint32_t) (s1 % 1000000000);
+    return (uint32_t) mod10e9(s1);
   } else if (j < 256) {
     uint128_t s0 = b0 + (b1 << 64); // 0
     uint128_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    return (uint32_t) ((s1 >> (j - 128)) % 1000000000);
+    return (uint32_t) mod10e9(s1 >> (j - 128));
   }
   return 0;
 }
@@ -92,7 +100,7 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
     assert(false);
   } else if (j < 192) { // 64 < j < 192
     uint128_t s = (b0 >> 64) + b1; // 64
-    return (uint32_t) ((s >> (j - 64)) % 1000000000);
+    return (uint32_t) mod10e9(s >> (j - 64));
   }
   return 0;
 }
