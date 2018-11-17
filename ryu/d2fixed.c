@@ -378,11 +378,17 @@ static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
   return (value & ((1ull << p) - 1)) == 0;
 }
 
-static inline int copy_special_str_printf(char * const result, const bool sign, const bool exponent, const bool mantissa) {
+static inline int copy_special_str_printf(char * const result, const bool sign, const bool exponent, const uint64_t mantissa) {
   if (sign) {
     result[0] = '-';
   }
   if (mantissa) {
+#if defined(_MSC_VER)
+    if (mantissa < (1ull << (DOUBLE_MANTISSA_BITS - 1))) {
+      memcpy(result + sign, "nan(snan)", 9);
+      return sign + 9;
+    }
+#endif
     memcpy(result + sign, "nan", 3);
     return sign + 3;
   }
