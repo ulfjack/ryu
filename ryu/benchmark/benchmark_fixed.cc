@@ -310,9 +310,9 @@ int main(int argc, char** argv) {
   }
 
   if (options.verbose()) {
-    printf("%sryu_time_in_ns%s\n", options.classic() ? "ryu_output,float_bits_as_int," : "", options.ryu_only() ? "" : ",grisu3_time_in_ns");
+    printf("%sryu_time_in_ns%s\n", options.classic() ? "ryu_output,float_bits_as_int," : "", options.ryu_only() ? "" : ",snprintf_time_in_ns");
   } else {
-    printf("    Average & Stddev Ryu%s\n", options.ryu_only() ? "" : "  Average & Stddev Grisu3");
+    printf("    Average & Stddev Ryu%s\n", options.ryu_only() ? "" : "  Average & Stddev snprintf");
   }
   int throwaway = 0;
   if (options.run64()) {
