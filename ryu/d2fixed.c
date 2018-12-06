@@ -323,7 +323,7 @@ static inline void append_c_digits(uint32_t count, uint32_t digits, char* const 
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
-  int i = 0;
+  uint32_t i = 0;
   for (; i < count - 1; i += 2) {
     const uint32_t c = (digits % 100) << 1;
     digits /= 100;
@@ -508,10 +508,10 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
 #ifdef RYU_DEBUG
     printf("idx=%d\n", idx);
 #endif
-    int32_t blocks = precision / 9 + 1;
+    uint32_t blocks = precision / 9 + 1;
     // 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
     int roundUp = 0;
-    int32_t i = 0;
+    uint32_t i = 0;
     if (i < MIN_BLOCK_2[idx]) {
       i = blocks - 1 < MIN_BLOCK_2[idx] ? blocks - 1 : MIN_BLOCK_2[idx];
       memset(result + index, '0', 9 * i);
@@ -519,7 +519,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     }
     for (; i < blocks; i++) {
       int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      int32_t p = POW10_OFFSET_2[idx] + i;
+      uint32_t p = POW10_OFFSET_2[idx] + i;
       if (p >= POW10_OFFSET_2[idx + 1]) {
         // If the remaining digits are all 0, then we might as well use memset.
         // No rounding required in this case.
@@ -706,7 +706,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
     for (int32_t i = MIN_BLOCK_2[idx]; i < 200; i++) {
       int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      int32_t p = POW10_OFFSET_2[idx] + i;
+      uint32_t p = POW10_OFFSET_2[idx] + i;
       digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift2(m2, POW10_SPLIT_2[p], j);
 #ifdef RYU_DEBUG
       printf("digits=%d\n", e2);
@@ -734,7 +734,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     }
   }
 
-  int32_t max = precision - printedDigits;
+  uint32_t max = precision - printedDigits;
 #ifdef RYU_DEBUG
   printf("availableDigits=%d\n", availableDigits);
   printf("digits=%d\n", digits);
@@ -745,7 +745,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   }
   int32_t lastDigit = 0;
   if (availableDigits > max) {
-    for (int32_t k = 0; k < availableDigits - max; k++) {
+    for (uint32_t k = 0; k < availableDigits - max; k++) {
       lastDigit = digits % 10;
       digits /= 10;
     }
