@@ -35,5 +35,5 @@ static double ieeeParts2Double(const bool sign, const uint32_t ieeeExponent, con
 TEST(D2fixedTest, Basic) {
   ASSERT_STREQ(
     "3291009114715486435425664845573426149758869524108446525879746560",
-    d2fixed(ieeeParts2Double(false, 1234, 99999)));
+    d2fixed(ieeeParts2Double(false, 1234, 99999), 0));
 }
