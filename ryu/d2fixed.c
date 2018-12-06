@@ -39,8 +39,7 @@
 #if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS)
 #define HAS_UINT128
 typedef __uint128_t uint128_t;
-#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64) \
-  && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
+#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64)
 #define HAS_64_BIT_INTRINSICS
 #endif
 
