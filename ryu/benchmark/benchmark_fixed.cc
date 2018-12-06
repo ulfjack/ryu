@@ -182,7 +182,7 @@ static int bench64_fixed(const benchmark_options& options) {
 //    printf("%f\n", f);
     auto t1 = steady_clock::now();
     for (int j = 0; j < options.iterations(); ++j) {
-      d2fixed_buffered(f, precision, bufferown);
+      d2fixed_buffered(f, static_cast<uint32_t>(precision), bufferown);
       throwaway += bufferown[2];
     }
     auto t2 = steady_clock::now();
@@ -240,7 +240,7 @@ static int bench64_exp(const benchmark_options& options) {
 //    printf("%f\n", f);
     auto t1 = steady_clock::now();
     for (int j = 0; j < options.iterations(); ++j) {
-      d2exp_buffered(f, precision, bufferown);
+      d2exp_buffered(f, static_cast<uint32_t>(precision), bufferown);
       throwaway += bufferown[2];
     }
     auto t2 = steady_clock::now();
