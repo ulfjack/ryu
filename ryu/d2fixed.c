@@ -135,6 +135,9 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint64_t c2 = s1low < high1;
   const uint64_t s1high = high2 + c2;       // 192
   if (j < 128) {
+#ifdef RYU_DEBUG
+    printf("%d\n", j);
+#endif
     assert(false);
   } else if (j == 128) {
     const uint64_t r0 = s1high % 1000000000;
@@ -176,7 +179,9 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
   const uint64_t c2 = s1low < high1;
   const uint64_t s1high = high2 + c2;       // 192
   if (j < 64) {
+#ifdef RYU_DEBUG
     printf("%d\n", j);
+#endif
     assert(false);
   } else if (j < 96) {
     const uint64_t r0 = s1high % 1000000000;
