@@ -129,6 +129,7 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   uint64_t high2;                                   // 192
   const uint64_t low2 = umul128(m, mul[2], &high2); // 128
   const uint64_t s0low = low0;              // 0
+  (void) s0low; // unused
   const uint64_t s0high = high0 + low1;     // 64
   const uint64_t c1 = s0high < high0;
   const uint64_t s1low = high1 + low2 + c1; // 128
@@ -173,6 +174,7 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
   const uint64_t high2 = 0;                         // 192
   const uint64_t low2 = 0;                          // 128
   const uint64_t s0low = low0;              // 0
+  (void) s0low; // unused
   const uint64_t s0high = high0 + low1;     // 64
   const uint64_t c1 = s0high < high0;
   const uint64_t s1low = high1 + low2 + c1; // 128
