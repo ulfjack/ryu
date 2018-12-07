@@ -135,26 +135,15 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     printf("%d\n", j);
 #endif
     assert(false);
-  } else if (j == 128) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
-    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return mod1e9(r2);
   } else if (j < 160) {
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
     return mod1e9(r2 >> (j - 128));
-  } else if (j == 160) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return mod1e9(r1);
   } else if (j < 192) {
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
     return mod1e9(r1 >> (j - 160));
-  } else if (j == 192) {
-    return mod1e9(s1high);
   } else if (j < 256) {
     return mod1e9(s1high << (j - 192));
   }
@@ -187,38 +176,21 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
     const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
     const uint64_t r4 = ((r3 << 32) | (s0high & 0xffffffff));
     return mod1e9(r4 >> (j - 64));
-  } else if (j == 96) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
-    const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
-    const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
-    return mod1e9(r3);
   } else if (j < 128) {
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
     const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
     return mod1e9(r3 >> (j - 96));
-  } else if (j == 128) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
-    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return mod1e9(r2);
   } else if (j < 160) {
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
     return mod1e9(r2 >> (j - 128));
-  } else if (j == 160) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return mod1e9(r1);
   } else if (j < 192) {
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
     return mod1e9(r1 >> (j - 160));
-  } else if (j == 192) {
-    return mod1e9(s1high);
   } else if (j < 256) {
     return mod1e9(s1high << (j - 192));
   }
