@@ -46,6 +46,7 @@ typedef __uint128_t uint128_t;
 #include "ryu/common.h"
 #include "ryu/digit_table.h"
 #include "ryu/d2fixed_full_table.h"
+#include "ryu/d2s_intrinsics.h"
 
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
@@ -113,13 +114,7 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
   return 0;
 }
 
-#elif defined(HAS_64_BIT_INTRINSICS)
-
-#include <intrin.h>
-
-static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* const productHi) {
-  return _umul128(a, b, productHi);
-}
+#else // HAS_UINT128
 
 static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   uint64_t high0;                                   // 64
@@ -230,11 +225,7 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
   return 0;
 }
 
-#else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
-
-#error "Not implemented"
-
-#endif // HAS_64_BIT_INTRINSICS
+#endif // HAS_UINT128
 
 static inline uint32_t decimalLength(const uint32_t v) {
   assert(v < 1000000000L);
