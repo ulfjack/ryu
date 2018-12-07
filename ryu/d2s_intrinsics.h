@@ -133,6 +133,23 @@ static inline uint64_t div1e8(const uint64_t x) {
   return umulh(x, 0xABCC77118461CEFDu) >> 26;
 }
 
+static inline uint64_t div1e9(const uint64_t x) {
+  return umulh(x >> 9, 0x44B82FA09B5A53u) >> 11;
+}
+
+static inline uint32_t mod1e9(const uint64_t x) {
+  // Avoid 64-bit math as much as possible.
+  // Returning (uint32_t) (x - 1000000000 * div1e9(x)) would
+  // perform 32x64-bit multiplication and 64-bit subtraction.
+  // x and 1000000000 * div1e9(x) are guaranteed to differ by
+  // less than 10^9, so their highest 32 bits must be identical,
+  // so we can truncate both sides to uint32_t before subtracting.
+  // We can also simplify (uint32_t) (1000000000 * div1e9(x)).
+  // We can truncate before multiplying instead of after, as multiplying
+  // the highest 32 bits of div1e9(x) can't affect the lowest 32 bits.
+  return ((uint32_t) x) - 1000000000 * ((uint32_t) div1e9(x));
+}
+
 #else // RYU_32_BIT_PLATFORM
 
 static inline uint64_t div5(const uint64_t x) {
@@ -149,6 +166,14 @@ static inline uint64_t div100(const uint64_t x) {
 
 static inline uint64_t div1e8(const uint64_t x) {
   return x / 100000000;
+}
+
+static inline uint64_t div1e9(const uint64_t x) {
+  return x / 1000000000;
+}
+
+static inline uint32_t mod1e9(const uint64_t x) {
+  return (uint32_t) (x - 1000000000 * div1e9(x));
 }
 
 #endif // RYU_32_BIT_PLATFORM
