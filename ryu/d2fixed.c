@@ -53,7 +53,6 @@ typedef __uint128_t uint128_t;
 #define DOUBLE_BIAS 1023
 
 #define POW10_ADDITIONAL_BITS 120
-#define BITS (POW10_ADDITIONAL_BITS + 16)
 
 #if defined(HAS_UINT128)
 
