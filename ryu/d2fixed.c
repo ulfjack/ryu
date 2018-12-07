@@ -58,7 +58,7 @@ typedef __uint128_t uint128_t;
 
 // Unfortunately, gcc/clang do not automatically turn a 128-bit integer division
 // into a multiplication, so we have to do it manually.
-static inline uint128_t mod10e9(uint128_t v) {
+static inline uint128_t uint128_mod1e9(uint128_t v) {
 //  uint64_t m0 = (((uint64_t) (v >> 64)) % 1000000000) * 709551616;
 //  uint64_t s1 = m0 + (uint64_t) v;
 //  if (s1 < m0) {
@@ -86,18 +86,18 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     uint64_t s0 = b1lo + (b0 >> 64); // 64
     uint128_t c1 = s0 < b1lo;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    uint128_t r0 = (mod10e9(s1) << 64) + s0;
-    return (uint32_t) mod10e9(r0 >> (j - 64));
+    uint128_t r0 = (uint128_mod1e9(s1) << 64) + s0;
+    return (uint32_t) uint128_mod1e9(r0 >> (j - 64));
   } else if (j == 128) {
     uint128_t s0 = b0 + (b1 << 64); // 0
     uint128_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    return (uint32_t) mod10e9(s1);
+    return (uint32_t) uint128_mod1e9(s1);
   } else if (j < 256) {
     uint128_t s0 = b0 + (b1 << 64); // 0
     uint128_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    return (uint32_t) mod10e9(s1 >> (j - 128));
+    return (uint32_t) uint128_mod1e9(s1 >> (j - 128));
   }
   return 0;
 }
@@ -109,7 +109,7 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
     assert(false);
   } else if (j < 192) { // 64 < j < 192
     uint128_t s = (b0 >> 64) + b1; // 64
-    return (uint32_t) mod10e9(s >> (j - 64));
+    return (uint32_t) uint128_mod1e9(s >> (j - 64));
   }
   return 0;
 }
@@ -136,27 +136,27 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
 #endif
     assert(false);
   } else if (j == 128) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return r2 % 1000000000;
+    return mod1e9(r2);
   } else if (j < 160) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return (r2 >> (j - 128)) % 1000000000;
+    return mod1e9(r2 >> (j - 128));
   } else if (j == 160) {
-    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return r1 % 1000000000;
+    return mod1e9(r1);
   } else if (j < 192) {
-    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return (r1 >> (j - 160)) % 1000000000;
+    return mod1e9(r1 >> (j - 160));
   } else if (j == 192) {
-    return s1high % 1000000000;
+    return mod1e9(s1high);
   } else if (j < 256) {
-    return (s1high << (j - 192)) % 1000000000;
+    return mod1e9(s1high << (j - 192));
   }
   return 0;
 }
@@ -181,46 +181,46 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
 #endif
     assert(false);
   } else if (j < 96) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
-    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff)) % 1000000000;
-    const uint64_t r3 = ((r2 << 32) | (s0high >> 32)) % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
+    const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
+    const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
     const uint64_t r4 = ((r3 << 32) | (s0high & 0xffffffff));
-    return (r4 >> (j - 64)) % 1000000000;
+    return mod1e9(r4 >> (j - 64));
   } else if (j == 96) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
-    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff)) % 1000000000;
-    const uint64_t r3 = ((r2 << 32) | (s0high >> 32)) % 1000000000;
-    return r3 % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
+    const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
+    const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
+    return mod1e9(r3);
   } else if (j < 128) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
-    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff)) % 1000000000;
-    const uint64_t r3 = ((r2 << 32) | (s0high >> 32)) % 1000000000;
-    return (r3 >> (j - 64)) % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
+    const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
+    const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
+    return mod1e9(r3 >> (j - 64));
   } else if (j == 128) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return r2 % 1000000000;
+    return mod1e9(r2);
   } else if (j < 160) {
-    const uint64_t r0 = s1high % 1000000000;
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32)) % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
+    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return (r2 >> (j - 128)) % 1000000000;
+    return mod1e9(r2 >> (j - 128));
   } else if (j == 160) {
-    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return r1 % 1000000000;
+    return mod1e9(r1);
   } else if (j < 192) {
-    const uint64_t r0 = s1high % 1000000000;
+    const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return (r1 >> (j - 160)) % 1000000000;
+    return mod1e9(r1 >> (j - 160));
   } else if (j == 192) {
-    return s1high % 1000000000;
+    return mod1e9(s1high);
   } else if (j < 256) {
-    return (s1high << (j - 192)) % 1000000000;
+    return mod1e9(s1high << (j - 192));
   }
   return 0;
 }
@@ -369,7 +369,7 @@ static inline uint32_t pow5Factor(uint64_t value) {
   uint32_t count = 0;
   for (;;) {
     assert(value != 0);
-    const uint64_t q = value / 5;
+    const uint64_t q = div5(value);
     const uint32_t r = (uint32_t) (value - 5 * q);
     if (r != 0) {
       break;
