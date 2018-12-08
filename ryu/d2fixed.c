@@ -353,9 +353,8 @@ static uint32_t pow10BitsForIndex(uint32_t idx) {
 }
 
 static uint32_t lengthForIndex(uint32_t idx) {
-  // [log_10(2^i)] = ((16 * i) * 78913L) >> 18 <-- floor
   // +1 for ceil, +16 for mantissa, +8 to round up when dividing by 9
-  return ((uint32_t) (((16 * idx) * 1292913986ull) >> 32) + 1 + 16 + 8) / 9;
+  return (log10Pow2(16 * (int32_t) idx) + 1 + 16 + 8) / 9;
 }
 
 static inline uint32_t pow5Factor(uint64_t value) {
