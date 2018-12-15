@@ -563,10 +563,21 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
 #endif
     if (roundUp != 0) {
       int roundIndex = index;
+      int dotIndex = 0; // '.' can't be located at index 0
       while (true) {
         roundIndex--;
-        char c = result[roundIndex];
+        char c;
+        if (roundIndex == -1 || (c = result[roundIndex], c == '-')) {
+          result[roundIndex + 1] = '1';
+          if (dotIndex > 0) {
+            result[dotIndex] = '0';
+            result[dotIndex + 1] = '.';
+          }
+          result[index++] = '0';
+          break;
+        }
         if (c == '.') {
+          dotIndex = roundIndex;
           continue;
         } else if (c == '9') {
           result[roundIndex] = '0';
@@ -791,8 +802,8 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     int roundIndex = index;
     while (true) {
       roundIndex--;
-      char c = result[roundIndex];
-      if (roundIndex == -1 || c == '-') {
+      char c;
+      if (roundIndex == -1 || (c = result[roundIndex], c == '-')) {
         result[roundIndex + 1] = '1';
         exp++;
         break;
