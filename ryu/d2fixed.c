@@ -620,6 +620,8 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     result[index++] = '.';
     memset(result + index, '0', precision);
     index += precision;
+    memcpy(result + index, "e+00", 4);
+    index += 4;
     return index;
   }
 
