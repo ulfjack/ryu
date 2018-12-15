@@ -432,9 +432,11 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       result[index++] = '-';
     }
     result[index++] = '0';
-    result[index++] = '.';
-    memset(result + index, '0', precision);
-    index += precision;
+    if (precision > 0) {
+      result[index++] = '.';
+      memset(result + index, '0', precision);
+      index += precision;
+    }
     return index;
   }
 
@@ -617,9 +619,11 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       result[index++] = '-';
     }
     result[index++] = '0';
-    result[index++] = '.';
-    memset(result + index, '0', precision);
-    index += precision;
+    if (precision > 0) {
+      result[index++] = '.';
+      memset(result + index, '0', precision);
+      index += precision;
+    }
     memcpy(result + index, "e+00", 4);
     index += 4;
     return index;
