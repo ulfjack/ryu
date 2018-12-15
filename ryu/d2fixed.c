@@ -268,10 +268,15 @@ static inline uint32_t append_n_digits(uint32_t digits, char* const result) {
   return olength;
 }
 
-static inline void append_d_digits(uint32_t olength, uint32_t digits, char* const result) {
+static inline uint32_t append_d_digits(uint32_t olength, uint32_t digits, char* const result, const bool printDecimalPoint) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
+
+  if (!printDecimalPoint) {
+    result[0] = (char) ('0' + digits);
+    return 1;
+  }
 
   uint32_t i = 0;
   while (digits >= 10000) {
@@ -301,6 +306,7 @@ static inline void append_d_digits(uint32_t olength, uint32_t digits, char* cons
     result[1] = '.';
     result[0] = (char) ('0' + digits);
   }
+  return olength + 1;
 }
 
 static inline void append_c_digits(uint32_t count, uint32_t digits, char* const result) {
@@ -484,7 +490,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   if (!nonzero) {
     result[index++] = '0';
   }
-  result[index++] = '.';
+  if (precision > 0) {
+    result[index++] = '.';
+  }
 #ifdef RYU_DEBUG
   printf("e2=%d\n", e2);
 #endif
@@ -643,6 +651,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   printf("-> %" PRIu64 " * 2^%d\n", m2, e2);
 #endif
 
+  const bool printDecimalPoint = precision > 0;
   precision++;
   int index = 0;
   if (ieeeSign) {
@@ -679,8 +688,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         if (printedDigits + availableDigits > precision) {
           break;
         }
-        append_d_digits(availableDigits, digits, result + index);
-        index += availableDigits + 1;
+        index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
         printedDigits += availableDigits;
         availableDigits = 0;
       }
@@ -715,8 +723,8 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         if (printedDigits + availableDigits > precision) {
           break;
         }
-        append_d_digits(availableDigits, digits, result + index);
-        index += availableDigits + 1;
+        // TODO: This callsite might not need printDecimalPoint logic.
+        index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
         printedDigits += availableDigits;
         availableDigits = 0;
       }
@@ -774,8 +782,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     }
     index += max;
   } else {
-    append_d_digits(max, digits, result + index);
-    index += max + 1;
+    index += append_d_digits(max, digits, result + index, printDecimalPoint);
   }
 #ifdef RYU_DEBUG
   printf("roundUp=%d\n", roundUp);
