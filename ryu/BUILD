@@ -19,6 +19,7 @@ cc_library(
   srcs = [
     "d2fixed.c",
 #    "d2fixed.h",
+    "d2s_intrinsics.h",
     "d2fixed_full_table.h",
     "digit_table.h",
     "common.h",
