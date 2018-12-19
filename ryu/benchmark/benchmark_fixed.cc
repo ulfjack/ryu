@@ -215,7 +215,7 @@ static int bench64_fixed(const benchmark_options& options) {
     }
   }
   if (!options.verbose()) {
-    printf("64: %8.3f %8.3f", mv1.mean, mv1.stddev());
+    printf("%%f: %8.3f %8.3f", mv1.mean, mv1.stddev());
     if (!options.ryu_only()) {
       printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
     }
@@ -273,7 +273,7 @@ static int bench64_exp(const benchmark_options& options) {
     }
   }
   if (!options.verbose()) {
-    printf("64: %8.3f %8.3f", mv1.mean, mv1.stddev());
+    printf("%%e: %8.3f %8.3f", mv1.mean, mv1.stddev());
     if (!options.ryu_only()) {
       printf("     %8.3f %8.3f", mv2.mean, mv2.stddev());
     }
