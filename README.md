@@ -27,6 +27,8 @@ https://docs.rs/ryu/0.1.1/ryu/
 
 Julia version: https://github.com/quinnj/Ryu.jl
 
+Factor version: https://github.com/AlexIljin/ryu
+
 ## Building, Testing, Running
 
 We use the Bazel build system (https://bazel.build). We recommend using the
