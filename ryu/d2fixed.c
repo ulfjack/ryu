@@ -145,7 +145,7 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
     return mod1e9(r1 >> (j - 160));
   } else if (j < 256) {
-    return mod1e9(s1high << (j - 192));
+    return mod1e9(s1high >> (j - 192));
   }
   return 0;
 }
@@ -192,7 +192,7 @@ static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, co
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
     return mod1e9(r1 >> (j - 160));
   } else if (j < 256) {
-    return mod1e9(s1high << (j - 192));
+    return mod1e9(s1high >> (j - 192));
   }
   return 0;
 }
