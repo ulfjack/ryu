@@ -79,27 +79,24 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
   const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
   const uint128_t b2 = ((uint128_t) m) * mul[2]; // 128
-  if (j <= 64) {
-    assert(false);
-  } else if (j < 128) {
-    uint64_t b1lo = (uint64_t) b1;
-    uint64_t s0 = b1lo + (b0 >> 64); // 64
-    uint32_t c1 = s0 < b1lo;
-    uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
-    uint128_t r0 = (uint128_mod1e9(s1) << 64) + s0;
-    return (uint32_t) uint128_mod1e9(r0 >> (j - 64));
-  } else if (j == 128) {
+#ifdef RYU_DEBUG
+  if (j < 128 || j > 180) {
+    printf("%d\n", j);
+  }
+#endif
+  assert(j >= 128);
+  assert(j <= 180);
+  if (j == 128) { // j: 128
     uint128_t s0 = b0 + (b1 << 64); // 0
     uint32_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     return (uint32_t) uint128_mod1e9(s1);
-  } else if (j < 256) {
+  } else { // j: [129, 256)
     uint128_t s0 = b0 + (b1 << 64); // 0
     uint32_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     return (uint32_t) uint128_mod1e9(s1 >> (j - 128));
   }
-  return 0;
 }
 
 #else // HAS_UINT128
@@ -122,24 +119,23 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   // This is possible for general multiplications,
   // but it should be impossible given how mulShift() is called.
   assert(low2 != 0xFFFFFFFFFFFFFFFFu || c1 != 1);
-  if (j < 128) {
 #ifdef RYU_DEBUG
+  if (j < 128 || j > 180) {
     printf("%d\n", j);
+  }
 #endif
-    assert(false);
-  } else if (j < 160) {
+  assert(j >= 128);
+  assert(j <= 180);
+  if (j < 160) { // j: [128, 160)
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
     const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
     return mod1e9(r2 >> (j - 128));
-  } else if (j < 192) {
+  } else { // j: [160, 192)
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
     return mod1e9(r1 >> (j - 160));
-  } else if (j < 256) {
-    return mod1e9(s1high >> (j - 192));
   }
-  return 0;
 }
 
 #endif // HAS_UINT128
