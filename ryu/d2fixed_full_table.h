@@ -17,6 +17,8 @@
 #ifndef RYU_D2FIXED_FULL_TABLE_H
 #define RYU_D2FIXED_FULL_TABLE_H
 
+#include <stdint.h>
+
 #define TABLE_SIZE 64
 
 static uint32_t POW10_OFFSET[TABLE_SIZE] = {
