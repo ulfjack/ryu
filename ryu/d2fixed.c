@@ -20,6 +20,8 @@
 //
 // -DRYU_ONLY_64_BIT_OPS Avoid using uint128_t or 64-bit intrinsics. Slower,
 //     depending on your compiler.
+//
+// -DRYU_AVOID_UINT128 Avoid using uint128_t. Slower, depending on your compiler.
 
 #include "ryu/ryu2.h"
 
@@ -34,12 +36,10 @@
 #include <stdio.h>
 #endif
 
-// ABSL avoids uint128_t on Win32 even if __SIZEOF_INT128__ is defined.
-// Let's do the same for now.
-#if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS)
+#if !defined(RYU_ONLY_64_BIT_OPS) && !defined(RYU_AVOID_UINT128) && defined(__SIZEOF_INT128__)
 #define HAS_UINT128
 typedef __uint128_t uint128_t;
-#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64)
+#elif !defined(RYU_ONLY_64_BIT_OPS) && defined(_MSC_VER) && defined(_M_X64)
 #define HAS_64_BIT_INTRINSICS
 #endif
 
