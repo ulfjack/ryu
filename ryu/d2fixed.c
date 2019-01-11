@@ -84,18 +84,18 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   } else if (j < 128) {
     uint64_t b1lo = (uint64_t) b1;
     uint64_t s0 = b1lo + (b0 >> 64); // 64
-    uint128_t c1 = s0 < b1lo;
+    uint32_t c1 = s0 < b1lo;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     uint128_t r0 = (uint128_mod1e9(s1) << 64) + s0;
     return (uint32_t) uint128_mod1e9(r0 >> (j - 64));
   } else if (j == 128) {
     uint128_t s0 = b0 + (b1 << 64); // 0
-    uint128_t c1 = s0 < b0;
+    uint32_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     return (uint32_t) uint128_mod1e9(s1);
   } else if (j < 256) {
     uint128_t s0 = b0 + (b1 << 64); // 0
-    uint128_t c1 = s0 < b0;
+    uint32_t c1 = s0 < b0;
     uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
     return (uint32_t) uint128_mod1e9(s1 >> (j - 128));
   }
@@ -114,9 +114,9 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint64_t s0low = low0;              // 0
   (void) s0low; // unused
   const uint64_t s0high = high0 + low1;     // 64
-  const uint64_t c1 = s0high < high0;
+  const uint32_t c1 = s0high < high0;
   const uint64_t s1low = high1 + low2 + c1; // 128
-  const uint64_t c2 = s1low < high1;
+  const uint32_t c2 = s1low < high1;
   const uint64_t s1high = high2 + c2;       // 192
   // If this assertion fails, c2 has been calculated incorrectly.
   // This is possible for general multiplications,
