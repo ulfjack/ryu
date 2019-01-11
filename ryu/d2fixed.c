@@ -385,7 +385,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   if (ieeeSign) {
     result[index++] = '-';
   }
-  if (e2 >= -53) {
+  if (e2 >= -52) {
     int32_t idx = e2 < 0 ? 0 : indexForExponent(e2);
     int32_t p10bits = pow10BitsForIndex(idx);
     int32_t len = lengthForIndex(idx);
