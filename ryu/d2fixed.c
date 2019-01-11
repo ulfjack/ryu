@@ -395,7 +395,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
 #endif
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
-      // Temporary: j is usually around 128, and by shifting a bit, we push it above 128, which is
+      // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
       uint32_t digits = mulShift(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
       if (nonzero) {
@@ -441,6 +441,8 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         index += fill;
         break;
       }
+      // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
+      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
       uint32_t digits = mulShift(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("digits=%u\n", digits);
@@ -602,7 +604,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
-      // Temporary: j is usually around 128, and by shifting a bit, we push it above 128, which is
+      // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
       digits = mulShift(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
       if (printedDigits != 0) {
@@ -634,6 +636,8 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     for (int32_t i = MIN_BLOCK_2[idx]; i < 200; i++) {
       int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
       uint32_t p = POW10_OFFSET_2[idx] + i;
+      // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
+      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
       digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("exact=%" PRIu64 " * (%" PRIu64 " + %" PRIu64 " << 64) >> %d\n", m2, POW10_SPLIT_2[p][0], POW10_SPLIT_2[p][1], j);
