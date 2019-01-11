@@ -102,18 +102,6 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   return 0;
 }
 
-static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, const int32_t j) {
-  const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
-  const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
-  if (j <= 64) {
-    assert(false);
-  } else if (j < 192) { // 64 < j < 192
-    uint128_t s = (b0 >> 64) + b1; // 64
-    return (uint32_t) uint128_mod1e9(s >> (j - 64));
-  }
-  return 0;
-}
-
 #else // HAS_UINT128
 
 static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
@@ -135,53 +123,6 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     printf("%d\n", j);
 #endif
     assert(false);
-  } else if (j < 160) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
-    const uint64_t r2 = ((r1 << 32) | (s1low & 0xffffffff));
-    return mod1e9(r2 >> (j - 128));
-  } else if (j < 192) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
-    return mod1e9(r1 >> (j - 160));
-  } else if (j < 256) {
-    return mod1e9(s1high >> (j - 192));
-  }
-  return 0;
-}
-
-static inline uint32_t mulShift2(const uint64_t m, const uint64_t* const mul, const int32_t j) {
-  uint64_t high0;                                   // 64
-  const uint64_t low0 = umul128(m, mul[0], &high0); // 0
-  uint64_t high1;                                   // 128
-  const uint64_t low1 = umul128(m, mul[1], &high1); // 64
-  const uint64_t high2 = 0;                         // 192
-  const uint64_t low2 = 0;                          // 128
-  const uint64_t s0low = low0;              // 0
-  (void) s0low; // unused
-  const uint64_t s0high = high0 + low1;     // 64
-  const uint64_t c1 = s0high < high0;
-  const uint64_t s1low = high1 + low2 + c1; // 128
-  const uint64_t c2 = s1low < high1;
-  const uint64_t s1high = high2 + c2;       // 192
-  if (j < 64) {
-#ifdef RYU_DEBUG
-    printf("%d\n", j);
-#endif
-    assert(false);
-  } else if (j < 96) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
-    const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
-    const uint64_t r3 = mod1e9((r2 << 32) | (s0high >> 32));
-    const uint64_t r4 = ((r3 << 32) | (s0high & 0xffffffff));
-    return mod1e9(r4 >> (j - 64));
-  } else if (j < 128) {
-    const uint64_t r0 = mod1e9(s1high);
-    const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
-    const uint64_t r2 = mod1e9((r1 << 32) | (s1low & 0xffffffff));
-    const uint64_t r3 = ((r2 << 32) | (s0high >> 32));
-    return mod1e9(r3 >> (j - 96));
   } else if (j < 160) {
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
