@@ -19,15 +19,15 @@ My PLDI'18 paper includes a complete correctness proof of the algorithm:
 https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
 CC-BY-SA license.
 
-Andriy Plokhotnyuk developed a scala implementation that is available here:
-https://github.com/plokhotnyuk/jsoniter-scala
+Other implementations:
 
-Mara Bos provides a Rust wrapper of the C code here:
-https://docs.rs/ryu/0.1.1/ryu/
-
-Julia version: https://github.com/quinnj/Ryu.jl
-
-Factor version: https://github.com/AlexIljin/ryu
+| Language         | Author             | Link                                          |
+|------------------|--------------------|-----------------------------------------------|
+| Scala            | Andriy Plokhotnyuk | https://github.com/plokhotnyuk/jsoniter-scala |
+| Rust (C wrapper) | Mara Bos           | https://docs.rs/ryu/0.1.1/ryu/                |
+| Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
+| Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
+| Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 
 ## Building, Testing, Running
 
