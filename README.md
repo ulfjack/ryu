@@ -8,6 +8,11 @@ The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
 C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
 point numbers.
 
+*Note*: The Java implementation follows the Java specification for
+Double.toString [1], which requires outputting at least two digits. Other
+specifications, such as for JavaScript, require the shortest output. We may
+change the Java implementation in the future to support both.
+
 There is an experimental C low-level API and 128-bit implementation in ryu/.
 These are still subject to change.
 
@@ -19,13 +24,17 @@ My PLDI'18 paper includes a complete correctness proof of the algorithm:
 https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
 CC-BY-SA license.
 
-Andriy Plokhotnyuk developed a scala implementation that is available here:
-https://github.com/plokhotnyuk/jsoniter-scala
+Other implementations:
 
-Mara Bos provides a Rust wrapper of the C code here:
-https://docs.rs/ryu/0.1.1/ryu/
+| Language         | Author             | Link                                          |
+|------------------|--------------------|-----------------------------------------------|
+| Scala            | Andriy Plokhotnyuk | https://github.com/plokhotnyuk/jsoniter-scala |
+| Rust             | David Tolnay       | https://github.com/dtolnay/ryu                |
+| Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
+| Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
+| Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 
-Julia version: https://github.com/quinnj/Ryu.jl
+[1] https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
 
 ## Building, Testing, Running
 

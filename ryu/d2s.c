@@ -44,8 +44,7 @@
 // Let's do the same for now.
 #if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS)
 #define HAS_UINT128
-#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64) \
-  && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
+#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64)
 #define HAS_64_BIT_INTRINSICS
 #endif
 
@@ -103,10 +102,10 @@ static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
 //    We explicitly cast from 64-bit to 128-bit, so the compiler can tell
 //    that these are only 64-bit inputs, and can map these to the best
 //    possible sequence of assembly instructions.
-//    x86-64 machines happen to have matching assembly instructions for
+//    x64 machines happen to have matching assembly instructions for
 //    64x64-bit multiplications and 128-bit shifts.
 //
-// 2. Second best case: the compiler exposes intrinsics for the x86-64 assembly
+// 2. Second best case: the compiler exposes intrinsics for the x64 assembly
 //    instructions mentioned in 1.
 //
 // 3. We only have 64x64 bit instructions that return the lower 64 bits of
@@ -127,8 +126,8 @@ static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, con
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
 
-static inline uint64_t mulShiftAll(
-    const uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
+static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
+  uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
 //  m <<= 2;
 //  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
 //  uint128_t b2 = ((uint128_t) m) * mul[1]; // 64
@@ -161,8 +160,8 @@ static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, con
   return shiftright128(sum, high1, j - 64);
 }
 
-static inline uint64_t mulShiftAll(
-    const uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
+static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
+  uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   *vp = mulShift(4 * m + 2, mul, j);
   *vm = mulShift(4 * m - 1 - mmShift, mul, j);
   return mulShift(4 * m, mul, j);
@@ -170,8 +169,8 @@ static inline uint64_t mulShiftAll(
 
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
-static inline uint64_t mulShiftAll(
-    uint64_t m, const uint64_t* const mul, const int32_t j, uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
+static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const int32_t j,
+  uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   m <<= 1;
   // m is maximum 55 bits
   uint64_t tmp;
@@ -183,13 +182,13 @@ static inline uint64_t mulShiftAll(
   const uint64_t lo2 = lo + mul[0];
   const uint64_t mid2 = mid + mul[1] + (lo2 < lo);
   const uint64_t hi2 = hi + (mid2 < mid);
-  *vp = shiftright128(mid2, hi2, j - 64 - 1);
+  *vp = shiftright128(mid2, hi2, (uint32_t) (j - 64 - 1));
 
   if (mmShift == 1) {
     const uint64_t lo3 = lo - mul[0];
     const uint64_t mid3 = mid - mul[1] - (lo3 > lo);
     const uint64_t hi3 = hi - (mid3 > mid);
-    *vm = shiftright128(mid3, hi3, j - 64 - 1);
+    *vm = shiftright128(mid3, hi3, (uint32_t) (j - 64 - 1));
   } else {
     const uint64_t lo3 = lo + lo;
     const uint64_t mid3 = mid + mid + (lo3 < lo);
@@ -197,10 +196,10 @@ static inline uint64_t mulShiftAll(
     const uint64_t lo4 = lo3 - mul[0];
     const uint64_t mid4 = mid3 - mul[1] - (lo4 > lo3);
     const uint64_t hi4 = hi3 - (mid4 > mid3);
-    *vm = shiftright128(mid4, hi4, j - 64);
+    *vm = shiftright128(mid4, hi4, (uint32_t) (j - 64));
   }
 
-  return shiftright128(mid, hi, j - 64 - 1);
+  return shiftright128(mid, hi, (uint32_t) (j - 64 - 1));
 }
 
 #endif // HAS_64_BIT_INTRINSICS
@@ -241,16 +240,14 @@ typedef struct floating_decimal_64 {
 } floating_decimal_64;
 
 static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
-  const uint32_t bias = (1u << (DOUBLE_EXPONENT_BITS - 1)) - 1;
-
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - bias - DOUBLE_MANTISSA_BITS - 2;
+    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - bias - DOUBLE_MANTISSA_BITS - 2;
+    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
     m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
@@ -260,7 +257,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   printf("-> %" PRIu64 " * 2^%d\n", m2, e2 + 2);
 #endif
 
-  // Step 2: Determine the interval of legal decimal representations.
+  // Step 2: Determine the interval of valid decimal representations.
   const uint64_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
   const uint32_t mmShift = ieeeMantissa != 0 || ieeeExponent <= 1;
@@ -277,9 +274,9 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     // I tried special-casing q == 0, but there was no effect on performance.
     // This expression is slightly faster than max(0, log10Pow2(e2) - 1).
     const uint32_t q = log10Pow2(e2) - (e2 > 3);
-    e10 = q;
-    const int32_t k = DOUBLE_POW5_INV_BITCOUNT + pow5bits(q) - 1;
-    const int32_t i = -e2 + q + k;
+    e10 = (int32_t) q;
+    const int32_t k = DOUBLE_POW5_INV_BITCOUNT + pow5bits((int32_t) q) - 1;
+    const int32_t i = -e2 + (int32_t) q + k;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computeInvPow5(q, pow5);
@@ -311,10 +308,10 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   } else {
     // This expression is slightly faster than max(0, log10Pow5(-e2) - 1).
     const uint32_t q = log10Pow5(-e2) - (-e2 > 1);
-    e10 = q + e2;
-    const int32_t i = -e2 - q;
+    e10 = (int32_t) q + e2;
+    const int32_t i = -e2 - (int32_t) q;
     const int32_t k = pow5bits(i) - DOUBLE_POW5_BITCOUNT;
-    const int32_t j = q - k;
+    const int32_t j = (int32_t) q - k;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computePow5(i, pow5);
@@ -357,8 +354,8 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
 
-  // Step 4: Find the shortest decimal representation in the interval of legal representations.
-  uint32_t removed = 0;
+  // Step 4: Find the shortest decimal representation in the interval of valid representations.
+  int32_t removed = 0;
   uint8_t lastRemovedDigit = 0;
   uint64_t output;
   // On average, we remove ~2 digits.
@@ -412,8 +409,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       lastRemovedDigit = 4;
     }
     // We need to take vr + 1 if vr is outside bounds or we need to round up.
-    output = vr +
-        ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
+    output = vr + ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || lastRemovedDigit >= 5);
   } else {
     // Specialized for the common case (~99.3%). Percentages below are relative to this.
     bool roundUp = false;
@@ -498,7 +494,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   // so the rest will fit into uint32_t.
   if ((output >> 32) != 0) {
     // Expensive 64-bit division.
-    const uint64_t q = div100000000(output);
+    const uint64_t q = div1e8(output);
     uint32_t output2 = (uint32_t) (output - 100000000 * q);
     output = q;
 
@@ -554,7 +550,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
 
   // Print the exponent.
   result[index++] = 'E';
-  int32_t exp = v.exponent + olength - 1;
+  int32_t exp = v.exponent + (int32_t) olength - 1;
   if (exp < 0) {
     result[index++] = '-';
     exp = -exp;
