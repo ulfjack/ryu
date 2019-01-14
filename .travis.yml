@@ -3,18 +3,23 @@ os:
 - linux
 - osx
 language: c
-before_install:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add - ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq pkg-config zip g++ zlib1g-dev unzip python openjdk-8-jdk bazel ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew cask install homebrew/cask-versions/java8 ; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bazel ; fi
-- mkdir -p "$HOME/.cache/bazel/"
-- bazel version
+addons:
+  apt:
+    sources:
+      - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
+        key_url: 'https://bazel.build/bazel-release.pub.gpg'
+    packages:
+      - bazel
+  homebrew:
+    taps: bazelbuild/tap
+    packages: bazelbuild/tap/bazel
+install:
 - echo "build --conlyopt=-std=c99 --compilation_mode=opt" > $HOME/.bazelrc
 - echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
 - echo "build --announce_rc" >> $HOME/.bazelrc
+before_script:
+- mkdir -p "$HOME/.cache/bazel/"
+- bazel version
 script:
 - bazel test //ryu/... //src/...
 - bazel run //ryu/benchmark
