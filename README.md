@@ -8,6 +8,11 @@ The Java implementations are RyuFloat and RyuDouble under src/main/java/. The
 C implementation is in the ryu/ directory. Both cover 32 and 64-bit floating
 point numbers.
 
+*Note*: The Java implementation attempts to follow the Java specification for
+Double.toString [1], which requires outputting at least two digits. Other
+specifications, such as for JavaScript, require the shortest output. We may
+change the Java implementation in the future to support both.
+
 There is an experimental C low-level API and 128-bit implementation in ryu/.
 These are still subject to change.
 
@@ -28,6 +33,8 @@ Other implementations:
 | Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
+
+[1] https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
 
 ## Building, Testing, Running
 
