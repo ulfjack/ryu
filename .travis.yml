@@ -6,7 +6,7 @@ language: c
 addons:
   homebrew:
     taps: bazelbuild/tap
-    casks: bazel
+    packages: bazel
 install:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list ; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add - ; fi
