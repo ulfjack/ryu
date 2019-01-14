@@ -204,7 +204,40 @@ static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const 
 
 #endif // HAS_64_BIT_INTRINSICS
 
+#if defined(_MSC_VER)
+#include <intrin.h>
+#else
+inline void _BitScanReverse64(unsigned long *result, uint64_t n) {
+  *result = 63 ^ __builtin_clzll(n);
+}
+#endif
+
 static inline uint32_t decimalLength(const uint64_t v) {
+  // This is slightly faster than a loop.
+  // The average output length is 16.38 digits, so we check high-to-low.
+  // Function precondition: v is not an 18, 19, or 20-digit number.
+  // (17 digits are sufficient for round-tripping.)
+  assert(v < 100000000000000000L);
+  if (v >= 10000000000000000L) { return 17; }
+  if (v >= 1000000000000000L) { return 16; }
+  if (v >= 100000000000000L) { return 15; }
+  if (v >= 10000000000000L) { return 14; }
+  if (v >= 1000000000000L) { return 13; }
+  if (v >= 100000000000L) { return 12; }
+  if (v >= 10000000000L) { return 11; }
+  if (v >= 1000000000L) { return 10; }
+  if (v >= 100000000L) { return 9; }
+  if (v >= 10000000L) { return 8; }
+  if (v >= 1000000L) { return 7; }
+  if (v >= 100000L) { return 6; }
+  if (v >= 10000L) { return 5; }
+  if (v >= 1000L) { return 4; }
+  if (v >= 100L) { return 3; }
+  if (v >= 10L) { return 2; }
+  return 1;
+}
+
+static inline uint32_t decimalLength2(const uint64_t v) {
   static const uint64_t table[18] = {
     0ull,
     9ull,
@@ -231,6 +264,46 @@ static inline uint32_t decimalLength(const uint64_t v) {
   uint32_t y = (19 * tmp) >> 6;
   y += (table[y + 1] - v) >> 63;
   return y + 1;
+}
+
+static inline uint32_t decimalLength3(const uint64_t val) {
+  static const uint64_t table[20] = {
+    0ull,
+    9ull,
+    99ull,
+    999ull,
+    9999ull,
+    99999ull,
+    999999ull,
+    9999999ull,
+    99999999ull,
+    999999999ull,
+    9999999999ull,
+    99999999999ull,
+    999999999999ull,
+    9999999999999ull,
+    99999999999999ull,
+    999999999999999ull,
+    9999999999999999ull,
+    99999999999999999ull,
+    999999999999999999ull,
+    9999999999999999999ull};
+
+  unsigned long log2;
+  _BitScanReverse64(&log2, val);
+
+  // # digits in 2^(index)
+  static unsigned char kNumDigitsOf2ToN[64] = {
+     1,  1,  1,  1,  2,  2,  2,  3,  3,  3,  //
+     4,  4,  4,  4,  5,  5,  5,  6,  6,  6,  //
+     7,  7,  7,  7,  8,  8,  8,  9,  9,  9,  //
+    10, 10, 10, 10, 11, 11, 11, 12, 12, 12,  //
+    13, 13, 13, 13, 14, 14, 14, 15, 15, 15,  //
+    16, 16, 16, 16, 17, 17, 17, 18, 18, 18,  //
+    19, 19, 19, 19};
+
+  uint32_t guess = kNumDigitsOf2ToN[log2];
+  return guess + (val > table[guess] ? 1 : 0);
 }
 
 // A floating decimal representing m * 10^e.
