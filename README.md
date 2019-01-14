@@ -24,7 +24,7 @@ Other implementations:
 | Language         | Author             | Link                                          |
 |------------------|--------------------|-----------------------------------------------|
 | Scala            | Andriy Plokhotnyuk | https://github.com/plokhotnyuk/jsoniter-scala |
-| Rust (C wrapper) | Mara Bos           | https://docs.rs/ryu/0.1.1/ryu/                |
+| Rust             | David Tolnay       | https://github.com/dtolnay/ryu                |
 | Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
