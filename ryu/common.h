@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <string.h>
 
 #if defined(_M_IX86) || defined(_M_ARM)
 #define RYU_32_BIT_PLATFORM

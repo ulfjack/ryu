@@ -43,3 +43,12 @@ cc_test(
     "//third_party/gtest",
   ],
 )
+
+cc_test(
+  name = "d2s_intrinsics_test",
+  srcs = ["d2s_intrinsics_test.cc"],
+  deps = [
+    "//ryu:d2s_intrinsics",
+    "//third_party/gtest",
+  ],
+)

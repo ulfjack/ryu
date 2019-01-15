@@ -37,3 +37,11 @@ cc_library(
     "ryu_generic_128.h",
   ],
 )
+
+cc_library(
+  name = "d2s_intrinsics",
+  hdrs = [
+    "common.h",
+    "d2s_intrinsics.h",
+  ],
+)

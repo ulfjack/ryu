@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdint.h>
 
+// This sets RYU_32_BIT_PLATFORM as a side effect if applicable.
 #include "ryu/common.h"
 
 #if defined(HAS_64_BIT_INTRINSICS)
