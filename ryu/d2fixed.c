@@ -244,9 +244,10 @@ static inline uint32_t append_d_digits(uint32_t olength, uint32_t digits, char* 
     i += 2;
   }
   if (digits >= 10) {
-    result[2] = (char) ('0' + digits % 10);
+    const uint32_t c = digits << 1;
+    result[2] = DIGIT_TABLE[c + 1];
     result[1] = '.';
-    result[0] = (char) ('0' + digits / 10);
+    result[0] = DIGIT_TABLE[c];
   } else {
     result[1] = '.';
     result[0] = (char) ('0' + digits);
