@@ -567,6 +567,36 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   return index;
 }
 
+static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent, floating_decimal_64* v) {
+  const uint64_t m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+  const int32_t e2 = (int32_t)ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+
+  if (e2 > 0) {
+    // f = m2 * 2^e2 >= 2^53 is an integer.
+    // Ignore this case for now.
+    return false;
+  }
+  if (e2 < -52) {
+    // f < 1.
+    return false;
+  }
+
+  // Since 2^52 <= m2 < 2^53 and 0 <= -e2 <= 52: 1 <= f = m2 / 2^-e2 < 2^53.
+  // Test if the lower -e2 bits of the significand are 0, i.e. whether the fraction is 0.
+  const uint64_t mask = (1ull << -e2) - 1;
+  const uint64_t fraction = m2 & mask;
+  if (fraction != 0) {
+    return false;
+  }
+
+  // f is an integer in the range [1, 2^53).
+  // Note: mantissa might contain trailing (decimal) 0's.
+  // Note: since 2^53 < 10^16, there is no need to adjust decimalLength().
+  v->mantissa = m2 >> -e2;
+  v->exponent = 0;
+  return true;
+}
+
 int d2s_buffered_n(double f, char* result) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint64_t bits = double_to_bits(f);
@@ -588,7 +618,26 @@ int d2s_buffered_n(double f, char* result) {
     return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
   }
 
-  const floating_decimal_64 v = d2d(ieeeMantissa, ieeeExponent);
+  floating_decimal_64 v;
+  const bool isSmallInt = d2d_small_int(ieeeMantissa, ieeeExponent, &v);
+  if (isSmallInt) {
+    // For small integers in the range [1,2^53), v.mantissa might contain trailing (decimal) zeros.
+    // For scientic notation we need to move these zeros into the exponent.
+    // (This is not needed for fixed-point notation, so it might be beneficial to trim
+    // trailing zeros in to_chars only if needed - once fixed-point notation output is implemented.)
+    for (;;) {
+      const uint64_t q = div10(v.mantissa);
+      const uint32_t r = (uint32_t)(v.mantissa - 10 * q);
+      if (r != 0) {
+        break;
+      }
+      v.mantissa = q;
+      ++v.exponent;
+    }
+  } else {
+    v = d2d(ieeeMantissa, ieeeExponent);
+  }
+
   return to_chars(v, ieeeSign, result);
 }
 
