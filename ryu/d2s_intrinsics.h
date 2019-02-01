@@ -70,7 +70,7 @@ static inline uint64_t umul128(const uint64_t a, const uint64_t b, uint64_t* con
   const uint32_t mid2Hi = (uint32_t)(mid2 >> 32);
 
   const uint64_t pHi = b11 + mid1Hi + mid2Hi;
-  const uint64_t pLo = ((uint64_t)mid2Lo << 32) + b00Lo;
+  const uint64_t pLo = ((uint64_t)mid2Lo << 32) | b00Lo;
 
   *productHi = pHi;
   return pLo;
