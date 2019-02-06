@@ -126,6 +126,38 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
 
 #else // HAS_UINT128
 
+#if defined(HAS_64_BIT_INTRINSICS)
+// Returns the low 64 bits of the high 128 bits of the 256-bit product of a and b.
+static inline uint64_t umul256_hi128_lo64(const uint64_t aHi, const uint64_t aLo, const uint64_t bHi, const uint64_t bLo) {
+  uint64_t b00Hi;
+  const uint64_t b00Lo = umul128(aLo, bLo, &b00Hi);
+  uint64_t b01Hi;
+  const uint64_t b01Lo = umul128(aLo, bHi, &b01Hi);
+  uint64_t b10Hi;
+  const uint64_t b10Lo = umul128(aHi, bLo, &b10Hi);
+  uint64_t b11Hi;
+  const uint64_t b11Lo = umul128(aHi, bHi, &b11Hi);
+  (void) b00Lo; // unused
+  (void) b11Hi; // unused
+  const uint64_t temp1Lo = b10Lo + b00Hi;
+  const uint64_t temp1Hi = b10Hi + (temp1Lo < b10Lo);
+  const uint64_t temp2Lo = b01Lo + temp1Lo;
+  const uint64_t temp2Hi = b01Hi + (temp2Lo < b01Lo);
+  return b11Lo + temp1Hi + temp2Hi;
+}
+
+static inline uint32_t uint128_mod1e9(uint64_t vHi, uint64_t vLo) {
+  // After multiplying, we're going to shift right by 29, then truncate to uint32_t.
+  // This means that we need only 29 + 32 = 61 bits, so we can truncate to uint64_t before shifting.
+  const uint64_t multiplied = umul256_hi128_lo64(vHi, vLo, 0x89705F4136B4A597u, 0x31680A88F8953031u);
+
+  // For uint32_t truncation, see the mod1e9() comment in d2s_intrinsics.h.
+  const uint32_t shifted = (uint32_t) (multiplied >> 29);
+
+  return ((uint32_t) vLo) - 1000000000 * shifted;
+}
+#endif // HAS_64_BIT_INTRINSICS
+
 static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   uint64_t high0;                                   // 64
   const uint64_t low0 = umul128(m, mul[0], &high0); // 0
@@ -151,6 +183,12 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
 #endif
   assert(j >= 128);
   assert(j <= 180);
+#if defined(HAS_64_BIT_INTRINSICS)
+  const uint32_t dist = (uint32_t) (j - 128); // dist: [0, 52]
+  const uint64_t shiftedhigh = s1high >> dist;
+  const uint64_t shiftedlow = shiftright128(s1low, s1high, dist);
+  return uint128_mod1e9(shiftedhigh, shiftedlow);
+#else // HAS_64_BIT_INTRINSICS
   if (j < 160) { // j: [128, 160)
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
@@ -161,8 +199,8 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
     const uint64_t r1 = ((r0 << 32) | (s1low >> 32));
     return mod1e9(r1 >> (j - 160));
   }
+#endif // HAS_64_BIT_INTRINSICS
 }
-
 #endif // HAS_UINT128
 
 static inline uint32_t decimalLength(const uint32_t v) {
