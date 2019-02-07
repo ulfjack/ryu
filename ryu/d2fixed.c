@@ -166,15 +166,11 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   const uint64_t low2 = umul128(m, mul[2], &high2); // 128
   const uint64_t s0low = low0;              // 0
   (void) s0low; // unused
-  const uint64_t s0high = high0 + low1;     // 64
-  const uint32_t c1 = s0high < high0;
-  const uint64_t s1low = high1 + low2 + c1; // 128
-  const uint32_t c2 = s1low < high1;
+  const uint64_t s0high = low1 + high0;     // 64
+  const uint32_t c1 = s0high < low1;
+  const uint64_t s1low = low2 + high1 + c1; // 128
+  const uint32_t c2 = s1low < low2; // high1 + c1 can't overflow, so compare against low2
   const uint64_t s1high = high2 + c2;       // 192
-  // If this assertion fails, c2 has been calculated incorrectly.
-  // This is possible for general multiplications,
-  // but it should be impossible given how mulShift() is called.
-  assert(low2 != 0xFFFFFFFFFFFFFFFFu || c1 != 1);
 #ifdef RYU_DEBUG
   if (j < 128 || j > 180) {
     printf("%d\n", j);
