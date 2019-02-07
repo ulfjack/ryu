@@ -118,9 +118,8 @@ static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, con
   assert(j >= 128);
   assert(j <= 180);
   // j: [128, 256)
-  uint128_t s0 = b0 + (b1 << 64); // 0
-  uint32_t c1 = s0 < b0;
-  uint128_t s1 = b2 + (b1 >> 64) + c1; // 128
+  const uint128_t mid = b1 + (uint64_t) (b0 >> 64); // 64
+  const uint128_t s1 = b2 + (uint64_t) (mid >> 64); // 128
   return uint128_mod1e9(s1 >> (j - 128));
 }
 
