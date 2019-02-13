@@ -58,7 +58,7 @@ static inline uint32_t pow5Factor(uint64_t value) {
   for (;;) {
     assert(value != 0);
     const uint64_t q = div5(value);
-    const uint32_t r = (uint32_t) (value - 5 * q);
+    const uint32_t r = ((uint32_t) value) - 5 * ((uint32_t) q);
     if (r != 0) {
       break;
     }
@@ -288,7 +288,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       // This should use q <= 22, but I think 21 is also safe. Smaller values
       // may still be safe, but it's more difficult to reason about them.
       // Only one of mp, mv, and mm can be a multiple of 5, if any.
-      const uint32_t mvMod5 = (uint32_t) (mv - 5 * div5(mv));
+      const uint32_t mvMod5 = ((uint32_t) mv) - 5 * ((uint32_t) div5(mv));
       if (mvMod5 == 0) {
         vrIsTrailingZeros = multipleOfPowerOf5(mv, q);
       } else if (acceptBounds) {
@@ -363,9 +363,9 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       if (vpDiv10 <= vmDiv10) {
         break;
       }
-      const uint32_t vmMod10 = (uint32_t) (vm - 10 * vmDiv10);
+      const uint32_t vmMod10 = ((uint32_t) vm) - 10 * ((uint32_t) vmDiv10);
       const uint64_t vrDiv10 = div10(vr);
-      const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+      const uint32_t vrMod10 = ((uint32_t) vr) - 10 * ((uint32_t) vrDiv10);
       vmIsTrailingZeros &= vmMod10 == 0;
       vrIsTrailingZeros &= lastRemovedDigit == 0;
       lastRemovedDigit = (uint8_t) vrMod10;
@@ -381,13 +381,13 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     if (vmIsTrailingZeros) {
       for (;;) {
         const uint64_t vmDiv10 = div10(vm);
-        const uint32_t vmMod10 = (uint32_t) (vm - 10 * vmDiv10);
+        const uint32_t vmMod10 = ((uint32_t) vm) - 10 * ((uint32_t) vmDiv10);
         if (vmMod10 != 0) {
           break;
         }
         const uint64_t vpDiv10 = div10(vp);
         const uint64_t vrDiv10 = div10(vr);
-        const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+        const uint32_t vrMod10 = ((uint32_t) vr) - 10 * ((uint32_t) vrDiv10);
         vrIsTrailingZeros &= lastRemovedDigit == 0;
         lastRemovedDigit = (uint8_t) vrMod10;
         vr = vrDiv10;
@@ -413,7 +413,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     const uint64_t vmDiv100 = div100(vm);
     if (vpDiv100 > vmDiv100) { // Optimization: remove two digits at a time (~86.2%).
       const uint64_t vrDiv100 = div100(vr);
-      const uint32_t vrMod100 = (uint32_t) (vr - 100 * vrDiv100);
+      const uint32_t vrMod100 = ((uint32_t) vr) - 100 * ((uint32_t) vrDiv100);
       roundUp = vrMod100 >= 50;
       vr = vrDiv100;
       vp = vpDiv100;
@@ -431,7 +431,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
         break;
       }
       const uint64_t vrDiv10 = div10(vr);
-      const uint32_t vrMod10 = (uint32_t) (vr - 10 * vrDiv10);
+      const uint32_t vrMod10 = ((uint32_t) vr) - 10 * ((uint32_t) vrDiv10);
       roundUp = vrMod10 >= 5;
       vr = vrDiv10;
       vp = vpDiv10;
@@ -491,7 +491,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   if ((output >> 32) != 0) {
     // Expensive 64-bit division.
     const uint64_t q = div1e8(output);
-    uint32_t output2 = (uint32_t) (output - 100000000 * q);
+    uint32_t output2 = ((uint32_t) output) - 100000000 * ((uint32_t) q);
     output = q;
 
     const uint32_t c = output2 % 10000;
@@ -627,7 +627,7 @@ int d2s_buffered_n(double f, char* result) {
     // trailing zeros in to_chars only if needed - once fixed-point notation output is implemented.)
     for (;;) {
       const uint64_t q = div10(v.mantissa);
-      const uint32_t r = (uint32_t)(v.mantissa - 10 * q);
+      const uint32_t r = ((uint32_t) v.mantissa) - 10 * ((uint32_t) q);
       if (r != 0) {
         break;
       }
