@@ -567,15 +567,17 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   return index;
 }
 
-static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent, floating_decimal_64* v) {
+static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent,
+  floating_decimal_64* const v) {
   const uint64_t m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
-  const int32_t e2 = (int32_t)ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+  const int32_t e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
 
   if (e2 > 0) {
     // f = m2 * 2^e2 >= 2^53 is an integer.
     // Ignore this case for now.
     return false;
   }
+
   if (e2 < -52) {
     // f < 1.
     return false;
@@ -621,8 +623,8 @@ int d2s_buffered_n(double f, char* result) {
   floating_decimal_64 v;
   const bool isSmallInt = d2d_small_int(ieeeMantissa, ieeeExponent, &v);
   if (isSmallInt) {
-    // For small integers in the range [1,2^53), v.mantissa might contain trailing (decimal) zeros.
-    // For scientic notation we need to move these zeros into the exponent.
+    // For small integers in the range [1, 2^53), v.mantissa might contain trailing (decimal) zeros.
+    // For scientific notation we need to move these zeros into the exponent.
     // (This is not needed for fixed-point notation, so it might be beneficial to trim
     // trailing zeros in to_chars only if needed - once fixed-point notation output is implemented.)
     for (;;) {
