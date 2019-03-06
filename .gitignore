@@ -1,4 +1,4 @@
 bazel-*
 /.eclipse-bin/
 /.project
-/.vscode/
+.vscode/
