@@ -106,7 +106,7 @@ static inline uint32_t uint128_mod1e9(uint128_t v) {
 }
 
 // Best case: use 128-bit type.
-static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
   const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
   const uint128_t b2 = ((uint128_t) m) * mul[2]; // 128
@@ -157,7 +157,7 @@ static inline uint32_t uint128_mod1e9(uint64_t vHi, uint64_t vLo) {
 }
 #endif // HAS_64_BIT_INTRINSICS
 
-static inline uint32_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   uint64_t high0;                                   // 64
   const uint64_t low0 = umul128(m, mul[0], &high0); // 0
   uint64_t high1;                                   // 128
@@ -455,8 +455,8 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
-      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
-      uint32_t digits = mulShift(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
+      // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
+      uint32_t digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
       if (nonzero) {
         append_nine_digits(digits, result + index);
         index += 9;
@@ -501,8 +501,8 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         break;
       }
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
-      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
-      uint32_t digits = mulShift(m2 << 8, POW10_SPLIT_2[p], j + 8);
+      // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
+      uint32_t digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("digits=%u\n", digits);
       printf("idx=%d\n", idx);
@@ -664,8 +664,8 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     for (int i = len - 1; i >= 0; i--) {
       uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
-      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
-      digits = mulShift(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
+      // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
+      digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], j + 8);
       if (printedDigits != 0) {
         if (printedDigits + 9 > precision) {
           availableDigits = 9;
@@ -696,8 +696,8 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
       uint32_t p = POW10_OFFSET_2[idx] + i;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
-      // a slightly faster code path in mulShift. Instead, we can just increase the multipliers.
-      digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift(m2 << 8, POW10_SPLIT_2[p], j + 8);
+      // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
+      digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("exact=%" PRIu64 " * (%" PRIu64 " + %" PRIu64 " << 64) >> %d\n", m2, POW10_SPLIT_2[p][0], POW10_SPLIT_2[p][1], j);
       printf("idx=%d\n", idx);
