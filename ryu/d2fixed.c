@@ -329,34 +329,6 @@ static uint32_t lengthForIndex(uint32_t idx) {
   return (log10Pow2(16 * (int32_t) idx) + 1 + 16 + 8) / 9;
 }
 
-static inline uint32_t pow5Factor(uint64_t value) {
-  uint32_t count = 0;
-  for (;;) {
-    assert(value != 0);
-    const uint64_t q = div5(value);
-    const uint32_t r = (uint32_t) (value - 5 * q);
-    if (r != 0) {
-      break;
-    }
-    value = q;
-    ++count;
-  }
-  return count;
-}
-
-// Returns true if value is divisible by 5^p.
-static inline bool multipleOfPowerOf5(const uint64_t value, const uint32_t p) {
-  // I tried a case distinction on p, but there was no performance difference.
-  return pow5Factor(value) >= p;
-}
-
-// Returns true if value is divisible by 2^p.
-static inline bool multipleOfPowerOf2(const uint64_t value, const uint32_t p) {
-  assert(value != 0);
-  // return __builtin_ctzll(value) >= p;
-  return (value & ((1ull << p) - 1)) == 0;
-}
-
 static inline int copy_special_str_printf(char * const result, const bool sign, const bool exponent, const uint64_t mantissa) {
   if (sign) {
     result[0] = '-';
