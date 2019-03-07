@@ -21,7 +21,7 @@
 
 #define TABLE_SIZE 64
 
-static uint32_t POW10_OFFSET[TABLE_SIZE] = {
+static const uint32_t POW10_OFFSET[TABLE_SIZE] = {
 0, 2, 5, 8, 12, 16, 21, 26, 32, 39,
 46, 54, 62, 71, 80, 90, 100, 111, 122, 134,
 146, 159, 173, 187, 202, 217, 233, 249, 266, 283,
@@ -31,7 +31,7 @@ static uint32_t POW10_OFFSET[TABLE_SIZE] = {
 1084, 1118, 1153, 1188
 };
 
-static uint64_t POW10_SPLIT[1224][3] = {
+static const uint64_t POW10_SPLIT[1224][3] = {
  {                    1u,    72057594037927936u,                    0u },
  {   699646928636035157u,             72057594u,                    0u },
  {                    1u,                    0u,                  256u },
@@ -1260,7 +1260,7 @@ static uint64_t POW10_SPLIT[1224][3] = {
 
 #define TABLE_SIZE_2 69
 
-static uint32_t POW10_OFFSET_2[TABLE_SIZE_2] = {
+static const uint32_t POW10_OFFSET_2[TABLE_SIZE_2] = {
 0, 3, 7, 13, 21, 31, 43, 57, 73, 91,
 110, 131, 154, 179, 206, 235, 266, 299, 333, 369,
 407, 447, 489, 533, 579, 627, 676, 727, 780, 835,
@@ -1270,7 +1270,7 @@ static uint32_t POW10_OFFSET_2[TABLE_SIZE_2] = {
 3472, 3587, 3704, 3823, 3944, 4067, 4191, 4317, 4445
 };
 
-static uint32_t MIN_BLOCK_2[TABLE_SIZE_2] = {
+static const uint32_t MIN_BLOCK_2[TABLE_SIZE_2] = {
 0, 0, 0, 0, 0, 0, 0, 1, 1, 2,
 2, 3, 3, 4, 4, 5, 5, 6, 7, 7,
 8, 8, 9, 9, 10, 10, 11, 11, 12, 12,
@@ -1283,7 +1283,7 @@ static uint32_t MIN_BLOCK_2[TABLE_SIZE_2] = {
 
 #define ADDITIONAL_BITS_2 120
 
-static uint64_t POW10_SPLIT_2[4445][3] = {
+static const uint64_t POW10_SPLIT_2[4445][3] = {
   {                    0u,                    0u,              3906250u },
   {                    0u,                    0u,         202000000000u },
   {                    0u,                    0u,                    0u },
