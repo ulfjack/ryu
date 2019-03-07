@@ -130,21 +130,6 @@ static inline uint32_t mulPow5divPow2(const uint32_t m, const uint32_t i, const 
   return mulShift(m, FLOAT_POW5_SPLIT[i], j);
 }
 
-static inline uint32_t decimalLength(const uint32_t v) {
-  // Function precondition: v is not a 10-digit number.
-  // (9 digits are sufficient for round-tripping.)
-  assert(v < 1000000000);
-  if (v >= 100000000) { return 9; }
-  if (v >= 10000000) { return 8; }
-  if (v >= 1000000) { return 7; }
-  if (v >= 100000) { return 6; }
-  if (v >= 10000) { return 5; }
-  if (v >= 1000) { return 4; }
-  if (v >= 100) { return 3; }
-  if (v >= 10) { return 2; }
-  return 1;
-}
-
 // A floating decimal representing m * 10^e.
 typedef struct floating_decimal_32 {
   uint32_t mantissa;
@@ -339,7 +324,7 @@ static inline int to_chars(const floating_decimal_32 v, const bool sign, char* c
   }
 
   uint32_t output = v.mantissa;
-  const uint32_t olength = decimalLength(output);
+  const uint32_t olength = decimalLength9(output);
 
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", v.mantissa);

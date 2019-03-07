@@ -198,25 +198,12 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 }
 #endif // HAS_UINT128
 
-static inline uint32_t decimalLength(const uint32_t v) {
-  assert(v < 1000000000L);
-  if (v >= 100000000L) { return 9; }
-  if (v >= 10000000L) { return 8; }
-  if (v >= 1000000L) { return 7; }
-  if (v >= 100000L) { return 6; }
-  if (v >= 10000L) { return 5; }
-  if (v >= 1000L) { return 4; }
-  if (v >= 100L) { return 3; }
-  if (v >= 10L) { return 2; }
-  return 1;
-}
-
 static inline uint32_t append_n_digits(uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
 
-  uint32_t olength = decimalLength(digits);
+  uint32_t olength = decimalLength9(digits);
   uint32_t i = 0;
   while (digits >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
@@ -675,7 +662,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         index += 9;
         printedDigits += 9;
       } else if (digits != 0) {
-        availableDigits = decimalLength(digits);
+        availableDigits = decimalLength9(digits);
         exp = i * 9 + availableDigits - 1;
         if (printedDigits + availableDigits > precision) {
           break;
@@ -712,7 +699,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         index += 9;
         printedDigits += 9;
       } else if (digits != 0) {
-        availableDigits = decimalLength(digits);
+        availableDigits = decimalLength9(digits);
         exp = -(i + 1) * 9 + availableDigits - 1;
         if (printedDigits + availableDigits > precision) {
           break;
