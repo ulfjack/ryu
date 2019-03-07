@@ -459,7 +459,6 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       uint32_t digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("digits=%u\n", digits);
-      printf("idx=%d\n", idx);
 #endif
       if (i < blocks - 1) {
         append_nine_digits(digits, result + index);
@@ -654,7 +653,6 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("exact=%" PRIu64 " * (%" PRIu64 " + %" PRIu64 " << 64) >> %d\n", m2, POW10_SPLIT_2[p][0], POW10_SPLIT_2[p][1], j);
-      printf("idx=%d\n", idx);
       printf("digits=%d\n", digits);
 #endif
       if (printedDigits != 0) {
