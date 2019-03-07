@@ -287,7 +287,6 @@ static inline void append_c_digits(const uint32_t count, uint32_t digits, char* 
   }
   if (i < count) {
     const char c = '0' + (digits % 10);
-    digits /= 10;
     result[count - i - 1] = c;
   }
 }
@@ -316,15 +315,15 @@ static inline void append_nine_digits(uint32_t digits, char* const result) {
   result[0] = (char) ('0' + digits);
 }
 
-static uint32_t indexForExponent(const uint32_t e) {
+static inline uint32_t indexForExponent(const uint32_t e) {
   return (e + 15) / 16;
 }
 
-static uint32_t pow10BitsForIndex(const uint32_t idx) {
+static inline uint32_t pow10BitsForIndex(const uint32_t idx) {
   return 16 * idx + POW10_ADDITIONAL_BITS;
 }
 
-static uint32_t lengthForIndex(const uint32_t idx) {
+static inline uint32_t lengthForIndex(const uint32_t idx) {
   // +1 for ceil, +16 for mantissa, +8 to round up when dividing by 9
   return (log10Pow2(16 * (int32_t) idx) + 1 + 16 + 8) / 9;
 }
