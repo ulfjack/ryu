@@ -204,7 +204,7 @@ static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const 
 
 #endif // HAS_64_BIT_INTRINSICS
 
-static inline uint32_t decimalLength(const uint64_t v) {
+static inline uint32_t decimalLength17(const uint64_t v) {
   // This is slightly faster than a loop.
   // The average output length is 16.38 digits, so we check high-to-low.
   // Function precondition: v is not an 18, 19, or 20-digit number.
@@ -467,7 +467,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   }
 
   uint64_t output = v.mantissa;
-  const uint32_t olength = decimalLength(output);
+  const uint32_t olength = decimalLength17(output);
 
 #ifdef RYU_DEBUG
   printf("DIGITS=%" PRIu64 "\n", v.mantissa);
@@ -593,7 +593,7 @@ static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t iee
 
   // f is an integer in the range [1, 2^53).
   // Note: mantissa might contain trailing (decimal) 0's.
-  // Note: since 2^53 < 10^16, there is no need to adjust decimalLength().
+  // Note: since 2^53 < 10^16, there is no need to adjust decimalLength17().
   v->mantissa = m2 >> -e2;
   v->exponent = 0;
   return true;

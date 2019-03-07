@@ -25,6 +25,22 @@
 #define RYU_32_BIT_PLATFORM
 #endif
 
+static inline uint32_t decimalLength9(const uint32_t v) {
+  // Function precondition: v is not a 10-digit number.
+  // (f2s: 9 digits are sufficient for round-tripping.)
+  // (d2fixed: We print 9-digit blocks.)
+  assert(v < 1000000000);
+  if (v >= 100000000) { return 9; }
+  if (v >= 10000000) { return 8; }
+  if (v >= 1000000) { return 7; }
+  if (v >= 100000) { return 6; }
+  if (v >= 10000) { return 5; }
+  if (v >= 1000) { return 4; }
+  if (v >= 100) { return 3; }
+  if (v >= 10) { return 2; }
+  return 1;
+}
+
 // Returns e == 0 ? 1 : ceil(log_2(5^e)).
 static inline int32_t pow5bits(const int32_t e) {
   // This approximation works up to the point that the multiplication overflows at e = 3529.
