@@ -468,9 +468,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         append_nine_digits(digits, result + index);
         index += 9;
       } else {
-        const int32_t max = precision - 9 * i;
+        const int32_t maximum = precision - 9 * i;
         int32_t lastDigit = 0;
-        for (int32_t k = 0; k < 9 - max; ++k) {
+        for (int32_t k = 0; k < 9 - maximum; ++k) {
           lastDigit = digits % 10;
           digits /= 10;
         }
@@ -489,9 +489,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
           printf("trailingZeros=%s\n", trailingZeros ? "true" : "false");
 #endif
         }
-        if (max > 0) {
-          append_c_digits(max, digits, result + index);
-          index += max;
+        if (maximum > 0) {
+          append_c_digits(maximum, digits, result + index);
+          index += maximum;
         }
         break;
       }
@@ -681,18 +681,18 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     }
   }
 
-  const uint32_t max = precision - printedDigits;
+  const uint32_t maximum = precision - printedDigits;
 #ifdef RYU_DEBUG
   printf("availableDigits=%d\n", availableDigits);
   printf("digits=%d\n", digits);
-  printf("max=%d\n", max);
+  printf("maximum=%d\n", maximum);
 #endif
   if (availableDigits == 0) {
     digits = 0;
   }
   int32_t lastDigit = 0;
-  if (availableDigits > max) {
-    for (uint32_t k = 0; k < availableDigits - max; ++k) {
+  if (availableDigits > maximum) {
+    for (uint32_t k = 0; k < availableDigits - maximum; ++k) {
       lastDigit = digits % 10;
       digits /= 10;
     }
@@ -726,13 +726,13 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   }
   if (printedDigits != 0) {
     if (digits == 0) {
-      memset(result + index, '0', max);
+      memset(result + index, '0', maximum);
     } else {
-      append_c_digits(max, digits, result + index);
+      append_c_digits(maximum, digits, result + index);
     }
-    index += max;
+    index += maximum;
   } else {
-    index += append_d_digits(max, digits, result + index, printDecimalPoint);
+    index += append_d_digits(maximum, digits, result + index, printDecimalPoint);
   }
 #ifdef RYU_DEBUG
   printf("roundUp=%d\n", roundUp);
