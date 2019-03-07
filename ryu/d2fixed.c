@@ -328,7 +328,7 @@ static inline uint32_t lengthForIndex(const uint32_t idx) {
   return (log10Pow2(16 * (int32_t) idx) + 1 + 16 + 8) / 9;
 }
 
-static inline int copy_special_str_printf(char * const result, const bool sign, const bool exponent, const uint64_t mantissa) {
+static inline int copy_special_str_printf(char* const result, const bool sign, const uint64_t mantissa) {
   if (sign) {
     result[0] = '-';
   }
@@ -342,12 +342,8 @@ static inline int copy_special_str_printf(char * const result, const bool sign, 
     memcpy(result + sign, "nan", 3);
     return sign + 3;
   }
-  if (exponent) {
-    memcpy(result + sign, "Infinity", 8);
-    return sign + 8;
-  }
-  memcpy(result + sign, "0", 1);
-  return sign + 1;
+  memcpy(result + sign, "Infinity", 8);
+  return sign + 8;
 }
 
 int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
@@ -367,7 +363,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
 
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u)) {
-    return copy_special_str_printf(result, ieeeSign, ieeeExponent, ieeeMantissa);
+    return copy_special_str_printf(result, ieeeSign, ieeeMantissa);
   }
   if (ieeeExponent == 0 && ieeeMantissa == 0) {
     int index = 0;
@@ -569,7 +565,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u)) {
-    return copy_special_str_printf(result, ieeeSign, ieeeExponent, ieeeMantissa);
+    return copy_special_str_printf(result, ieeeSign, ieeeMantissa);
   }
   if (ieeeExponent == 0 && ieeeMantissa == 0) {
     int index = 0;
