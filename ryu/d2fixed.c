@@ -411,7 +411,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     printf("idx=%d\n", idx);
     printf("len=%d\n", len);
 #endif
-    for (int i = len - 1; i >= 0; i--) {
+    for (int i = len - 1; i >= 0; --i) {
       uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
@@ -448,7 +448,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       memset(result + index, '0', 9 * i);
       index += 9 * i;
     }
-    for (; i < blocks; i++) {
+    for (; i < blocks; ++i) {
       int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
       uint32_t p = POW10_OFFSET_2[idx] + i;
       if (p >= POW10_OFFSET_2[idx + 1]) {
@@ -472,7 +472,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       } else {
         int32_t max = precision - 9 * i;
         int32_t lastDigit = 0;
-        for (int32_t k = 0; k < 9 - max; k++) {
+        for (int32_t k = 0; k < 9 - max; ++k) {
           lastDigit = digits % 10;
           digits /= 10;
         }
@@ -505,7 +505,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       int roundIndex = index;
       int dotIndex = 0; // '.' can't be located at index 0
       while (true) {
-        roundIndex--;
+        --roundIndex;
         char c;
         if (roundIndex == -1 || (c = result[roundIndex], c == '-')) {
           result[roundIndex + 1] = '1';
@@ -603,7 +603,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
 
   const bool printDecimalPoint = precision > 0;
-  precision++;
+  ++precision;
   int index = 0;
   if (ieeeSign) {
     result[index++] = '-';
@@ -620,7 +620,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     printf("idx=%d\n", idx);
     printf("len=%d\n", len);
 #endif
-    for (int i = len - 1; i >= 0; i--) {
+    for (int i = len - 1; i >= 0; --i) {
       uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
@@ -651,7 +651,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #ifdef RYU_DEBUG
     printf("idx=%d, e2=%d, min=%d\n", idx, e2, MIN_BLOCK_2[idx]);
 #endif
-    for (int32_t i = MIN_BLOCK_2[idx]; i < 200; i++) {
+    for (int32_t i = MIN_BLOCK_2[idx]; i < 200; ++i) {
       int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
       uint32_t p = POW10_OFFSET_2[idx] + i;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
@@ -695,7 +695,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   }
   int32_t lastDigit = 0;
   if (availableDigits > max) {
-    for (uint32_t k = 0; k < availableDigits - max; k++) {
+    for (uint32_t k = 0; k < availableDigits - max; ++k) {
       lastDigit = digits % 10;
       digits /= 10;
     }
@@ -743,11 +743,11 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   if (roundUp != 0) {
     int roundIndex = index;
     while (true) {
-      roundIndex--;
+      --roundIndex;
       char c;
       if (roundIndex == -1 || (c = result[roundIndex], c == '-')) {
         result[roundIndex + 1] = '1';
-        exp++;
+        ++exp;
         break;
       }
       if (c == '.') {
