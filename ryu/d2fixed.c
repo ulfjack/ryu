@@ -709,18 +709,17 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     bool trailingZeros;
     // precision was already increased by 1, so we don't need to write + 1 here.
     const int32_t rexp = precision - exp;
+    const int32_t requiredTwos = -e2 - rexp;
     if (rexp < 0) {
-      const int32_t requiredTwos = -e2 - rexp;
       const int32_t requiredFives = -rexp;
       trailingZeros =
           (requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos))) && multipleOfPowerOf5(m2, requiredFives);
     } else {
-      const int32_t requiredTwos = -e2 - rexp;
       trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos));
     }
     roundUp = trailingZeros ? 2 : 1;
 #ifdef RYU_DEBUG
-//    printf("requiredTwos=%d\n", requiredTwos);
+    printf("requiredTwos=%d\n", requiredTwos);
     printf("trailingZeros=%s\n", trailingZeros ? "true" : "false");
 #endif
   }
