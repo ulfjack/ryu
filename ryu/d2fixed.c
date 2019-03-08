@@ -482,7 +482,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         } else {
           // Is m * 10^(additionalDigits + 1) / 2^(-e2) integer?
           const int32_t requiredTwos = -e2 - precision - 1;
-          const bool trailingZeros = (requiredTwos <= 0) || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos));
+          const bool trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos));
           roundUp = trailingZeros ? 2 : 1;
 #ifdef RYU_DEBUG
           printf("requiredTwos=%d\n", requiredTwos);
@@ -522,7 +522,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
           roundUp = 1;
           continue;
         } else {
-          if ((roundUp == 2) && (c % 2 == 0)) {
+          if (roundUp == 2 && c % 2 == 0) {
             break;
           }
           result[roundIndex] = c + 1;
@@ -753,7 +753,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         roundUp = 1;
         continue;
       } else {
-        if ((roundUp == 2) && (c % 2 == 0)) {
+        if (roundUp == 2 && c % 2 == 0) {
           break;
         }
         result[roundIndex] = c + 1;
