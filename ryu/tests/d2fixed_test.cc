@@ -36018,3 +36018,7 @@ TEST(D2expTest, AllBinaryExponents) {
     EXPECT_STREQ(d2exp(tc.value, tc.exp_precision), tc.exp_string);
   }
 }
+
+TEST(D2expTest, Regression) {
+  EXPECT_STREQ(d2fixed(7.018232e-82, 6), "-0.000000");
+}
