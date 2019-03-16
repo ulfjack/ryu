@@ -438,14 +438,18 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     // 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
     int roundUp = 0;
     uint32_t i = 0;
-    if (i < MIN_BLOCK_2[idx]) {
-      i = blocks - 1 < MIN_BLOCK_2[idx] ? blocks - 1 : MIN_BLOCK_2[idx];
+    if (blocks <= MIN_BLOCK_2[idx]) {
+      i = blocks;
+      memset(result + index, '0', precision);
+      index += precision;
+    } else if (i < MIN_BLOCK_2[idx]) {
+      i = MIN_BLOCK_2[idx];
       memset(result + index, '0', 9 * i);
       index += 9 * i;
     }
     for (; i < blocks; ++i) {
       const int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      const uint32_t p = POW10_OFFSET_2[idx] + i;
+      const uint32_t p = POW10_OFFSET_2[idx] + i - MIN_BLOCK_2[idx];
       if (p >= POW10_OFFSET_2[idx + 1]) {
         // If the remaining digits are all 0, then we might as well use memset.
         // No rounding required in this case.
@@ -647,7 +651,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
     for (int32_t i = MIN_BLOCK_2[idx]; i < 200; ++i) {
       const int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      const uint32_t p = POW10_OFFSET_2[idx] + i;
+      const uint32_t p = POW10_OFFSET_2[idx] + i - MIN_BLOCK_2[idx];
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
       digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
