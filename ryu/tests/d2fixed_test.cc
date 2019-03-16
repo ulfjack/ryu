@@ -36020,5 +36020,5 @@ TEST(D2expTest, AllBinaryExponents) {
 }
 
 TEST(D2expTest, Regression) {
-  EXPECT_STREQ(d2fixed(7.018232e-82, 6), "-0.000000");
+  EXPECT_STREQ(d2fixed(7.018232e-82, 6), "0.000000");
 }
