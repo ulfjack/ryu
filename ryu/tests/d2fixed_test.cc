@@ -36022,3 +36022,13 @@ TEST(D2expTest, AllBinaryExponents) {
     EXPECT_STREQ(d2exp(tc.value, tc.exp_precision), tc.exp_string);
   }
 }
+
+TEST(D2expTest, PrintDecimalPoint) {
+  // These values exercise each codepath.
+  EXPECT_STREQ(d2exp(1e+54, 0), "1e+54"  );
+  EXPECT_STREQ(d2exp(1e+54, 1), "1.0e+54");
+  EXPECT_STREQ(d2exp(1e-63, 0), "1e-63"  );
+  EXPECT_STREQ(d2exp(1e-63, 1), "1.0e-63");
+  EXPECT_STREQ(d2exp(1e+83, 0), "1e+83"  );
+  EXPECT_STREQ(d2exp(1e+83, 1), "1.0e+83");
+}

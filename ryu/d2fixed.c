@@ -673,7 +673,6 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         if (printedDigits + availableDigits > precision) {
           break;
         }
-        // TODO: This callsite might not need printDecimalPoint logic.
         index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
         printedDigits += availableDigits;
         availableDigits = 0;
