@@ -634,11 +634,11 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       } else if (digits != 0) {
         availableDigits = decimalLength9(digits);
         exp = i * 9 + availableDigits - 1;
-        if (printedDigits + availableDigits > precision) {
+        if (availableDigits > precision) {
           break;
         }
         index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
-        printedDigits += availableDigits;
+        printedDigits = availableDigits;
         availableDigits = 0;
       }
     }
@@ -670,11 +670,11 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       } else if (digits != 0) {
         availableDigits = decimalLength9(digits);
         exp = -(i + 1) * 9 + availableDigits - 1;
-        if (printedDigits + availableDigits > precision) {
+        if (availableDigits > precision) {
           break;
         }
         index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
-        printedDigits += availableDigits;
+        printedDigits = availableDigits;
         availableDigits = 0;
       }
     }
