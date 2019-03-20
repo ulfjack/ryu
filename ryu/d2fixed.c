@@ -198,12 +198,11 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 }
 #endif // HAS_UINT128
 
-static inline uint32_t append_n_digits(uint32_t digits, char* const result) {
+static inline void append_n_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
 
-  const uint32_t olength = decimalLength9(digits);
   uint32_t i = 0;
   while (digits >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
@@ -230,18 +229,12 @@ static inline uint32_t append_n_digits(uint32_t digits, char* const result) {
   } else {
     result[0] = (char) ('0' + digits);
   }
-  return olength;
 }
 
-static inline uint32_t append_d_digits(const uint32_t olength, uint32_t digits, char* const result, const bool printDecimalPoint) {
+static inline void append_d_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%d\n", digits);
 #endif
-
-  if (!printDecimalPoint) {
-    result[0] = (char) ('0' + digits);
-    return 1;
-  }
 
   uint32_t i = 0;
   while (digits >= 10000) {
@@ -272,7 +265,6 @@ static inline uint32_t append_d_digits(const uint32_t olength, uint32_t digits, 
     result[1] = '.';
     result[0] = (char) ('0' + digits);
   }
-  return olength + 1;
 }
 
 static inline void append_c_digits(const uint32_t count, uint32_t digits, char* const result) {
@@ -415,7 +407,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         append_nine_digits(digits, result + index);
         index += 9;
       } else if (digits != 0) {
-        index += append_n_digits(digits, result + index);
+        const uint32_t olength = decimalLength9(digits);
+        append_n_digits(olength, digits, result + index);
+        index += olength;
         nonzero = true;
       }
     }
@@ -637,7 +631,12 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         if (availableDigits > precision) {
           break;
         }
-        index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
+        if (printDecimalPoint) {
+          append_d_digits(availableDigits, digits, result + index);
+          index += availableDigits + 1; // +1 for decimal point
+        } else {
+          result[index++] = (char) ('0' + digits);
+        }
         printedDigits = availableDigits;
         availableDigits = 0;
       }
@@ -673,7 +672,12 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         if (availableDigits > precision) {
           break;
         }
-        index += append_d_digits(availableDigits, digits, result + index, printDecimalPoint);
+        if (printDecimalPoint) {
+          append_d_digits(availableDigits, digits, result + index);
+          index += availableDigits + 1; // +1 for decimal point
+        } else {
+          result[index++] = (char) ('0' + digits);
+        }
         printedDigits = availableDigits;
         availableDigits = 0;
       }
@@ -730,7 +734,12 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     }
     index += maximum;
   } else {
-    index += append_d_digits(maximum, digits, result + index, printDecimalPoint);
+    if (printDecimalPoint) {
+      append_d_digits(maximum, digits, result + index);
+      index += maximum + 1; // +1 for decimal point
+    } else {
+      result[index++] = (char) ('0' + digits);
+    }
   }
 #ifdef RYU_DEBUG
   printf("roundUp=%d\n", roundUp);
