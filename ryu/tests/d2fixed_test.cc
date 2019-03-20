@@ -35829,6 +35829,10 @@ TEST(D2fixedTest, AllBinaryExponents) {
   }
 }
 
+TEST(D2fixedTest, Regression) {
+  EXPECT_STREQ(d2fixed(7.018232e-82, 6), "0.000000");
+}
+
 TEST(D2expTest, Basic) {
   EXPECT_STREQ(d2exp(ieeeParts2Double(false, 1234, 99999), 62),
     "3.29100911471548643542566484557342614975886952410844652587974656e+63");
@@ -36017,8 +36021,4 @@ TEST(D2expTest, AllBinaryExponents) {
   for (const auto& tc : all_binary_exponents) {
     EXPECT_STREQ(d2exp(tc.value, tc.exp_precision), tc.exp_string);
   }
-}
-
-TEST(D2expTest, Regression) {
-  EXPECT_STREQ(d2fixed(7.018232e-82, 6), "0.000000");
 }
