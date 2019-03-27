@@ -205,6 +205,8 @@ static inline uint32_t decimalLength17(const uint64_t v) {
 // A floating decimal representing m * 10^e.
 typedef struct floating_decimal_64 {
   uint64_t mantissa;
+  // Decimal exponent's range is -324 to 308
+  // inclusive, and can fit in a short if needed.
   int32_t exponent;
 } floating_decimal_64;
 
