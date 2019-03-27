@@ -133,6 +133,8 @@ static inline uint32_t mulPow5divPow2(const uint32_t m, const uint32_t i, const 
 // A floating decimal representing m * 10^e.
 typedef struct floating_decimal_32 {
   uint32_t mantissa;
+  // Decimal exponent's range is -45 to 38
+  // inclusive, and can fit in a short if needed.
   int32_t exponent;
 } floating_decimal_32;
 
