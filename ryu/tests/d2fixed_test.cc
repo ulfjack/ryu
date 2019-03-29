@@ -16,15 +16,16 @@
 // KIND, either express or implied.
 
 #include <math.h>
+#include <stdint.h>
 
 #include "ryu/ryu2.h"
 #include "third_party/gtest/gtest.h"
 
 struct test_case {
   double value;
-  int fixed_precision;
+  uint32_t fixed_precision;
   const char* fixed_string;
-  int exp_precision;
+  uint32_t exp_precision;
   const char* exp_string;
 };
 
