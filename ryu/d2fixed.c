@@ -447,7 +447,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       if (p >= POW10_OFFSET_2[idx + 1]) {
         // If the remaining digits are all 0, then we might as well use memset.
         // No rounding required in this case.
-        const int32_t fill = precision - 9 * i;
+        const uint32_t fill = precision - 9 * i;
         memset(result + index, '0', fill);
         index += fill;
         break;
