@@ -278,7 +278,7 @@ static inline void append_c_digits(const uint32_t count, uint32_t digits, char* 
     memcpy(result + count - i - 2, DIGIT_TABLE + c, 2);
   }
   if (i < count) {
-    const char c = '0' + (digits % 10);
+    const char c = (char) ('0' + (digits % 10));
     result[count - i - 1] = c;
   }
 }
