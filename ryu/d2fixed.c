@@ -393,12 +393,12 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   if (e2 >= -52) {
     const uint32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
     const uint32_t p10bits = pow10BitsForIndex(idx);
-    const int32_t len = lengthForIndex(idx);
+    const int32_t len = (int32_t) lengthForIndex(idx);
 #ifdef RYU_DEBUG
     printf("idx=%d\n", idx);
     printf("len=%d\n", len);
 #endif
-    for (int i = len - 1; i >= 0; --i) {
+    for (int32_t i = len - 1; i >= 0; --i) {
       const uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
@@ -607,12 +607,12 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   if (e2 >= -52) {
     const uint32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
     const uint32_t p10bits = pow10BitsForIndex(idx);
-    const int32_t len = lengthForIndex(idx);
+    const int32_t len = (int32_t) lengthForIndex(idx);
 #ifdef RYU_DEBUG
     printf("idx=%d\n", idx);
     printf("len=%d\n", len);
 #endif
-    for (int i = len - 1; i >= 0; --i) {
+    for (int32_t i = len - 1; i >= 0; --i) {
       const uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
