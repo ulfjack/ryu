@@ -377,7 +377,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
     m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
 
@@ -586,7 +586,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
     m2 = ieeeMantissa;
   } else {
-    e2 = ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
     m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
 
