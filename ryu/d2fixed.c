@@ -391,7 +391,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     result[index++] = '-';
   }
   if (e2 >= -52) {
-    const int32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
+    const uint32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
     const int32_t p10bits = pow10BitsForIndex(idx);
     const int32_t len = lengthForIndex(idx);
 #ifdef RYU_DEBUG
@@ -605,7 +605,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   uint32_t availableDigits = 0;
   int32_t exp = 0;
   if (e2 >= -52) {
-    const int32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
+    const uint32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
     const int32_t p10bits = pow10BitsForIndex(idx);
     const int32_t len = lengthForIndex(idx);
 #ifdef RYU_DEBUG
