@@ -462,9 +462,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         append_nine_digits(digits, result + index);
         index += 9;
       } else {
-        const int32_t maximum = precision - 9 * i;
+        const uint32_t maximum = precision - 9 * i;
         int32_t lastDigit = 0;
-        for (int32_t k = 0; k < 9 - maximum; ++k) {
+        for (uint32_t k = 0; k < 9 - maximum; ++k) {
           lastDigit = digits % 10;
           digits /= 10;
         }
