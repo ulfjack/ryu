@@ -628,7 +628,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         printedDigits += 9;
       } else if (digits != 0) {
         availableDigits = decimalLength9(digits);
-        exp = i * 9 + availableDigits - 1;
+        exp = i * 9 + (int32_t) availableDigits - 1;
         if (availableDigits > precision) {
           break;
         }
@@ -669,7 +669,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
         printedDigits += 9;
       } else if (digits != 0) {
         availableDigits = decimalLength9(digits);
-        exp = -(i + 1) * 9 + availableDigits - 1;
+        exp = -(i + 1) * 9 + (int32_t) availableDigits - 1;
         if (availableDigits > precision) {
           break;
         }
