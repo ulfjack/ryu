@@ -712,12 +712,11 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     // Is m * 2^e2 * 10^(precision + 1 - exp) integer?
     bool trailingZeros;
     // precision was already increased by 1, so we don't need to write + 1 here.
-    const int32_t rexp = precision - exp;
+    const int32_t rexp = (int32_t) precision - exp;
     const int32_t requiredTwos = -e2 - rexp;
     if (rexp < 0) {
       const int32_t requiredFives = -rexp;
-      trailingZeros =
-          (requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos))) && multipleOfPowerOf5(m2, requiredFives);
+      trailingZeros = (requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos))) && multipleOfPowerOf5(m2, (uint32_t) requiredFives);
     } else {
       trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos));
     }
