@@ -716,9 +716,9 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     const int32_t requiredTwos = -e2 - rexp;
     if (rexp < 0) {
       const int32_t requiredFives = -rexp;
-      trailingZeros = (requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos))) && multipleOfPowerOf5(m2, (uint32_t) requiredFives);
+      trailingZeros = (requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos))) && multipleOfPowerOf5(m2, (uint32_t) requiredFives);
     } else {
-      trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos));
+      trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
     }
     roundUp = trailingZeros ? 2 : 1;
 #ifdef RYU_DEBUG
