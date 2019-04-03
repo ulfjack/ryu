@@ -463,7 +463,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         index += 9;
       } else {
         const uint32_t maximum = precision - 9 * i;
-        int32_t lastDigit = 0;
+        uint32_t lastDigit = 0;
         for (uint32_t k = 0; k < 9 - maximum; ++k) {
           lastDigit = digits % 10;
           digits /= 10;
@@ -693,7 +693,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   if (availableDigits == 0) {
     digits = 0;
   }
-  int32_t lastDigit = 0;
+  uint32_t lastDigit = 0;
   if (availableDigits > maximum) {
     for (uint32_t k = 0; k < availableDigits - maximum; ++k) {
       lastDigit = digits % 10;
