@@ -201,7 +201,7 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 
 static inline void append_n_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
-  printf("DIGITS=%d\n", digits);
+  printf("DIGITS=%u\n", digits);
 #endif
 
   uint32_t i = 0;
@@ -234,7 +234,7 @@ static inline void append_n_digits(const uint32_t olength, uint32_t digits, char
 
 static inline void append_d_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
-  printf("DIGITS=%d\n", digits);
+  printf("DIGITS=%u\n", digits);
 #endif
 
   uint32_t i = 0;
@@ -270,7 +270,7 @@ static inline void append_d_digits(const uint32_t olength, uint32_t digits, char
 
 static inline void append_c_digits(const uint32_t count, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
-  printf("DIGITS=%d\n", digits);
+  printf("DIGITS=%u\n", digits);
 #endif
   uint32_t i = 0;
   for (; i < count - 1; i += 2) {
@@ -286,7 +286,7 @@ static inline void append_c_digits(const uint32_t count, uint32_t digits, char* 
 
 static inline void append_nine_digits(uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
-  printf("DIGITS=%d\n", digits);
+  printf("DIGITS=%u\n", digits);
 #endif
   if (digits == 0) {
     memset(result, '0', 9);
@@ -396,7 +396,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     const uint32_t p10bits = pow10BitsForIndex(idx);
     const int32_t len = (int32_t) lengthForIndex(idx);
 #ifdef RYU_DEBUG
-    printf("idx=%d\n", idx);
+    printf("idx=%u\n", idx);
     printf("len=%d\n", len);
 #endif
     for (int32_t i = len - 1; i >= 0; --i) {
@@ -470,7 +470,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
           digits /= 10;
         }
 #ifdef RYU_DEBUG
-        printf("lastDigit=%d\n", lastDigit);
+        printf("lastDigit=%u\n", lastDigit);
 #endif
         if (lastDigit != 5) {
           roundUp = lastDigit > 5;
@@ -611,7 +611,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     const uint32_t p10bits = pow10BitsForIndex(idx);
     const int32_t len = (int32_t) lengthForIndex(idx);
 #ifdef RYU_DEBUG
-    printf("idx=%d\n", idx);
+    printf("idx=%u\n", idx);
     printf("len=%d\n", len);
 #endif
     for (int32_t i = len - 1; i >= 0; --i) {
@@ -658,7 +658,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
 #ifdef RYU_DEBUG
       printf("exact=%" PRIu64 " * (%" PRIu64 " + %" PRIu64 " << 64) >> %d\n", m2, POW10_SPLIT_2[p][0], POW10_SPLIT_2[p][1], j);
-      printf("digits=%d\n", digits);
+      printf("digits=%u\n", digits);
 #endif
       if (printedDigits != 0) {
         if (printedDigits + 9 > precision) {
@@ -688,9 +688,9 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 
   const uint32_t maximum = precision - printedDigits;
 #ifdef RYU_DEBUG
-  printf("availableDigits=%d\n", availableDigits);
-  printf("digits=%d\n", digits);
-  printf("maximum=%d\n", maximum);
+  printf("availableDigits=%u\n", availableDigits);
+  printf("digits=%u\n", digits);
+  printf("maximum=%u\n", maximum);
 #endif
   if (availableDigits == 0) {
     digits = 0;
@@ -703,7 +703,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     }
   }
 #ifdef RYU_DEBUG
-  printf("lastDigit=%d\n", lastDigit);
+  printf("lastDigit=%u\n", lastDigit);
 #endif
   // 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
   int roundUp = 0;
