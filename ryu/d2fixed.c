@@ -710,15 +710,14 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     roundUp = lastDigit > 5;
   } else {
     // Is m * 2^e2 * 10^(precision + 1 - exp) integer?
-    bool trailingZeros;
     // precision was already increased by 1, so we don't need to write + 1 here.
     const int32_t rexp = (int32_t) precision - exp;
     const int32_t requiredTwos = -e2 - rexp;
+    bool trailingZeros = requiredTwos <= 0
+      || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
     if (rexp < 0) {
       const int32_t requiredFives = -rexp;
-      trailingZeros = (requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos))) && multipleOfPowerOf5(m2, (uint32_t) requiredFives);
-    } else {
-      trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
+      trailingZeros = trailingZeros && multipleOfPowerOf5(m2, (uint32_t) requiredFives);
     }
     roundUp = trailingZeros ? 2 : 1;
 #ifdef RYU_DEBUG
