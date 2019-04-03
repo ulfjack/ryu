@@ -475,8 +475,9 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
           roundUp = lastDigit > 5;
         } else {
           // Is m * 10^(additionalDigits + 1) / 2^(-e2) integer?
-          const int32_t requiredTwos = -e2 - precision - 1;
-          const bool trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, requiredTwos));
+          const int32_t requiredTwos = -e2 - (int32_t) precision - 1;
+          const bool trailingZeros = requiredTwos <= 0
+            || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
           roundUp = trailingZeros ? 2 : 1;
 #ifdef RYU_DEBUG
           printf("requiredTwos=%d\n", requiredTwos);
