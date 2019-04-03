@@ -127,7 +127,8 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 
 #if defined(HAS_64_BIT_INTRINSICS)
 // Returns the low 64 bits of the high 128 bits of the 256-bit product of a and b.
-static inline uint64_t umul256_hi128_lo64(const uint64_t aHi, const uint64_t aLo, const uint64_t bHi, const uint64_t bLo) {
+static inline uint64_t umul256_hi128_lo64(
+  const uint64_t aHi, const uint64_t aLo, const uint64_t bHi, const uint64_t bLo) {
   uint64_t b00Hi;
   const uint64_t b00Lo = umul128(aLo, bLo, &b00Hi);
   uint64_t b01Hi;
