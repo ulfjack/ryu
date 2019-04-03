@@ -651,7 +651,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
     for (int32_t i = MIN_BLOCK_2[idx]; i < 200; ++i) {
       const int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      const uint32_t p = POW10_OFFSET_2[idx] + i - MIN_BLOCK_2[idx];
+      const uint32_t p = POW10_OFFSET_2[idx] + (uint32_t) i - MIN_BLOCK_2[idx];
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
       digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
