@@ -27,8 +27,10 @@ public final class PrintFloatLookupTable {
   private static final int POW5_INV_BITCOUNT = 59; // max 63
 
   public static void main(String[] args) {
-    System.out.println("#define POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
-    System.out.println("static uint64_t POW5_INV_SPLIT[" + INV_TABLE_SIZE + "] = {");
+    System.out.println("#define RYU_FLOAT_POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
+    System.out.println("RYU_INLINE uint64_t float_pow5_inv_split(size_t index){");
+    System.out.println("  assert(index < " + INV_TABLE_SIZE + ");");
+    System.out.println("  static const uint64_t table[" + INV_TABLE_SIZE + "] = {");
     for (int i = 0; i < INV_TABLE_SIZE; i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
@@ -36,6 +38,9 @@ public final class PrintFloatLookupTable {
       BigInteger pow5inv = BigInteger.ONE.shiftLeft(j).divide(pow).add(BigInteger.ONE);
 
       long v = pow5inv.longValueExact();
+      if (i % 4 == 0) {
+        System.out.printf("   ");
+      }
       System.out.printf(" %19su", Long.toUnsignedString(v));
       if (i < INV_TABLE_SIZE - 1) {
         System.out.print(",");
@@ -45,16 +50,23 @@ public final class PrintFloatLookupTable {
       }
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
-    System.out.println("#define POW5_BITCOUNT " + POW5_BITCOUNT);
-    System.out.println("static uint64_t POW5_SPLIT[" + POS_TABLE_SIZE + "] = {");
+    System.out.println("#define RYU_FLOAT_POW5_BITCOUNT " + POW5_BITCOUNT);
+    System.out.println("RYU_INLINE uint64_t float_pow5_split(size_t index){");
+    System.out.println("  assert(index < " + POS_TABLE_SIZE + ");");
+    System.out.println("  static const uint64_t table[" + POS_TABLE_SIZE + "] = {");
     for (int i = 0; i < POS_TABLE_SIZE; i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
       BigInteger pow5 = pow.shiftRight(pow5len - POW5_BITCOUNT);
 
       long v = pow5.longValueExact();
+      if (i % 4 == 0) {
+        System.out.printf("   ");
+      }
       System.out.printf(" %19su", Long.toUnsignedString(v));
       if (i < POS_TABLE_SIZE - 1) {
         System.out.print(",");
@@ -64,6 +76,8 @@ public final class PrintFloatLookupTable {
       }
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
   }
 }

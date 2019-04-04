@@ -36,17 +36,19 @@ public final class PrintGenericLookupTable {
     BigInteger mask = BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.ONE);
 
     int pow5TableSize = 56; // log_5(2^128) + 1
-    System.out.println("#define POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
-    System.out.println("#define POW5_BITCOUNT " + POW5_BITCOUNT);
-    System.out.println("#define POW5_TABLE_SIZE " + pow5TableSize);
+    System.out.println("#define RYU_POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
+    System.out.println("#define RYU_POW5_BITCOUNT " + POW5_BITCOUNT);
+    System.out.println("#define RYU_POW5_TABLE_SIZE " + pow5TableSize);
     System.out.println();
-    System.out.println("static uint64_t GENERIC_POW5_TABLE[POW5_TABLE_SIZE][2] = {");
+    System.out.println("RYU_INLINE const uint64_t* generic_pow5_table(size_t index) {");
+    System.out.println("  assert(index < RYU_POW5_TABLE_SIZE);");
+    System.out.println("  static const uint64_t table[RYU_POW5_TABLE_SIZE][2] = {");
     for (int i = 0; i < pow5TableSize; i++) {
       if (i != 0) {
         System.out.println(",");
       }
       BigInteger pow = BigInteger.valueOf(5).pow(i);
-      System.out.print(" { ");
+      System.out.print("    { ");
       for (int j = 0; j < 2; j++) {
         if (j != 0) {
           System.out.print(", ");
@@ -60,16 +62,20 @@ public final class PrintGenericLookupTable {
       System.out.print(" }");
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
     int posPartialTableSize = (POS_TABLE_SIZE / pow5TableSize) + 1;
-    System.out.println("static uint64_t GENERIC_POW5_SPLIT[" + posPartialTableSize + "][4] = {");
+    System.out.println("RYU_INLINE const uint64_t* generic_pow5_split(size_t index) {");
+    System.out.println("  assert(index < " + posPartialTableSize + ");");
+    System.out.println("  static const uint64_t table[" + posPartialTableSize + "][4] = {");
     for (int i = 0; i < posPartialTableSize; i++) {
       if (i != 0) {
         System.out.println(",");
       }
       BigInteger pow = pos(pow5TableSize * i);
-      System.out.print(" { ");
+      System.out.print("    { ");
       for (int j = 0; j < 4; j++) {
         if (j != 0) {
           System.out.print(", ");
@@ -83,7 +89,9 @@ public final class PrintGenericLookupTable {
       System.out.print(" }");
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
     BitSet errorBits = new BitSet();
     for (int i = 0; i < POS_TABLE_SIZE; i++) {
@@ -105,27 +113,33 @@ public final class PrintGenericLookupTable {
       errorBits.set(2 * i + 1, (diff & 2) != 0);
     }
     long[] error = Arrays.copyOf(errorBits.toLongArray(), POS_TABLE_SIZE / 32 + 1);
-    System.out.println("static uint64_t POW5_ERRORS[" + error.length + "] = {");
+    System.out.println("RYU_INLINE uint64_t pow5_errors(size_t index) {");
+    System.out.println("  assert(index < " + error.length + ");");
+    System.out.println("  static const uint64_t table[" + error.length + "] = {");
     for (int i = 0; i < error.length; i++) {
       if (i % 4 == 0) {
         if (i != 0) {
           System.out.println();
         }
-        System.out.print(" ");
+        System.out.print("    ");
       }
       System.out.printf("0x%016xu, ", Long.valueOf(error[i]));
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
     int negPartialTableSize = (NEG_TABLE_SIZE + pow5TableSize - 1) / pow5TableSize + 1;
-    System.out.println("static uint64_t GENERIC_POW5_INV_SPLIT[" + negPartialTableSize + "][4] = {");
+    System.out.println("RYU_INLINE const uint64_t* generic_pow5_inv_split(size_t index) {");
+    System.out.println("  assert(index < " + negPartialTableSize + ");");
+    System.out.println("  static const uint64_t table[" + negPartialTableSize + "][4] = {");
     for (int i = 0; i < negPartialTableSize; i++) {
       if (i != 0) {
         System.out.println(",");
       }
       BigInteger inv = neg(i * pow5TableSize);
-      System.out.print(" { ");
+      System.out.print("    { ");
       for (int j = 0; j < 4; j++) {
         if (j != 0) {
           System.out.print(", ");
@@ -139,7 +153,9 @@ public final class PrintGenericLookupTable {
       System.out.print(" }");
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
     errorBits.clear();
     for (int i = 0; i < NEG_TABLE_SIZE; i++) {
       int base = (i + pow5TableSize - 1) / pow5TableSize;
@@ -160,10 +176,12 @@ public final class PrintGenericLookupTable {
       errorBits.set(2 * i + 1, (diff & 2) != 0);
     }
     error = Arrays.copyOf(errorBits.toLongArray(), NEG_TABLE_SIZE / 32 + 1);
-    System.out.println("static uint64_t POW5_INV_ERRORS[" + error.length + "] = {");
+    System.out.println("RYU_INLINE uint64_t pow5_inv_errors(size_t index) {");
+    System.out.println("  assert(index < " + error.length + ");");
+    System.out.println("  static const uint64_t table[" + error.length + "] = {");
     for (int i = 0; i < error.length; i++) {
       if (i % 4 == 0) {
-        System.out.print(" ");
+        System.out.print("    ");
       }
       System.out.printf("0x%016xu, ", Long.valueOf(error[i]));
       if (i % 4 == 3) {
@@ -171,17 +189,21 @@ public final class PrintGenericLookupTable {
       }
     }
     System.out.println();
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
     {
       int[] exps = new int[] { 1, 10, 55, 56, 300, 1000, 2345, 3210, POS_TABLE_SIZE - 3, POS_TABLE_SIZE - 1 };
-      System.out.println("static uint64_t EXACT_POW5[" + exps.length + "][4] = {");
+      System.out.println("RYU_INLINE const uint64_t* exact_pow5(size_t index) {");
+      System.out.println("  assert(index < " + exps.length + ");");
+      System.out.println("  static const uint64_t table[" + exps.length + "][4] = {");
       for (int i = 0; i < exps.length; i++) {
         if (i != 0) {
           System.out.println(",");
         }
         BigInteger exact = pos(exps[i]);
-        System.out.print(" { ");
+        System.out.print("    { ");
         for (int j = 0; j < 4; j++) {
           if (j != 0) {
             System.out.print(", ");
@@ -195,18 +217,22 @@ public final class PrintGenericLookupTable {
         System.out.print(" }");
       }
       System.out.println();
-      System.out.println("};");
+      System.out.println("  };");
+      System.out.println("  return table[index];");
+      System.out.println("}");
     }
 
     {
       int[] exps = new int[] { 1, 10, 55, 56, 300, 1000, 2345, 3210, NEG_TABLE_SIZE - 3, NEG_TABLE_SIZE - 1 };
-      System.out.println("static uint64_t EXACT_INV_POW5[" + exps.length + "][4] = {");
+      System.out.println("RYU_INLINE const uint64_t* exact_inv_pow5(size_t index) {");
+      System.out.println("  assert(size < " + exps.length + ");"); 
+      System.out.println("  static const uint64_t table[" + exps.length + "][4] = {");
       for (int i = 0; i < exps.length; i++) {
         if (i != 0) {
           System.out.println(",");
         }
         BigInteger exact = neg(exps[i]).add(BigInteger.ONE);
-        System.out.print(" { ");
+        System.out.print("    { ");
         for (int j = 0; j < 4; j++) {
           if (j != 0) {
             System.out.print(", ");
@@ -220,7 +246,9 @@ public final class PrintGenericLookupTable {
         System.out.print(" }");
       }
       System.out.println();
-      System.out.println("};");
+      System.out.println("  };");
+      System.out.println("  return table[index];");
+      System.out.println("}");
     }
   }
 

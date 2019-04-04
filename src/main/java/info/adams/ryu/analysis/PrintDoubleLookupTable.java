@@ -30,8 +30,10 @@ public final class PrintDoubleLookupTable {
   public static void main(String[] args) {
     BigInteger mask = BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.ONE);
 
-    System.out.println("#define POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
-    System.out.println("static uint64_t POW5_INV_SPLIT[" + NEG_TABLE_SIZE + "][2] = {");
+    System.out.println("#define RYU_POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
+    System.out.println("RYU_INLINE const uint64_t* double_pow5_inv_split(size_t index) {");
+    System.out.println("  assert(index < " + NEG_TABLE_SIZE + ");");
+    System.out.println("  static const uint64_t table[" + NEG_TABLE_SIZE + "][2] = {");
     for (int i = 0; i < NEG_TABLE_SIZE; i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
@@ -41,25 +43,38 @@ public final class PrintDoubleLookupTable {
 
       BigInteger pow5High = inv.shiftRight(64);
       BigInteger pow5Low = inv.and(mask);
+      if (i % 2 == 0) {
+        System.out.printf("   ");
+      }
       System.out.printf(" { %20su, %20su },", pow5Low, pow5High);
       if (i % 2 == 1) {
         System.out.println();
       }
     }
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
-    System.out.println("#define POW5_BITCOUNT " + POW5_BITCOUNT);
-    System.out.println("static uint64_t POW5_SPLIT[" + POS_TABLE_SIZE + "][2] = {");
+    System.out.println("#define RYU_POW5_BITCOUNT " + POW5_BITCOUNT);
+
+    System.out.println("RYU_INLINE const uint64_t* double_pow5_split(size_t index) {");
+    System.out.println("  assert(index < " + POS_TABLE_SIZE + ");");
+    System.out.println("  static const uint64_t table[" + POS_TABLE_SIZE + "][2] = {");
     for (int i = 0; i < POS_TABLE_SIZE; i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
       BigInteger pow5High = pow.shiftRight(pow5len - POW5_BITCOUNT + 64);
       BigInteger pow5Low = pow.shiftRight(pow5len - POW5_BITCOUNT).and(mask);
+      if (i % 2 == 0) {
+        System.out.printf("   ");
+      }
       System.out.printf(" { %20su, %20su },", pow5Low, pow5High);
       if (i % 2 == 1) {
         System.out.println();
       }
     }
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
   }
 }

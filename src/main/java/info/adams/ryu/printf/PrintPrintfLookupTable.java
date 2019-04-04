@@ -54,7 +54,9 @@ public final class PrintPrintfLookupTable {
     for (int idx = 0; idx < TABLE_SIZE; idx++) {
       totalLength += lengthForIndex(idx);
     }
-    System.out.println("static uint64_t POW10_SPLIT[" + totalLength + "][3] = {");
+    System.out.println("RYU_INLINE const uint64_t* pow10_split(size_t index) {");
+    System.out.println("  assert(index < " + totalLength + ");");
+    System.out.println("  static const uint64_t table[" + totalLength + "][3] = {");
     for (int idx = 0; idx < TABLE_SIZE; idx++) {
       int pow10bits = pow10BitsForIndex(idx);
       int len = lengthForIndex(idx);
@@ -66,7 +68,7 @@ public final class PrintPrintfLookupTable {
         if (v.bitLength() > 192) {
           throw new IllegalStateException("" + v.bitLength());
         }
-        System.out.printf(" { ");
+        System.out.printf("    { ");
         for (int j = 0; j < 3; j++) {
           if (j != 0) {
             System.out.print(", ");
@@ -77,7 +79,9 @@ public final class PrintPrintfLookupTable {
         System.out.printf(" },\n");
       }
     }
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
   }
 
   private static void printInverseTables() {
@@ -119,30 +123,38 @@ public final class PrintPrintfLookupTable {
       }
     }
 
-    System.out.println("static const uint16_t POW10_OFFSET_2[TABLE_SIZE_2] = {");
-    System.out.print(" ");
+    System.out.println("RYU_INLINE uint16_t pow10_offset_2(size_t index) {");
+    System.out.println("  assert(index < RYU_TABLE_SIZE_2);");
+    System.out.println("  static const uint16_t table[RYU_TABLE_SIZE_2] = {");
+    System.out.print("    ");
     for (int idx = 0; idx < TABLE_SIZE_2; idx++) {
       System.out.printf(" %4d,", Integer.valueOf(offset[idx]));
       if (idx % 10 == 9) {
         System.out.println();
-        System.out.print(" ");
+        System.out.print("    ");
       }
     }
     System.out.printf(" %4d\n", Integer.valueOf(data.size()));
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
     System.out.println();
 
-    System.out.println("static const uint8_t MIN_BLOCK_2[TABLE_SIZE_2] = {");
-    System.out.print(" ");
+    System.out.println("RYU_INLINE uint8_t min_block_2(size_t index) {");
+    System.out.println("  assert(index < RYU_TABLE_SIZE_2);");
+    System.out.println("  static const uint8_t table[RYU_TABLE_SIZE_2] = {");
+    System.out.print("    ");
     for (int idx = 0; idx < TABLE_SIZE_2; idx++) {
       System.out.printf(" %4d,", Integer.valueOf(min[idx]));
       if (idx % 10 == 9) {
         System.out.println();
-        System.out.print(" ");
+        System.out.print("    ");
       }
     }
     System.out.printf(" %4d\n", Integer.valueOf(0));
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
 
 //    System.out.println("static const uint8_t MAX_BLOCK_2[TABLE_SIZE_2] = {");
 //    System.out.print(" ");
@@ -157,10 +169,12 @@ public final class PrintPrintfLookupTable {
 //    System.out.println("};");
 
     System.out.println();
-    System.out.println("static const uint64_t POW10_SPLIT_2[" + data.size() + "][3] = {");
+    System.out.println("RYU_INLINE const uint64_t* pow10_split_2(size_t index) {");
+    System.out.println("  assert(index < " + data.size() + ");");
+    System.out.println("  static const uint64_t table[" + data.size() + "][3] = {");
     for (int i = 0; i < data.size(); i++) {
       BigInteger v = data.get(i);
-      System.out.printf("  { ");
+      System.out.printf("    { ");
       for (int j = 0; j < 3; j++) {
         if (j != 0) {
           System.out.print(", ");
@@ -170,7 +184,9 @@ public final class PrintPrintfLookupTable {
       }
       System.out.printf(" },\n");
     }
-    System.out.println("};");
+    System.out.println("  };");
+    System.out.println("  return table[index];");
+    System.out.println("}");
   }
 
   private static int pow10BitsForIndex(int idx) {
