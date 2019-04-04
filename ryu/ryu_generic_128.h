@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#define FD128_EXCEPTIONAL_EXPONENT 0x7FFFFFFF
+#define RYU_FD128_EXCEPTIONAL_EXPONENT 0x7FFFFFFF
 
 // A floating decimal representing (-1)^s * m * 10^e.
 struct floating_decimal_128 {

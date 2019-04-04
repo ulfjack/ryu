@@ -10,6 +10,7 @@ cc_library(
     "d2s_intrinsics.h",
     "digit_table.h",
     "common.h",
+    "config.h",
   ],
   hdrs = ["ryu.h"],
 )
@@ -23,6 +24,7 @@ cc_library(
     "d2fixed_full_table.h",
     "digit_table.h",
     "common.h",
+    "config.h",
   ],
   hdrs = ["ryu2.h"],
 )
@@ -32,6 +34,7 @@ cc_library(
   srcs = [
     "generic_128.c",
     "generic_128.h",
+    "config.h",
   ],
   hdrs = [
     "ryu_generic_128.h",
@@ -43,5 +46,6 @@ cc_library(
   hdrs = [
     "common.h",
     "d2s_intrinsics.h",
+    "config.h",
   ],
 )

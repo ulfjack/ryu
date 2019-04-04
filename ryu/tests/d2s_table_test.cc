@@ -39,8 +39,8 @@ TEST(D2sTableTest, double_computePow5) {
   for (int i = 0; i < 326; i++) {
     uint64_t m[2];
     double_computePow5(i, m);
-    ASSERT_EQ(m[0], DOUBLE_POW5_SPLIT[i][0]);
-    ASSERT_EQ(m[1], DOUBLE_POW5_SPLIT[i][1]);
+    ASSERT_EQ(m[0], double_pow5_split(i)[0]);
+    ASSERT_EQ(m[1], double_pow5_split(i)[1]);
   }
 }
 
@@ -50,8 +50,8 @@ TEST(D2sTableTest, compute_offsets_for_double_computePow5) {
   for (int i = 0; i < 326; i++) {
     uint64_t m[2];
     double_computePow5(i, m);
-    if (m[0] != DOUBLE_POW5_SPLIT[i][0]) {
-      offsets[i / POW5_TABLE_SIZE] |= 1 << (i % POW5_TABLE_SIZE);
+    if (m[0] != double_pow5_split(i)[0]) {
+      offsets[i / RYU_POW5_TABLE_SIZE] |= 1 << (i % RYU_POW5_TABLE_SIZE);
       totalErrors++;
     }
   }
@@ -67,8 +67,8 @@ TEST(D2sTableTest, double_computeInvPow5) {
   for (int i = 0; i < 292; i++) {
     uint64_t m[2];
     double_computeInvPow5(i, m);
-    ASSERT_EQ(m[0], DOUBLE_POW5_INV_SPLIT[i][0]);
-    ASSERT_EQ(m[1], DOUBLE_POW5_INV_SPLIT[i][1]);
+    ASSERT_EQ(m[0], double_pow5_inv_split(i)[0]);
+    ASSERT_EQ(m[1], double_pow5_inv_split(i)[1]);
   }
 }
 
@@ -78,8 +78,8 @@ TEST(D2sTableTest, compute_offsets_for_double_computeInvPow5) {
   for (int i = 0; i < 292; i++) {
     uint64_t m[2];
     double_computeInvPow5(i, m);
-    if (m[0] != DOUBLE_POW5_INV_SPLIT[i][0]) {
-      offsets[i / 16] |= ((DOUBLE_POW5_INV_SPLIT[i][0] - m[0]) & 3) << ((i % 16) << 1);
+    if (m[0] != double_pow5_inv_split(i)[0]) {
+      offsets[i / 16] |= ((double_pow5_inv_split(i)[0] - m[0]) & 3) << ((i % 16) << 1);
       totalErrors++;
     }
   }

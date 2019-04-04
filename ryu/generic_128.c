@@ -44,37 +44,43 @@ static char* s(uint128_t v) {
 }
 #endif
 
-#define ONE ((uint128_t) 1)
+#define RYU_ONE ((uint128_t) 1)
 
-#define FLOAT_MANTISSA_BITS 23
-#define FLOAT_EXPONENT_BITS 8
+#define RYU_FLOAT_MANTISSA_BITS 23
+#define RYU_FLOAT_EXPONENT_BITS 8
 
-struct floating_decimal_128 float_to_fd128(float f) {
+RYU_NAMESPACE_BEGIN;
+
+RYU_PUBLIC_FUNC struct floating_decimal_128 float_to_fd128(float f) {
+  RYU_USING_NAMESPACE_DETAIL;
   uint32_t bits = 0;
   memcpy(&bits, &f, sizeof(float));
-  return generic_binary_to_decimal(bits, FLOAT_MANTISSA_BITS, FLOAT_EXPONENT_BITS, false);
+  return generic_binary_to_decimal(bits, RYU_FLOAT_MANTISSA_BITS, RYU_FLOAT_EXPONENT_BITS, false);
 }
 
-#define DOUBLE_MANTISSA_BITS 52
-#define DOUBLE_EXPONENT_BITS 11
+#define RYU_DOUBLE_MANTISSA_BITS 52
+#define RYU_DOUBLE_EXPONENT_BITS 11
 
-struct floating_decimal_128 double_to_fd128(double d) {
+RYU_PUBLIC_FUNC struct floating_decimal_128 double_to_fd128(double d) {
+  RYU_USING_NAMESPACE_DETAIL;
   uint64_t bits = 0;
   memcpy(&bits, &d, sizeof(double));
-  return generic_binary_to_decimal(bits, DOUBLE_MANTISSA_BITS, DOUBLE_EXPONENT_BITS, false);
+  return generic_binary_to_decimal(bits, RYU_DOUBLE_MANTISSA_BITS, RYU_DOUBLE_EXPONENT_BITS, false);
 }
 
-#define LONG_DOUBLE_MANTISSA_BITS 64
-#define LONG_DOUBLE_EXPONENT_BITS 15
+#define RYU_LONG_DOUBLE_MANTISSA_BITS 64
+#define RYU_LONG_DOUBLE_EXPONENT_BITS 15
 
-struct floating_decimal_128 long_double_to_fd128(long double d) {
+RYU_PUBLIC_FUNC struct floating_decimal_128 long_double_to_fd128(long double d) {
+  RYU_USING_NAMESPACE_DETAIL;
   uint128_t bits = 0;
   memcpy(&bits, &d, sizeof(long double));
-  return generic_binary_to_decimal(bits, LONG_DOUBLE_MANTISSA_BITS, LONG_DOUBLE_EXPONENT_BITS, true);
+  return generic_binary_to_decimal(bits, RYU_LONG_DOUBLE_MANTISSA_BITS, RYU_LONG_DOUBLE_EXPONENT_BITS, true);
 }
 
-struct floating_decimal_128 generic_binary_to_decimal(
+RYU_PUBLIC_FUNC struct floating_decimal_128 generic_binary_to_decimal(
     const uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits, const bool explicitLeadingBit) {
+  RYU_USING_NAMESPACE_DETAIL;
 #ifdef RYU_DEBUG
   printf("IN=");
   for (int32_t bit = 127; bit >= 0; --bit) {
@@ -85,8 +91,8 @@ struct floating_decimal_128 generic_binary_to_decimal(
 
   const uint32_t bias = (1u << (exponentBits - 1)) - 1;
   const bool ieeeSign = ((bits >> (mantissaBits + exponentBits)) & 1) != 0;
-  const uint128_t ieeeMantissa = bits & ((ONE << mantissaBits) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((ONE << exponentBits) - 1u));
+  const uint128_t ieeeMantissa = bits & ((RYU_ONE << mantissaBits) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> mantissaBits) & ((RYU_ONE << exponentBits) - 1u));
 
   if (ieeeExponent == 0 && ieeeMantissa == 0) {
     struct floating_decimal_128 fd;
@@ -97,8 +103,8 @@ struct floating_decimal_128 generic_binary_to_decimal(
   }
   if (ieeeExponent == ((1u << exponentBits) - 1u)) {
     struct floating_decimal_128 fd;
-    fd.mantissa = explicitLeadingBit ? ieeeMantissa & ((ONE << (mantissaBits - 1)) - 1) : ieeeMantissa;
-    fd.exponent = FD128_EXCEPTIONAL_EXPONENT;
+    fd.mantissa = explicitLeadingBit ? ieeeMantissa & ((RYU_ONE << (mantissaBits - 1)) - 1) : ieeeMantissa;
+    fd.exponent = RYU_FD128_EXCEPTIONAL_EXPONENT;
     fd.sign = ieeeSign;
     return fd;
   }
@@ -120,7 +126,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
       m2 = ieeeMantissa;
     } else {
       e2 = ieeeExponent - bias - mantissaBits - 2;
-      m2 = (ONE << mantissaBits) | ieeeMantissa;
+      m2 = (RYU_ONE << mantissaBits) | ieeeMantissa;
     }
   }
   const bool even = (m2 & 1) == 0;
@@ -145,7 +151,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
     // This expression is slightly faster than max(0, log10Pow2(e2) - 1).
     const uint32_t q = log10Pow2(e2) - (e2 > 3);
     e10 = q;
-    const int32_t k = FLOAT_128_POW5_INV_BITCOUNT + pow5bits(q) - 1;
+    const int32_t k = RYU_FLOAT_128_POW5_INV_BITCOUNT + pow5bits(q) - 1;
     const int32_t i = -e2 + q + k;
     uint64_t pow5[4];
     generic_computeInvPow5(q, pow5);
@@ -176,7 +182,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
     const uint32_t q = log10Pow5(-e2) - (-e2 > 1);
     e10 = q + e2;
     const int32_t i = -e2 - q;
-    const int32_t k = pow5bits(i) - FLOAT_128_POW5_BITCOUNT;
+    const int32_t k = pow5bits(i) - RYU_FLOAT_128_POW5_BITCOUNT;
     const int32_t j = q - k;
     uint64_t pow5[4];
     generic_computePow5(i, pow5);
@@ -272,6 +278,8 @@ struct floating_decimal_128 generic_binary_to_decimal(
   return fd;
 }
 
+RYU_NAMESPACE_DETAIL_BEGIN;
+
 static inline int copy_special_str(char * const result, const struct floating_decimal_128 fd) {
   if (fd.mantissa) {
     memcpy(result, "NaN", 3);
@@ -284,8 +292,11 @@ static inline int copy_special_str(char * const result, const struct floating_de
   return fd.sign + 8;
 }
 
-int generic_to_chars(const struct floating_decimal_128 v, char* const result) {
-  if (v.exponent == FD128_EXCEPTIONAL_EXPONENT) {
+RYU_NAMESPACE_DETAIL_END;
+
+RYU_PUBLIC_FUNC int generic_to_chars(const struct floating_decimal_128 v, char* const result) {
+  RYU_USING_NAMESPACE_DETAIL;
+  if (v.exponent == RYU_FD128_EXCEPTIONAL_EXPONENT) {
     return copy_special_str(result, v);
   }
 
@@ -336,3 +347,5 @@ int generic_to_chars(const struct floating_decimal_128 v, char* const result) {
   index += elength;
   return index;
 }
+
+RYU_NAMESPACE_END;

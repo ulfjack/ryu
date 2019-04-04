@@ -53,6 +53,16 @@
 #include "ryu/d2s.h"
 #include "ryu/d2s_intrinsics.h"
 
+#define RYU_DOUBLE_MANTISSA_BITS 52
+#define RYU_DOUBLE_EXPONENT_BITS 11
+#define RYU_DOUBLE_BIAS 1023
+
+#define RYU_DOUBLE_POW5_INV_BITCOUNT 122
+#define RYU_DOUBLE_POW5_BITCOUNT 121
+
+RYU_NAMESPACE_BEGIN;
+RYU_NAMESPACE_DETAIL_BEGIN;
+
 // We need a 64x128-bit multiplication and a subsequent 128-bit shift.
 // Multiplication:
 //   The 64-bit factor is variable and passed in, the 128-bit factor comes
@@ -93,13 +103,13 @@
 #if defined(HAS_UINT128)
 
 // Best case: use 128-bit type.
-static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+RYU_INLINE uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   const uint128_t b0 = ((uint128_t) m) * mul[0];
   const uint128_t b2 = ((uint128_t) m) * mul[1];
   return (uint64_t) (((b0 >> 64) + b2) >> (j - 64));
 }
 
-static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
+RYU_INLINE uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
   uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
 //  m <<= 2;
 //  uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
@@ -120,7 +130,7 @@ static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, 
 
 #elif defined(HAS_64_BIT_INTRINSICS)
 
-static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+RYU_INLINE uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   // m is maximum 55 bits
   uint64_t high1;                                   // 128
   const uint64_t low1 = umul128(m, mul[1], &high1); // 64
@@ -133,7 +143,7 @@ static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, con
   return shiftright128(sum, high1, j - 64);
 }
 
-static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
+RYU_INLINE uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, const int32_t j,
   uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   *vp = mulShift(4 * m + 2, mul, j);
   *vm = mulShift(4 * m - 1 - mmShift, mul, j);
@@ -142,7 +152,7 @@ static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, 
 
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
-static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const int32_t j,
+RYU_INLINE uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const int32_t j,
   uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   m <<= 1;
   // m is maximum 55 bits
@@ -177,7 +187,7 @@ static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const 
 
 #endif // HAS_64_BIT_INTRINSICS
 
-static inline uint32_t decimalLength17(const uint64_t v) {
+RYU_INLINE uint32_t decimalLength17(const uint64_t v) {
   // This is slightly faster than a loop.
   // The average output length is 16.38 digits, so we check high-to-low.
   // Function precondition: v is not an 18, 19, or 20-digit number.
@@ -208,16 +218,16 @@ typedef struct floating_decimal_64 {
   int32_t exponent;
 } floating_decimal_64;
 
-static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
+RYU_INLINE floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_t ieeeExponent) {
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
     // We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
+    e2 = 1 - RYU_DOUBLE_BIAS - RYU_DOUBLE_MANTISSA_BITS - 2;
     m2 = ieeeMantissa;
   } else {
-    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS - 2;
-    m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+    e2 = (int32_t) ieeeExponent - RYU_DOUBLE_BIAS - RYU_DOUBLE_MANTISSA_BITS - 2;
+    m2 = (1ull << RYU_DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
   const bool even = (m2 & 1) == 0;
   const bool acceptBounds = even;
@@ -244,14 +254,14 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     // This expression is slightly faster than max(0, log10Pow2(e2) - 1).
     const uint32_t q = log10Pow2(e2) - (e2 > 3);
     e10 = (int32_t) q;
-    const int32_t k = DOUBLE_POW5_INV_BITCOUNT + pow5bits((int32_t) q) - 1;
+    const int32_t k = RYU_DOUBLE_POW5_INV_BITCOUNT + pow5bits((int32_t) q) - 1;
     const int32_t i = -e2 + (int32_t) q + k;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computeInvPow5(q, pow5);
     vr = mulShiftAll(m2, pow5, i, &vp, &vm, mmShift);
 #else
-    vr = mulShiftAll(m2, DOUBLE_POW5_INV_SPLIT[q], i, &vp, &vm, mmShift);
+    vr = mulShiftAll(m2, double_pow5_inv_split(q), i, &vp, &vm, mmShift);
 #endif
 #ifdef RYU_DEBUG
     printf("%" PRIu64 " * 2^%d / 10^%u\n", mv, e2, q);
@@ -279,14 +289,14 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
     const uint32_t q = log10Pow5(-e2) - (-e2 > 1);
     e10 = (int32_t) q + e2;
     const int32_t i = -e2 - (int32_t) q;
-    const int32_t k = pow5bits(i) - DOUBLE_POW5_BITCOUNT;
+    const int32_t k = pow5bits(i) - RYU_DOUBLE_POW5_BITCOUNT;
     const int32_t j = (int32_t) q - k;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
     double_computePow5(i, pow5);
     vr = mulShiftAll(m2, pow5, j, &vp, &vm, mmShift);
 #else
-    vr = mulShiftAll(m2, DOUBLE_POW5_SPLIT[i], j, &vp, &vm, mmShift);
+    vr = mulShiftAll(m2, double_pow5_split(i), j, &vp, &vm, mmShift);
 #endif
 #ifdef RYU_DEBUG
     printf("%" PRIu64 " * 5^%d / 10^%u\n", mv, -e2, q);
@@ -432,7 +442,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   return fd;
 }
 
-static inline int to_chars(const floating_decimal_64 v, const bool sign, char* const result) {
+RYU_INLINE int to_chars(const floating_decimal_64 v, const bool sign, char* const result) {
   // Step 5: Print the decimal representation.
   int index = 0;
   if (sign) {
@@ -455,7 +465,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   //   result[index + olength - i] = (char) ('0' + c);
   // }
   // result[index] = '0' + output % 10;
-
+  const char* dig_table = digit_table();
   uint32_t i = 0;
   // We prefer 32-bit operations, even on 64-bit platforms.
   // We have at most 17 digits, and uint32_t can store 9 digits.
@@ -474,10 +484,10 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     const uint32_t c1 = (c / 100) << 1;
     const uint32_t d0 = (d % 100) << 1;
     const uint32_t d1 = (d / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
-    memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
-    memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
+    memcpy(result + index + olength - i - 1, dig_table + c0, 2);
+    memcpy(result + index + olength - i - 3, dig_table + c1, 2);
+    memcpy(result + index + olength - i - 5, dig_table + d0, 2);
+    memcpy(result + index + olength - i - 7, dig_table + d1, 2);
     i += 8;
   }
   uint32_t output2 = (uint32_t) output;
@@ -490,21 +500,21 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     output2 /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
+    memcpy(result + index + olength - i - 1, dig_table + c0, 2);
+    memcpy(result + index + olength - i - 3, dig_table + c1, 2);
     i += 4;
   }
   if (output2 >= 100) {
     const uint32_t c = (output2 % 100) << 1;
     output2 /= 100;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
+    memcpy(result + index + olength - i - 1, dig_table + c, 2);
     i += 2;
   }
   if (output2 >= 10) {
     const uint32_t c = output2 << 1;
     // We can't use memcpy here: the decimal dot goes between these two digits.
-    result[index + olength - i] = DIGIT_TABLE[c + 1];
-    result[index] = DIGIT_TABLE[c];
+    result[index + olength - i] = dig_table[c + 1];
+    result[index] = dig_table[c];
   } else {
     result[index] = (char) ('0' + output2);
   }
@@ -527,11 +537,11 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
 
   if (exp >= 100) {
     const int32_t c = exp % 10;
-    memcpy(result + index, DIGIT_TABLE + 2 * (exp / 10), 2);
+    memcpy(result + index, dig_table + 2 * (exp / 10), 2);
     result[index + 2] = (char) ('0' + c);
     index += 3;
   } else if (exp >= 10) {
-    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
+    memcpy(result + index, dig_table + 2 * exp, 2);
     index += 2;
   } else {
     result[index++] = (char) ('0' + exp);
@@ -540,10 +550,10 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   return index;
 }
 
-static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent,
+RYU_INLINE bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent,
   floating_decimal_64* const v) {
-  const uint64_t m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
-  const int32_t e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+  const uint64_t m2 = (1ull << RYU_DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+  const int32_t e2 = (int32_t) ieeeExponent - RYU_DOUBLE_BIAS - RYU_DOUBLE_MANTISSA_BITS;
 
   if (e2 > 0) {
     // f = m2 * 2^e2 >= 2^53 is an integer.
@@ -572,7 +582,10 @@ static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t iee
   return true;
 }
 
-int d2s_buffered_n(double f, char* result) {
+RYU_NAMESPACE_DETAIL_END;
+
+RYU_PUBLIC_FUNC int d2s_buffered_n(double f, char* result) {
+  RYU_USING_NAMESPACE_DETAIL;
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint64_t bits = double_to_bits(f);
 
@@ -585,11 +598,11 @@ int d2s_buffered_n(double f, char* result) {
 #endif
 
   // Decode bits into sign, mantissa, and exponent.
-  const bool ieeeSign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  const bool ieeeSign = ((bits >> (RYU_DOUBLE_MANTISSA_BITS + RYU_DOUBLE_EXPONENT_BITS)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << RYU_DOUBLE_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> RYU_DOUBLE_MANTISSA_BITS) & ((1u << RYU_DOUBLE_EXPONENT_BITS) - 1));
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
+  if (ieeeExponent == ((1u << RYU_DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
     return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
   }
 
@@ -616,15 +629,17 @@ int d2s_buffered_n(double f, char* result) {
   return to_chars(v, ieeeSign, result);
 }
 
-void d2s_buffered(double f, char* result) {
+RYU_PUBLIC_FUNC void d2s_buffered(double f, char* result) {
   const int index = d2s_buffered_n(f, result);
 
   // Terminate the string.
   result[index] = '\0';
 }
 
-char* d2s(double f) {
+RYU_PUBLIC_FUNC char* d2s(double f) {
   char* const result = (char*) malloc(25);
   d2s_buffered(f, result);
   return result;
 }
+
+RYU_NAMESPACE_END;

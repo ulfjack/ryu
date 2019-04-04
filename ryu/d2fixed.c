@@ -48,14 +48,17 @@ typedef __uint128_t uint128_t;
 #include "ryu/d2fixed_full_table.h"
 #include "ryu/d2s_intrinsics.h"
 
-#define DOUBLE_MANTISSA_BITS 52
-#define DOUBLE_EXPONENT_BITS 11
-#define DOUBLE_BIAS 1023
+#define RYU_DOUBLE_MANTISSA_BITS 52
+#define RYU_DOUBLE_EXPONENT_BITS 11
+#define RYU_DOUBLE_BIAS 1023
 
-#define POW10_ADDITIONAL_BITS 120
+#define RYU_POW10_ADDITIONAL_BITS 120
+
+RYU_NAMESPACE_BEGIN;
+RYU_NAMESPACE_DETAIL_BEGIN;
 
 #if defined(HAS_UINT128)
-static inline uint128_t umul256(const uint128_t a, const uint64_t bHi, const uint64_t bLo, uint128_t* const productHi) {
+RYU_INLINE uint128_t umul256(const uint128_t a, const uint64_t bHi, const uint64_t bLo, uint128_t* const productHi) {
   const uint64_t aLo = (uint64_t)a;
   const uint64_t aHi = (uint64_t)(a >> 64);
 
@@ -83,7 +86,7 @@ static inline uint128_t umul256(const uint128_t a, const uint64_t bHi, const uin
 }
 
 // Returns the high 128 bits of the 256-bit product of a and b.
-static inline uint128_t umul256_hi(const uint128_t a, const uint64_t bHi, const uint64_t bLo) {
+RYU_INLINE uint128_t umul256_hi(const uint128_t a, const uint64_t bHi, const uint64_t bLo) {
   // Reuse the umul256 implementation.
   // Optimizers will likely eliminate the instructions used to compute the
   // low part of the product.
@@ -94,7 +97,7 @@ static inline uint128_t umul256_hi(const uint128_t a, const uint64_t bHi, const 
 
 // Unfortunately, gcc/clang do not automatically turn a 128-bit integer division
 // into a multiplication, so we have to do it manually.
-static inline uint32_t uint128_mod1e9(const uint128_t v) {
+RYU_INLINE uint32_t uint128_mod1e9(const uint128_t v) {
   // After multiplying, we're going to shift right by 29, then truncate to uint32_t.
   // This means that we need only 29 + 32 = 61 bits, so we can truncate to uint64_t before shifting.
   const uint64_t multiplied = (uint64_t) umul256_hi(v, 0x89705F4136B4A597u, 0x31680A88F8953031u);
@@ -106,7 +109,7 @@ static inline uint32_t uint128_mod1e9(const uint128_t v) {
 }
 
 // Best case: use 128-bit type.
-static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+RYU_INLINE uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   const uint128_t b0 = ((uint128_t) m) * mul[0]; // 0
   const uint128_t b1 = ((uint128_t) m) * mul[1]; // 64
   const uint128_t b2 = ((uint128_t) m) * mul[2]; // 128
@@ -127,7 +130,7 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 
 #if defined(HAS_64_BIT_INTRINSICS)
 // Returns the low 64 bits of the high 128 bits of the 256-bit product of a and b.
-static inline uint64_t umul256_hi128_lo64(
+RYU_INLINE uint64_t umul256_hi128_lo64(
   const uint64_t aHi, const uint64_t aLo, const uint64_t bHi, const uint64_t bLo) {
   uint64_t b00Hi;
   const uint64_t b00Lo = umul128(aLo, bLo, &b00Hi);
@@ -146,7 +149,7 @@ static inline uint64_t umul256_hi128_lo64(
   return b11Lo + temp1Hi + temp2Hi;
 }
 
-static inline uint32_t uint128_mod1e9(const uint64_t vHi, const uint64_t vLo) {
+RYU_INLINE uint32_t uint128_mod1e9(const uint64_t vHi, const uint64_t vLo) {
   // After multiplying, we're going to shift right by 29, then truncate to uint32_t.
   // This means that we need only 29 + 32 = 61 bits, so we can truncate to uint64_t before shifting.
   const uint64_t multiplied = umul256_hi128_lo64(vHi, vLo, 0x89705F4136B4A597u, 0x31680A88F8953031u);
@@ -158,7 +161,7 @@ static inline uint32_t uint128_mod1e9(const uint64_t vHi, const uint64_t vLo) {
 }
 #endif // HAS_64_BIT_INTRINSICS
 
-static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+RYU_INLINE uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const mul, const int32_t j) {
   uint64_t high0;                                   // 64
   const uint64_t low0 = umul128(m, mul[0], &high0); // 0
   uint64_t high1;                                   // 128
@@ -199,12 +202,13 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 }
 #endif // HAS_UINT128
 
-static inline void append_n_digits(const uint32_t olength, uint32_t digits, char* const result) {
+RYU_INLINE void append_n_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
 #endif
 
   uint32_t i = 0;
+  const char* dig_table = digit_table();
   while (digits >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = digits - 10000 * (digits / 10000);
@@ -214,30 +218,31 @@ static inline void append_n_digits(const uint32_t olength, uint32_t digits, char
     digits /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
-    memcpy(result + olength - i - 2, DIGIT_TABLE + c0, 2);
-    memcpy(result + olength - i - 4, DIGIT_TABLE + c1, 2);
+    memcpy(result + olength - i - 2, dig_table + c0, 2);
+    memcpy(result + olength - i - 4, dig_table + c1, 2);
     i += 4;
   }
   if (digits >= 100) {
     const uint32_t c = (digits % 100) << 1;
     digits /= 100;
-    memcpy(result + olength - i - 2, DIGIT_TABLE + c, 2);
+    memcpy(result + olength - i - 2, dig_table + c, 2);
     i += 2;
   }
   if (digits >= 10) {
     const uint32_t c = digits << 1;
-    memcpy(result + olength - i - 2, DIGIT_TABLE + c, 2);
+    memcpy(result + olength - i - 2, dig_table + c, 2);
   } else {
     result[0] = (char) ('0' + digits);
   }
 }
 
-static inline void append_d_digits(const uint32_t olength, uint32_t digits, char* const result) {
+RYU_INLINE void append_d_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
 #endif
 
   uint32_t i = 0;
+  const char* dig_table = digit_table();
   while (digits >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = digits - 10000 * (digits / 10000);
@@ -247,36 +252,37 @@ static inline void append_d_digits(const uint32_t olength, uint32_t digits, char
     digits /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
-    memcpy(result + olength + 1 - i - 2, DIGIT_TABLE + c0, 2);
-    memcpy(result + olength + 1 - i - 4, DIGIT_TABLE + c1, 2);
+    memcpy(result + olength + 1 - i - 2, dig_table + c0, 2);
+    memcpy(result + olength + 1 - i - 4, dig_table + c1, 2);
     i += 4;
   }
   if (digits >= 100) {
     const uint32_t c = (digits % 100) << 1;
     digits /= 100;
-    memcpy(result + olength + 1 - i - 2, DIGIT_TABLE + c, 2);
+    memcpy(result + olength + 1 - i - 2, dig_table + c, 2);
     i += 2;
   }
   if (digits >= 10) {
     const uint32_t c = digits << 1;
-    result[2] = DIGIT_TABLE[c + 1];
+    result[2] = dig_table[c + 1];
     result[1] = '.';
-    result[0] = DIGIT_TABLE[c];
+    result[0] = dig_table[c];
   } else {
     result[1] = '.';
     result[0] = (char) ('0' + digits);
   }
 }
 
-static inline void append_c_digits(const uint32_t count, uint32_t digits, char* const result) {
+RYU_INLINE void append_c_digits(const uint32_t count, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
 #endif
   uint32_t i = 0;
+  const char* dig_table = digit_table();
   for (; i < count - 1; i += 2) {
     const uint32_t c = (digits % 100) << 1;
     digits /= 100;
-    memcpy(result + count - i - 2, DIGIT_TABLE + c, 2);
+    memcpy(result + count - i - 2, dig_table + c, 2);
   }
   if (i < count) {
     const char c = (char) ('0' + (digits % 10));
@@ -284,7 +290,7 @@ static inline void append_c_digits(const uint32_t count, uint32_t digits, char* 
   }
 }
 
-static inline void append_nine_digits(uint32_t digits, char* const result) {
+RYU_INLINE void append_nine_digits(uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
 #endif
@@ -293,6 +299,7 @@ static inline void append_nine_digits(uint32_t digits, char* const result) {
     return;
   }
 
+  const char* dig_table = digit_table();
   for (uint32_t i = 0; i < 5; i += 4) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = digits - 10000 * (digits / 10000);
@@ -302,32 +309,32 @@ static inline void append_nine_digits(uint32_t digits, char* const result) {
     digits /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
-    memcpy(result + 7 - i, DIGIT_TABLE + c0, 2);
-    memcpy(result + 5 - i, DIGIT_TABLE + c1, 2);
+    memcpy(result + 7 - i, dig_table + c0, 2);
+    memcpy(result + 5 - i, dig_table + c1, 2);
   }
   result[0] = (char) ('0' + digits);
 }
 
-static inline uint32_t indexForExponent(const uint32_t e) {
+RYU_INLINE uint32_t indexForExponent(const uint32_t e) {
   return (e + 15) / 16;
 }
 
-static inline uint32_t pow10BitsForIndex(const uint32_t idx) {
-  return 16 * idx + POW10_ADDITIONAL_BITS;
+RYU_INLINE uint32_t pow10BitsForIndex(const uint32_t idx) {
+  return 16 * idx + RYU_POW10_ADDITIONAL_BITS;
 }
 
-static inline uint32_t lengthForIndex(const uint32_t idx) {
+RYU_INLINE uint32_t lengthForIndex(const uint32_t idx) {
   // +1 for ceil, +16 for mantissa, +8 to round up when dividing by 9
   return (log10Pow2(16 * (int32_t) idx) + 1 + 16 + 8) / 9;
 }
 
-static inline int copy_special_str_printf(char* const result, const bool sign, const uint64_t mantissa) {
+RYU_INLINE int copy_special_str_printf(char* const result, const bool sign, const uint64_t mantissa) {
   if (sign) {
     result[0] = '-';
   }
   if (mantissa) {
 #if defined(_MSC_VER)
-    if (mantissa < (1ull << (DOUBLE_MANTISSA_BITS - 1))) {
+    if (mantissa < (1ull << (RYU_DOUBLE_MANTISSA_BITS - 1))) {
       memcpy(result + sign, "nan(snan)", 9);
       return sign + 9;
     }
@@ -339,7 +346,12 @@ static inline int copy_special_str_printf(char* const result, const bool sign, c
   return sign + 8;
 }
 
-int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
+RYU_NAMESPACE_DETAIL_END;
+
+RYU_PUBLIC_FUNC int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
+
+  RYU_USING_NAMESPACE_DETAIL;
+
   const uint64_t bits = double_to_bits(d);
 #ifdef RYU_DEBUG
   printf("IN=");
@@ -350,12 +362,12 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
 #endif
 
   // Decode bits into sign, mantissa, and exponent.
-  const bool ieeeSign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  const bool ieeeSign = ((bits >> (RYU_DOUBLE_MANTISSA_BITS + RYU_DOUBLE_EXPONENT_BITS)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << RYU_DOUBLE_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> RYU_DOUBLE_MANTISSA_BITS) & ((1u << RYU_DOUBLE_EXPONENT_BITS) - 1));
 
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u)) {
+  if (ieeeExponent == ((1u << RYU_DOUBLE_EXPONENT_BITS) - 1u)) {
     return copy_special_str_printf(result, ieeeSign, ieeeMantissa);
   }
   if (ieeeExponent == 0 && ieeeMantissa == 0) {
@@ -375,11 +387,11 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
-    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+    e2 = 1 - RYU_DOUBLE_BIAS - RYU_DOUBLE_MANTISSA_BITS;
     m2 = ieeeMantissa;
   } else {
-    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
-    m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+    e2 = (int32_t) ieeeExponent -  RYU_DOUBLE_BIAS -  RYU_DOUBLE_MANTISSA_BITS;
+    m2 = (1ull <<  RYU_DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
 
 #ifdef RYU_DEBUG
@@ -403,7 +415,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       const uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
-      const uint32_t digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], (int32_t) (j + 8));
+      const uint32_t digits = mulShift_mod1e9(m2 << 8, pow10_split(pow10_offset(idx) + i), (int32_t) (j + 8));
       if (nonzero) {
         append_nine_digits(digits, result + index);
         index += 9;
@@ -433,19 +445,19 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     // 0 = don't round up; 1 = round up unconditionally; 2 = round up if odd.
     int roundUp = 0;
     uint32_t i = 0;
-    if (blocks <= MIN_BLOCK_2[idx]) {
+    if (blocks <= min_block_2(idx)) {
       i = blocks;
       memset(result + index, '0', precision);
       index += precision;
-    } else if (i < MIN_BLOCK_2[idx]) {
-      i = MIN_BLOCK_2[idx];
+    } else if (i < min_block_2(idx)) {
+      i = min_block_2(idx);
       memset(result + index, '0', 9 * i);
       index += 9 * i;
     }
     for (; i < blocks; ++i) {
-      const int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      const uint32_t p = POW10_OFFSET_2[idx] + i - MIN_BLOCK_2[idx];
-      if (p >= POW10_OFFSET_2[idx + 1]) {
+      const int32_t j = RYU_ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
+      const uint32_t p = pow10_offset_2(idx) + i - min_block_2(idx);
+      if (p >= pow10_offset_2(idx + 1)) {
         // If the remaining digits are all 0, then we might as well use memset.
         // No rounding required in this case.
         const uint32_t fill = precision - 9 * i;
@@ -455,7 +467,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
       }
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
-      uint32_t digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
+      uint32_t digits = mulShift_mod1e9(m2 << 8, pow10_split_2(p), j + 8);
 #ifdef RYU_DEBUG
       printf("digits=%u\n", digits);
 #endif
@@ -533,12 +545,14 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
   return index;
 }
 
-void d2fixed_buffered(double d, uint32_t precision, char* result) {
+RYU_PUBLIC_FUNC void d2fixed_buffered(double d, uint32_t precision, char* result) {
+  RYU_USING_NAMESPACE_DETAIL;
   const int len = d2fixed_buffered_n(d, precision, result);
   result[len] = '\0';
 }
 
-char* d2fixed(double d, uint32_t precision) {
+RYU_PUBLIC_FUNC char* d2fixed(double d, uint32_t precision) {
+  RYU_USING_NAMESPACE_DETAIL;
   char* const buffer = (char*)malloc(2000);
   const int index = d2fixed_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
@@ -547,7 +561,8 @@ char* d2fixed(double d, uint32_t precision) {
 
 
 
-int d2exp_buffered_n(double d, uint32_t precision, char* result) {
+RYU_PUBLIC_FUNC int d2exp_buffered_n(double d, uint32_t precision, char* result) {
+  RYU_USING_NAMESPACE_DETAIL;
   const uint64_t bits = double_to_bits(d);
 #ifdef RYU_DEBUG
   printf("IN=");
@@ -558,12 +573,12 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 #endif
 
   // Decode bits into sign, mantissa, and exponent.
-  const bool ieeeSign = ((bits >> (DOUBLE_MANTISSA_BITS + DOUBLE_EXPONENT_BITS)) & 1) != 0;
-  const uint64_t ieeeMantissa = bits & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
-  const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
+  const bool ieeeSign = ((bits >> (RYU_DOUBLE_MANTISSA_BITS + RYU_DOUBLE_EXPONENT_BITS)) & 1) != 0;
+  const uint64_t ieeeMantissa = bits & ((1ull << RYU_DOUBLE_MANTISSA_BITS) - 1);
+  const uint32_t ieeeExponent = (uint32_t) ((bits >> RYU_DOUBLE_MANTISSA_BITS) & ((1u << RYU_DOUBLE_EXPONENT_BITS) - 1));
 
   // Case distinction; exit early for the easy cases.
-  if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u)) {
+  if (ieeeExponent == ((1u << RYU_DOUBLE_EXPONENT_BITS) - 1u)) {
     return copy_special_str_printf(result, ieeeSign, ieeeMantissa);
   }
   if (ieeeExponent == 0 && ieeeMantissa == 0) {
@@ -585,11 +600,11 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   int32_t e2;
   uint64_t m2;
   if (ieeeExponent == 0) {
-    e2 = 1 - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
+    e2 = 1 - RYU_DOUBLE_BIAS - RYU_DOUBLE_MANTISSA_BITS;
     m2 = ieeeMantissa;
   } else {
-    e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
-    m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
+    e2 = (int32_t) ieeeExponent - RYU_DOUBLE_BIAS - RYU_DOUBLE_MANTISSA_BITS;
+    m2 = (1ull << RYU_DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   }
 
 #ifdef RYU_DEBUG
@@ -618,7 +633,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
       const uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
-      digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], (int32_t) (j + 8));
+      digits = mulShift_mod1e9(m2 << 8, pow10_split(pow10_offset(idx) + i), (int32_t) (j + 8));
       if (printedDigits != 0) {
         if (printedDigits + 9 > precision) {
           availableDigits = 9;
@@ -648,16 +663,16 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   if (e2 < 0 && availableDigits == 0) {
     const int32_t idx = -e2 / 16;
 #ifdef RYU_DEBUG
-    printf("idx=%d, e2=%d, min=%d\n", idx, e2, MIN_BLOCK_2[idx]);
+    printf("idx=%d, e2=%d, min=%d\n", idx, e2, min_block_2(idx));
 #endif
-    for (int32_t i = MIN_BLOCK_2[idx]; i < 200; ++i) {
-      const int32_t j = ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
-      const uint32_t p = POW10_OFFSET_2[idx] + (uint32_t) i - MIN_BLOCK_2[idx];
+   for (int32_t i = min_block_2(idx); i < 200; ++i) {
+      const int32_t j = RYU_ADDITIONAL_BITS_2 + (-e2 - 16 * idx);
+      const uint32_t p = pow10_offset_2(idx) + (uint32_t) i - min_block_2(idx);
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
-      digits = (p >= POW10_OFFSET_2[idx + 1]) ? 0 : mulShift_mod1e9(m2 << 8, POW10_SPLIT_2[p], j + 8);
+      digits = (p >= pow10_offset_2(idx + 1)) ? 0 : mulShift_mod1e9(m2 << 8, pow10_split_2(p), j + 8);
 #ifdef RYU_DEBUG
-      printf("exact=%" PRIu64 " * (%" PRIu64 " + %" PRIu64 " << 64) >> %d\n", m2, POW10_SPLIT_2[p][0], POW10_SPLIT_2[p][1], j);
+      printf("exact=%" PRIu64 " * (%" PRIu64 " + %" PRIu64 " << 64) >> %d\n", m2, pow10_split_2(p)[0], pow10_split_2(p)[1], j);
       printf("digits=%u\n", digits);
 #endif
       if (printedDigits != 0) {
@@ -779,25 +794,29 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
 
   if (exp >= 100) {
     const int32_t c = exp % 10;
-    memcpy(result + index, DIGIT_TABLE + 2 * (exp / 10), 2);
+    memcpy(result + index, digit_table() + 2 * (exp / 10), 2);
     result[index + 2] = (char) ('0' + c);
     index += 3;
   } else {
-    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
+    memcpy(result + index, digit_table() + 2 * exp, 2);
     index += 2;
   }
 
   return index;
 }
 
-void d2exp_buffered(double d, uint32_t precision, char* result) {
+RYU_PUBLIC_FUNC void d2exp_buffered(double d, uint32_t precision, char* result) {
+  RYU_USING_NAMESPACE_DETAIL;
   const int len = d2exp_buffered_n(d, precision, result);
   result[len] = '\0';
 }
 
-char* d2exp(double d, uint32_t precision) {
+RYU_PUBLIC_FUNC char* d2exp(double d, uint32_t precision) {
+  RYU_USING_NAMESPACE_DETAIL;
   char* const buffer = (char*)malloc(2000);
   const int index = d2exp_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
   return buffer;
 }
+
+RYU_NAMESPACE_END;
