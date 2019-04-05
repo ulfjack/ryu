@@ -12,13 +12,21 @@
 // Unless required by applicable law or agreed to in writing, this software
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
+#ifndef RYU2_HPP
+#define RYU2_HPP
 
-#ifndef RYU_HEADER_ONLY_HPP
-#define RYU_HEADER_ONLY_HPP
+#define RYU_CPP_API
+#include "ryu/ryu2.h"
 
-#define RYU_HEADER_ONLY
-#include "ryu/d2s.c"
-#include "ryu/f2s.c"
-#undef RYU_HEADER_ONLY
+RYU_NAMESPACE_BEGIN;
 
-#endif // RYU_HEADER_ONLY_HPP
+using ::d2fixed_buffered_n;
+using ::d2fixed_buffered;
+using ::d2fixed;
+using ::d2exp_buffered_n;
+using ::d2exp_buffered;
+using ::d2exp;
+
+RYU_NAMESPACE_END;
+
+#endif // RYU2_HPP

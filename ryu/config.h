@@ -16,15 +16,42 @@
 #ifndef RYU_CONFIG_H
 #define RYU_CONFIG_H
 
+
 #if defined(RYU_HEADER_ONLY)
+
 #  if ! defined(__cplusplus)
 #    error Header-only mode only available in C++
 #  endif
+
+#  define RYU_CPP_API
 
 #  define RYU_INLINE inline
 #  define RYU_PRIVATE_FUNC inline
 #  define RYU_PUBLIC_FUNC inline
 
+#  define RYU_EXTERN_C_BEGIN
+#  define RYU_EXTERN_C_END
+
+#else // defined(RYU_HEADER_ONLY)
+
+#  if defined(__cplusplus)
+#    define RYU_EXTERN_C_BEGIN extern "C" {
+#    define RYU_EXTERN_C_END }
+#  else
+#    define RYU_EXTERN_C_BEGIN
+#    define RYU_EXTERN_C_END
+#  endif //defined(__cplusplus)
+
+#  define RYU_INLINE static inline
+#  define RYU_PRIVATE_FUNC static
+#  define RYU_PUBLIC_FUNC extern
+
+#endif // defined(RYU_HEADER_ONLY)
+
+#if defined(RYU_CPP_API)
+#  if ! defined(__cplusplus)
+#    error C++ Header included from a non C++ source
+#  endif
 #  if ! defined(RYU_NAMESPACE_BEGIN)
 #    define RYU_NAMESPACE_BEGIN namespace ryu {
 #    define RYU_NAMESPACE_END }
@@ -34,18 +61,19 @@
 #  define RYU_NAMESPACE_DETAIL_BEGIN namespace detail {
 #  define RYU_NAMESPACE_DETAIL_END }
 #  define RYU_USING_NAMESPACE_DETAIL using namespace detail;
-
-#else
-
-#  define RYU_INLINE static inline
-#  define RYU_PRIVATE_FUNC static
-#  define RYU_PUBLIC_FUNC extern
+#  define RYU_USING_NAMESPACE using namespace ryu;
+#else // defined(RYU_CPP_API)
 #  define RYU_NAMESPACE_BEGIN
 #  define RYU_NAMESPACE_END
 #  define RYU_NAMESPACE_DETAIL_BEGIN
 #  define RYU_NAMESPACE_DETAIL_END
 #  define RYU_USING_NAMESPACE_DETAIL
+#  define RYU_USING_NAMESPACE
+#endif // defined(RYU_CPP_API)
 
-#endif // defined(RYU_HEADER_ONLY) else
+RYU_NAMESPACE_BEGIN
+RYU_NAMESPACE_DETAIL_BEGIN
+RYU_NAMESPACE_DETAIL_END
+RYU_NAMESPACE_END
 
 #endif // RYU_CONFIG_H

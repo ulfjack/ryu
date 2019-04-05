@@ -12,13 +12,21 @@
 // Unless required by applicable law or agreed to in writing, this software
 // is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 // KIND, either express or implied.
+#ifndef RYU_GENERIC_128_HPP
+#define RYU_GENERIC_128_HPP
 
-#ifndef RYU_HEADER_ONLY_HPP
-#define RYU_HEADER_ONLY_HPP
+#define RYU_CPP_API
+#include "ryu/ryu_generic_128.h"
 
-#define RYU_HEADER_ONLY
-#include "ryu/d2s.c"
-#include "ryu/f2s.c"
-#undef RYU_HEADER_ONLY
+RYU_NAMESPACE_BEGIN;
 
-#endif // RYU_HEADER_ONLY_HPP
+using ::floating_decimal_128;
+using ::float_to_fd128;
+using ::double_to_fd128;
+using ::long_double_to_fd128;
+using ::generic_binary_to_decimal;
+using ::generic_to_chars;
+
+RYU_NAMESPACE_END;
+
+#endif // RYU_GENERIC_128_HPP

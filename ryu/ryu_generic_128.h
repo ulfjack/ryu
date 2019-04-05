@@ -19,9 +19,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "ryu/config.h"
 
-#ifdef __cplusplus
-extern "C" {
+RYU_EXTERN_C_BEGIN;
+#ifdef RYU_HEADER_ONLY
+RYU_NAMESPACE_BEGIN;
 #endif
 
 #define RYU_FD128_EXCEPTIONAL_EXPONENT 0x7FFFFFFF
@@ -33,16 +35,16 @@ struct floating_decimal_128 {
   bool sign;
 };
 
-struct floating_decimal_128 float_to_fd128(float f);
-struct floating_decimal_128 double_to_fd128(double d);
+RYU_PUBLIC_FUNC struct floating_decimal_128 float_to_fd128(float f);
+RYU_PUBLIC_FUNC struct floating_decimal_128 double_to_fd128(double d);
 
 // According to wikipedia (https://en.wikipedia.org/wiki/Long_double), this likely only works on
 // x86 with specific compilers (clang?). May need an ifdef.
-struct floating_decimal_128 long_double_to_fd128(long double d);
+RYU_PUBLIC_FUNC struct floating_decimal_128 long_double_to_fd128(long double d);
 
 // Converts the given binary floating point number to the shortest decimal floating point number
 // that still accurately represents it.
-struct floating_decimal_128 generic_binary_to_decimal(
+RYU_PUBLIC_FUNC struct floating_decimal_128 generic_binary_to_decimal(
     const __uint128_t bits, const uint32_t mantissaBits, const uint32_t exponentBits, const bool explicitLeadingBit);
 
 // Converts the given decimal floating point number to a string, writing to result, and returning
@@ -52,10 +54,11 @@ struct floating_decimal_128 generic_binary_to_decimal(
 // Maximal char buffer requirement:
 // sign + mantissa digits + decimal dot + 'E' + exponent sign + exponent digits
 // = 1 + 39 + 1 + 1 + 1 + 10 = 53
-int generic_to_chars(const struct floating_decimal_128 v, char* const result);
+RYU_PUBLIC_FUNC int generic_to_chars(const struct floating_decimal_128 v, char* const result);
 
-#ifdef __cplusplus
-}
+#ifdef RYU_HEADER_ONLY
+RYU_NAMESPACE_END;
 #endif
+RYU_EXTERN_C_END;
 
 #endif // RYU_GENERIC_128_H

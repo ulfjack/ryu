@@ -17,22 +17,28 @@
 #ifndef RYU2_H
 #define RYU2_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "ryu/config.h"
+
+RYU_EXTERN_C_BEGIN;
 
 #include <inttypes.h>
 
-int d2fixed_buffered_n(double d, uint32_t precision, char* result);
-void d2fixed_buffered(double d, uint32_t precision, char* result);
-char* d2fixed(double d, uint32_t precision);
-
-int d2exp_buffered_n(double d, uint32_t precision, char* result);
-void d2exp_buffered(double d, uint32_t precision, char* result);
-char* d2exp(double d, uint32_t precision);
-
-#ifdef __cplusplus
-}
+#ifdef RYU_HEADER_ONLY
+RYU_NAMESPACE_BEGIN;
 #endif
+
+RYU_PUBLIC_FUNC int d2fixed_buffered_n(double d, uint32_t precision, char* result);
+RYU_PUBLIC_FUNC void d2fixed_buffered(double d, uint32_t precision, char* result);
+RYU_PUBLIC_FUNC char* d2fixed(double d, uint32_t precision);
+
+RYU_PUBLIC_FUNC int d2exp_buffered_n(double d, uint32_t precision, char* result);
+RYU_PUBLIC_FUNC void d2exp_buffered(double d, uint32_t precision, char* result);
+RYU_PUBLIC_FUNC char* d2exp(double d, uint32_t precision);
+
+#ifdef RYU_HEADER_ONLY
+RYU_NAMESPACE_END;
+#endif
+
+RYU_EXTERN_C_END;
 
 #endif // RYU2_H

@@ -17,20 +17,24 @@
 #ifndef RYU_H
 #define RYU_H
 
-#ifdef __cplusplus
-extern "C" {
+#include "ryu/config.h"
+
+RYU_EXTERN_C_BEGIN;
+#ifdef RYU_HEADER_ONLY
+RYU_NAMESPACE_BEGIN;
 #endif
 
-int d2s_buffered_n(double f, char* result);
-void d2s_buffered(double f, char* result);
-char* d2s(double f);
+RYU_PUBLIC_FUNC int d2s_buffered_n(double f, char* result);
+RYU_PUBLIC_FUNC void d2s_buffered(double f, char* result);
+RYU_PUBLIC_FUNC char* d2s(double f);
 
-int f2s_buffered_n(float f, char* result);
-void f2s_buffered(float f, char* result);
-char* f2s(float f);
+RYU_PUBLIC_FUNC int f2s_buffered_n(float f, char* result);
+RYU_PUBLIC_FUNC void f2s_buffered(float f, char* result);
+RYU_PUBLIC_FUNC char* f2s(float f);
 
-#ifdef __cplusplus
-}
+#ifdef RYU_HEADER_ONLY
+RYU_NAMESPACE_END;
 #endif
+RYU_EXTERN_C_END;
 
 #endif // RYU_H
