@@ -84,15 +84,15 @@ static inline int copy_special_str(char * const result, const bool sign, const b
 }
 
 static inline uint32_t float_to_bits(const float f) {
-  uint32_t bits = 0;
-  memcpy(&bits, &f, sizeof(float));
-  return bits;
+  union { float f; uint32_t i; } u;
+  u.f = f;
+  return u.i;
 }
 
 static inline uint64_t double_to_bits(const double d) {
-  uint64_t bits = 0;
-  memcpy(&bits, &d, sizeof(double));
-  return bits;
+  union { double d; uint64_t i; } u;
+  u.d = d;
+  return u.i;
 }
 
 #endif // RYU_COMMON_H
