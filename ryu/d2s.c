@@ -312,7 +312,7 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
       // <=> ntz(mv) >= q - 1 (e2 is negative and -e2 >= q)
       // <=> (mv & ((1 << (q - 1)) - 1)) == 0
       // We also need to make sure that the left shift does not overflow.
-      vrIsTrailingZeros = multipleOfPowerOf2(mv, q - 1);
+      vrIsTrailingZeros = multipleOfPowerOf2(mv, q);
 #ifdef RYU_DEBUG
       printf("vr is trailing zeros=%s\n", vrIsTrailingZeros ? "true" : "false");
 #endif
