@@ -143,19 +143,17 @@ endianness.
 There are no concerns around endianness for the Java implementation.
 
 ### Building with a Custom Compiler
-You can select a custom C++ compiler by setting the CC environment variable
-(e.g., on Ubuntu, run `export CC=clang-3.9`).
-
-For example, use these steps to build with clang-4.0 on Ubuntu:
+You can select a custom C++ compiler by setting the CC environment variable,
+e.g., use these steps to build with clang-4.0 on Ubuntu:
 ```
 $ export CC=clang-4.0
 $ bazel build //ryu
 ```
 
-Building Ryu against musl and msys requires installing the corresponding
+Building Ryu Printf against musl and msys requires installing the corresponding
 packages. We only tested against the musl Debian package that installs a gcc
-wrapper and can be by setting ```CC```. However, building against msys requires
-manually adjusting Bazel's compiler configuration files.
+wrapper and is enabled by setting ```CC```. However, building against msys
+requires manually adjusting Bazel's compiler configuration files.
 
 ### Tests
 You can run both C and Java tests with
