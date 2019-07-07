@@ -29,7 +29,7 @@ posed by White and Steele [1], for which they described an algorithm called
 "Dragon". It was subsequently improved upon with algorithms that also had
 dragon-themed names. I followed in the same vein using the japanese word for
 dragon, Ryu. In general, all these algorithms should produce identical output
-given identical input.
+given identical input, and this is checked when running the benchmark program.
 
 The C implementation of Ryu is in the ryu/ directory. The Java implementations
 are RyuFloat and RyuDouble under src/main/java/. Both cover 32 and 64-bit
@@ -88,7 +88,18 @@ implementations, printf provides three floating-point specific formatters,
 
 Ryu Printf implements %f and %e formatting in a way that should be drop-in
 compatible with most implementations of printf, although it currently does not
-implement any formatting flags other than precision.
+implement any formatting flags other than precision. The benchmark program
+verifies that the output matches exactly, and outputs a warning if not. Any
+unexpected output from the benchmark indicates a difference in output.
+
+*Note* that old versions of MSVC ship with a printf implementation that has a
+confirmed bug: it does not always round the last digit correctly.
+
+*Note* that msys cuts off the output after ~17 digits, and therefore generally
+differs from Ryu Printf output for precision values larger than 17.
+
+*Note* that the output for NaN values can differ between implementations; we use
+ifdefs in an attempt to match platform output.
 
 According to our benchmarks, Ryu Printf compares favorably with the following
 implementations of printf for precision parameters 1, 10, 100, and 1000:
@@ -124,6 +135,13 @@ To build Ryu Printf, run
 $ bazel build //ryu:ryu_printf
 ```
 
+### Big-Endian Architectures
+The C implementation of Ryu should work on big-endian architectures provided
+that the floating point type and the corresponding integer type use the same
+endianness.
+
+There are no concerns around endianness for the Java implementation.
+
 ### Building with a Custom Compiler
 You can select a custom C++ compiler by setting the CC environment variable
 (e.g., on Ubuntu, run `export CC=clang-3.9`).
@@ -145,103 +163,16 @@ You can run both C and Java tests with
 $ bazel test //ryu/... //src/...
 ```
 
-### Benchmarks
-
-#### Ryu
-We provide both C and Java benchmark programs.
-
-Enable optimization by adding "-c opt" on the command line:
-```
-$ bazel run -c opt //ryu/benchmark:ryu_benchmark --
-    Average & Stddev Ryu  Average & Stddev Grisu3
-32:   22.515    1.578       90.981   41.455
-64:   27.545    1.677       98.981   80.797
-```
-
-For the Java benchmark, run:
-```
-$ bazel run //src/main/java/info/adams/ryu/benchmark --
-    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
-32:   56.680    9.127       254.903  170.099
-64:   89.751   13.442      1085.596  302.371     1089.535  309.245
-```
-
-Additional parameters can be passed to the benchmark after the `--` parameter:
-```
-  -32           only run the 32-bit benchmark
-  -64           only run the 64-bit benchmark
-  -samples=n    run n pseudo-randomly selected numbers
-  -iterations=n run each number n times
-  -ryu          run Ryu only, no comparison
-  -v            generate verbose output in CSV format
-```
-
-If you have gnuplot installed, you can generate plots from the benchmark data
-with:
-```
-$ bazel build -c opt --jobs=1 //scripts:shortest-{c,java}-{float,double}.pdf
-```
-
-The resulting files are `bazel-genfiles/scripts/shortest-{c,java}-{float,double}.pdf`.
-
-#### Ryu Printf
-We provide a C++ benchmark program that runs against the implementation of
-```snprintf``` bundled with the selected C++ compiler. You need to enable
-optimization using "-c opt" on the command line:
-```
-$ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark --
-    Average & Stddev Ryu  Average & Stddev snprintf
-%f:  116.359  130.992     3983.251 5331.505
-%e:   40.853   10.872      210.648   36.779
-```
-
-Additional parameters can be passed to the benchmark after the `--` parameter:
-```
-  -f            only run the %f benchmark
-  -e            only run the %e benchmark
-  -precision=n  run with precision n (default is 6)
-  -samples=n    run n pseudo-randomly selected numbers
-  -iterations=n run each number n times
-  -ryu          run Ryu Printf only, no comparison
-  -v            generate verbose output in CSV format
-```
-
-See above for selecting a different compiler. Note that msys C++ compilation
-does not work out of the box.
-
-We also provide a simplified C benchmark for platforms that do not support C++
-compilation, but *note* that pure C compilation is not natively supported by
-Bazel:
-```
-$ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark_c --
-```
-
-If you have gnuplot installed, you can generate plots from the benchmark data
-with:
-```
-$ bazel build -c opt --jobs=1 //scripts:{f,e}-c-double-{1,10,100,1000}.pdf
-```
 
 
-### Ryu: Comparison with Other Implementations
+## Ryu: Additional Notes
 
-#### Grisu3
-
-Ryu's output should exactly match Grisu3's output. Our benchmark verifies that
-the generated numbers are identical.
-```
-$ bazel run -c opt //ryu/benchmark -- -64
-    Average & Stddev Ryu  Average & Stddev Grisu3
-64:   29.806    3.182      103.060   98.717
-```
-
-#### Jaffer's Implementation
+### Jaffer
 The code given by Jaffer in the original paper does not come with a license
 declaration. Instead, we're using code found on GitHub, which contains a
 license declaration by Jaffer. Compared to the original code, this
 implementation no longer outputs incorrect values for negative numbers.
 
-#### Differences between Ryu and Jaffer / Jdk implementations
 We provide a binary to find differences between Ryu and the Jaffer / Jdk
 implementations:
 ```
@@ -252,13 +183,6 @@ Add the `-mode=csv` option to get all the discovered differences as a CSV. Use
 `-mode=latex` instead to get a latex snippet of the first 20. Use
 `-mode=summary` to only print the number of discovered differences (this is the
 default mode).
-
-### Big-Endian Architectures
-The C implementation of Ryu should work on big-endian architectures provided
-that the floating point type and the corresponding integer type use the same
-endianness.
-
-There are no concerns around endianness for the Java implementation.
 
 ### Computing Required Lookup Table Sizes
 You can compute the required lookup table sizes with:
@@ -297,3 +221,81 @@ $ bazel run //src/main/java/info/adams/ryu/analysis:ExtensiveDoubleComparison
 
 This takes approximately forever, so you will need to interrupt the program.
 
+
+
+## Benchmarks
+
+### Ryu
+We provide both C and Java benchmark programs.
+
+Enable optimization by adding "-c opt" on the command line:
+```
+$ bazel run -c opt //ryu/benchmark:ryu_benchmark --
+    Average & Stddev Ryu  Average & Stddev Grisu3
+32:   22.515    1.578       90.981   41.455
+64:   27.545    1.677       98.981   80.797
+```
+
+For the Java benchmark, run:
+```
+$ bazel run //src/main/java/info/adams/ryu/benchmark --
+    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
+32:   56.680    9.127       254.903  170.099
+64:   89.751   13.442      1085.596  302.371     1089.535  309.245
+```
+
+Additional parameters can be passed to the benchmark after the `--` parameter:
+```
+  -32           only run the 32-bit benchmark
+  -64           only run the 64-bit benchmark
+  -samples=n    run n pseudo-randomly selected numbers
+  -iterations=n run each number n times
+  -ryu          run Ryu only, no comparison
+  -v            generate verbose output in CSV format
+```
+
+If you have gnuplot installed, you can generate plots from the benchmark data
+with:
+```
+$ bazel build -c opt --jobs=1 //scripts:shortest-{c,java}-{float,double}.pdf
+```
+
+The resulting files are `bazel-genfiles/scripts/shortest-{c,java}-{float,double}.pdf`.
+
+### Ryu Printf
+We provide a C++ benchmark program that runs against the implementation of
+```snprintf``` bundled with the selected C++ compiler. You need to enable
+optimization using "-c opt" on the command line:
+```
+$ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark --
+    Average & Stddev Ryu  Average & Stddev snprintf
+%f:  116.359  130.992     3983.251 5331.505
+%e:   40.853   10.872      210.648   36.779
+```
+
+Additional parameters can be passed to the benchmark after the `--` parameter:
+```
+  -f            only run the %f benchmark
+  -e            only run the %e benchmark
+  -precision=n  run with precision n (default is 6)
+  -samples=n    run n pseudo-randomly selected numbers
+  -iterations=n run each number n times
+  -ryu          run Ryu Printf only, no comparison
+  -v            generate verbose output in CSV format
+```
+
+See above for selecting a different compiler. Note that msys C++ compilation
+does not work out of the box.
+
+We also provide a simplified C benchmark for platforms that do not support C++
+compilation, but *note* that pure C compilation is not natively supported by
+Bazel:
+```
+$ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark_c --
+```
+
+If you have gnuplot installed, you can generate plots from the benchmark data
+with:
+```
+$ bazel build -c opt --jobs=1 //scripts:{f,e}-c-double-{1,10,100,1000}.pdf
+```
