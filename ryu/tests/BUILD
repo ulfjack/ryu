@@ -27,10 +27,10 @@ cc_test(
 )
 
 cc_test(
-  name = "d2fixed_test",
+  name = "ryu_printf_test",
   srcs = ["d2fixed_test.cc"],
   deps = [
-    "//ryu:ryu2",
+    "//ryu:ryu_printf",
     "//third_party/gtest",
   ],
 )

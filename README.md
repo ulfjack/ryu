@@ -1,4 +1,4 @@
-# Ryu [![Build Status](https://travis-ci.org/ulfjack/ryu.svg?branch=master)](https://travis-ci.org/ulfjack/ryu)
+# Ryu & Ryu Printf [![Build Status](https://travis-ci.org/ulfjack/ryu.svg?branch=master)](https://travis-ci.org/ulfjack/ryu)
 
 This project contains C and Java implementation of Ryu, as well as a C
 implementation of Ryu Printf. Ryu converts a floating point number to its
@@ -68,7 +68,165 @@ Other implementations of Ryu:
 [1] "How to Print Floating-Point Numbers Accurately", PLDI '90, https://dl.acm.org/citation.cfm?id=93559
 [2] https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
 
-### Comparison with Other Implementations
+
+## Ryu Printf
+Since Ryu generates the shortest decimal representation, it is not immediately
+suitable for use in languages that have printf-like facilities. In most
+implementations, printf provides three floating-point specific formatters,
+```%f```, ```%e```, and ```%g```:
+
+ - The ```%f``` format prints the full decimal part of the given floating point
+   number, and then appends as many digits of the fractional part as specified
+   using the precision parameter.
+
+ - The ```%e``` format prints the decimal number in scientific notation with as
+   many digits after the initial digit as specified using the precision
+   parameter.
+
+ - The ```%g``` format prints either ```%f``` or ```%e``` format, whichever is
+   shorter.
+
+Ryu Printf implements %f and %e formatting in a way that should be drop-in
+compatible with most implementations of printf, although it currently does not
+implement any formatting flags other than precision.
+
+According to our benchmarks, Ryu Printf compares favorably with the following
+implementations of printf for precision parameters 1, 10, 100, and 1000:
+
+| OS                   | Libc                        | Ryu Printf is faster by |
+|----------------------|-----------------------------|-------------------------|
+| Ubuntu 18.04         | libc6 2.27-3ubuntu1         | 15x                     |
+| Ubuntu 18.04         | musl 1.1.19-1               | 4x                      |
+| Windows 10 Home 1803 | MSVC 19.14.26429.4          | 9x                      |
+| Windows 10 Home 1803 | msys-runtime-devel 2.10.0-2 | between 8x and 20x      |
+| macOS Mojave 10.14   | Apple Libc                  | 24x                     |
+
+In addition, Ryu Printf has a more predictable performance profile. In theory,
+an implementation that performs particularly badly for some subset of numbers
+could be exploited as a denial-of-service attack vector.
+
+
+
+## Building, Testing, Running
+
+We use the Bazel build system (https://bazel.build) 0.14 or later, although we
+recommend using the latest release. You also need to install Jdk 8 (or later)
+to build and run the Java code, and/or a C/C++ compiler (gcc or clang on Ubuntu,
+XCode on MacOS, or MSVC on Windows) to build the C/C++ code.
+
+To build Ryu, run
+```
+$ bazel build //ryu
+```
+
+To build Ryu Printf, run
+```
+$ bazel build //ryu:ryu_printf
+```
+
+### Building with a Custom Compiler
+You can select a custom C++ compiler by setting the CC environment variable
+(e.g., on Ubuntu, run `export CC=clang-3.9`).
+
+For example, use these steps to build with clang-4.0 on Ubuntu:
+```
+$ export CC=clang-4.0
+$ bazel build //ryu
+```
+
+### Tests
+You can run both C and Java tests with
+```
+$ bazel test //ryu/... //src/...
+```
+
+### Benchmarks
+
+#### Ryu
+We provide both C and Java benchmark programs.
+
+Enable optimization by adding "-c opt" on the command line:
+```
+$ bazel run -c opt //ryu/benchmark:ryu_benchmark --
+    Average & Stddev Ryu  Average & Stddev Grisu3
+32:   22.515    1.578       90.981   41.455
+64:   27.545    1.677       98.981   80.797
+```
+
+For the Java benchmark, run:
+```
+$ bazel run //src/main/java/info/adams/ryu/benchmark --
+    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
+32:   56.680    9.127       254.903  170.099
+64:   89.751   13.442      1085.596  302.371     1089.535  309.245
+```
+
+Additional parameters can be passed to the benchmark after the `--` parameter:
+```
+  -32           only run the 32-bit benchmark
+  -64           only run the 64-bit benchmark
+  -samples=n    run n pseudo-randomly selected numbers
+  -iterations=n run each number n times
+  -ryu          run Ryu only, no comparison
+  -v            generate verbose output in CSV format
+```
+
+If you have gnuplot installed, you can generate plots from the benchmark data
+with:
+```
+$ bazel build -c opt --jobs=1 //scripts:shortest-{c,java}-{float,double}.pdf
+```
+
+The resulting files are `bazel-genfiles/scripts/shortest-{c,java}-{float,double}.pdf`.
+
+#### Ryu Printf
+We provide a C++ benchmark program that runs against the implementation of
+```snprintf``` bundled with the selected C++ compiler. You need to enable
+optimization using "-c opt" on the command line:
+```
+$ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark --
+    Average & Stddev Ryu  Average & Stddev snprintf
+%f:  116.359  130.992     3983.251 5331.505
+%e:   40.853   10.872      210.648   36.779
+```
+
+Additional parameters can be passed to the benchmark after the `--` parameter:
+```
+  -f            only run the %f benchmark
+  -e            only run the %e benchmark
+  -precision=n  run with precision n (default is 6)
+  -samples=n    run n pseudo-randomly selected numbers
+  -iterations=n run each number n times
+  -ryu          run Ryu Printf only, no comparison
+  -v            generate verbose output in CSV format
+```
+
+If you have gnuplot installed, you can generate plots from the benchmark data
+with:
+```
+$ bazel build -c opt --jobs=1 //scripts:{f,e}-c-double-{1,10,100,1000}.pdf
+```
+
+
+### Building without Bazel on Linux / MacOS
+You can build and run the C benchmark without using Bazel with the following shell
+command:
+```
+$ gcc -o benchmark -I. -O2 -l m -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
+    third_party/double-conversion/double-conversion/*.cc
+$ ./benchmark
+```
+
+You can build and run the Java benchmark with the following shell command:
+```
+$ mkdir out
+$ javac -d out \
+    -sourcepath src/main/java/:third_party/mersenne_java/java/:third_party/jaffer/java/ \
+    src/main/java/info/adams/ryu/benchmark/BenchmarkMain.java
+$ java -cp out info.adams.ryu.benchmark.BenchmarkMain
+```
+
+### Ryu: Comparison with Other Implementations
 
 #### Grisu3
 
@@ -142,115 +300,3 @@ $ bazel run //src/main/java/info/adams/ryu/analysis:ExtensiveDoubleComparison
 
 This takes approximately forever, so you will need to interrupt the program.
 
-
-
-## Ryu Printf
-Since Ryu generates the shortest decimal representation, it is not immediately
-suitable for use in languages that have printf-like facilities. In most
-implementations, printf provides three floating-point specific formatters,
-```%f```, ```%e```, and ```%g```:
-
- - The ```%f``` format prints the full decimal part of the given floating point
-   number, and then appends as many digits of the fractional part as specified
-   using the precision parameter.
-
- - The ```%e``` format prints the decimal number in scientific notation with as
-   many digits after the initial digit as specified using the precision
-   parameter.
-
- - The ```%g``` format prints either ```%f``` or ```%e``` format, whichever is
-   shorter.
-
-Ryu Printf implements %f and %e formatting in a way that should be drop-in
-compatible with most implementations of printf, although it currently does not
-implement any formatting flags other than precision.
-
-According to our benchmarks, Ryu Printf compares favorably with the following
-implementations of printf for precision parameters 1, 10, 100, and 1000:
-
-| OS                   | Libc                        | Ryu Printf is faster by |
-|----------------------|-----------------------------|-------------------------|
-| Ubuntu 18.04         | libc6 2.27-3ubuntu1         | 15x                     |
-| Ubuntu 18.04         | musl 1.1.19-1               | 4x                      |
-| Windows 10 Home 1803 | MSVC 19.14.26429.4          | 9x                      |
-| Windows 10 Home 1803 | msys-runtime-devel 2.10.0-2 | between 8x and 20x      |
-| macOS Mojave 10.14   | Apple Libc                  | 24x                     |
-
-In addition, Ryu Printf has a more predictable performance profile. In theory,
-an implementation that performs particularly badly for some subset of numbers
-could be exploited as a denial-of-service attack vector.
-
-
-## Building, Testing, Running
-
-We use the Bazel build system (https://bazel.build) 0.14 or later, although we
-recommend using the latest release. You also need to install Jdk 8 (or later)
-to build and run the Java code, and/or a C/C++ compiler (gcc or clang on Ubuntu,
-XCode on MacOS, or MSVC on Windows) to build the C/C++ code.
-
-### Building with a Custom Compiler
-You can select a custom C++ compiler by setting the CC environment variable
-(e.g., on Ubuntu, run `export CC=clang-3.9`).
-
-For example, use these steps to build with clang-4.0 on Ubuntu:
-```
-$ export CC=clang-4.0
-$ bazel build //ryu
-```
-
-### Tests
-You can run both C and Java tests with
-```
-$ bazel test //ryu/... //src/...
-```
-
-### Benchmarks
-We provide both C and Java benchmark programs.
-
-Enable optimization by adding "-c opt" on the command line:
-```
-$ bazel run -c opt //ryu/benchmark --
-    Average & Stddev Ryu  Average & Stddev Grisu3
-32:   22.515    1.578       90.981   41.455
-64:   27.545    1.677       98.981   80.797
-
-$ bazel run //src/main/java/info/adams/ryu/benchmark --
-    Average & Stddev Ryu  Average & Stddev Jdk  Average & Stddev Jaffer
-32:   56.680    9.127       254.903  170.099
-64:   89.751   13.442      1085.596  302.371     1089.535  309.245
-```
-
-Additional parameters can be passed to the benchmark after the `--` parameter:
-```
-  -32           only run the 32-bit benchmark
-  -64           only run the 64-bit benchmark
-  -samples=n    run n pseudo-randomly selected numbers
-  -iterations=n run each number n times
-  -v            generate verbose output in CSV format
-```
-
-If you have gnuplot installed, you can generate plots from the benchmark data
-with:
-```
-$ bazel build --jobs=1 //scripts:{c,java}-{float,double}.pdf
-```
-
-The resulting files are `bazel-genfiles/scripts/{c,java}-{float,double}.pdf`.
-
-### Building without Bazel on Linux / MacOS
-You can build and run the C benchmark without using Bazel with the following shell
-command:
-```
-$ gcc -o benchmark -I. -O2 -l m -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
-    third_party/double-conversion/double-conversion/*.cc
-$ ./benchmark
-```
-
-You can build and run the Java benchmark with the following shell command:
-```
-$ mkdir out
-$ javac -d out \
-    -sourcepath src/main/java/:third_party/mersenne_java/java/:third_party/jaffer/java/ \
-    src/main/java/info/adams/ryu/benchmark/BenchmarkMain.java
-$ java -cp out info.adams.ryu.benchmark.BenchmarkMain
-```

@@ -81,13 +81,10 @@ public:
   int precision() const { return m_precision; }
 
   void parse(const char * const arg) {
-    if (strcmp(arg, "-32") == 0) {
-      m_run32 = true;
-      m_run64 = false;
-    } else if (strcmp(arg, "-64") == 0) {
+    if (strcmp(arg, "-f") == 0) {
       m_run32 = false;
       m_run64 = true;
-    } else if (strcmp(arg, "-exp") == 0) {
+    } else if (strcmp(arg, "-e") == 0) {
       m_run32 = true;
       m_run64 = false;
     } else if (strcmp(arg, "-v") == 0) {
@@ -130,7 +127,7 @@ private:
   int m_iterations = 1000;
   bool m_verbose = false;
   bool m_ryu_only = false;
-  bool m_classic = false;
+  bool m_classic = true;
   int m_small_digits = 0;
   int m_precision = 6;
 };
@@ -310,7 +307,7 @@ int main(int argc, char** argv) {
   }
 
   if (options.verbose()) {
-    printf("%sryu_time_in_ns%s\n", options.classic() ? "ryu_output,float_bits_as_int," : "", options.ryu_only() ? "" : ",snprintf_time_in_ns");
+    printf("ryu_output,float_bits_as_int,ryu_time_in_ns%s\n", options.ryu_only() ? "" : ",snprintf_time_in_ns");
   } else {
     printf("    Average & Stddev Ryu%s\n", options.ryu_only() ? "" : "  Average & Stddev snprintf");
   }

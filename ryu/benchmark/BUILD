@@ -3,7 +3,7 @@ package(default_visibility=["//visibility:public"])
 # Build with --copt=-DMATCH_GRISU3_OUTPUT to match Grisu3 and check for
 # differences.
 cc_binary(
-  name = "benchmark",
+  name = "ryu_benchmark",
   srcs = ["benchmark.cc"],
   deps = [
     "//ryu",
@@ -12,19 +12,19 @@ cc_binary(
 )
 
 cc_binary(
-  name = "benchmark_fixed",
+  name = "ryu_printf_benchmark_c",
   srcs = ["benchmark_fixed.c"],
   deps = [
-    "//ryu:ryu2",
+    "//ryu:ryu_printf",
     "//third_party/mersenne",
   ],
 )
 
 cc_binary(
-  name = "benchmark_fixed_cc",
+  name = "ryu_printf_benchmark",
   srcs = ["benchmark_fixed.cc"],
   deps = [
-    "//ryu:ryu2",
+    "//ryu:ryu_printf",
     "//third_party/mersenne",
   ],
 )

@@ -1,16 +1,4 @@
-[genrule(
-  name = "shortest-" + t + "-" + f + "-csv",
-  tools = [dep],
-  outs = ["shortest-" + t + "-" + f + ".csv"],
-  cmd = "$(location " + dep + ") " + o + " -classic -samples=1000 -v > $@",
-) for (t,f,o,dep) in [
-    ("c", "float", "-32", "//ryu/benchmark"),
-    ("c", "double", "-64", "//ryu/benchmark"),
-    ("java", "float", "-32", "//src/main/java/info/adams/ryu/benchmark"),
-    ("java", "double", "-64", "//src/main/java/info/adams/ryu/benchmark"),
-]]
-
-CONVERSION_CMD="".join([
+CONVERSION_CMD_RYU="".join([
     "TMP_FILE=$$(mktemp /tmp/plot.XXXXXX)",
     " && cat $(location %s.template)",
     "  | sed \"s|INPUT_FILE|$<|g\"",
@@ -21,44 +9,75 @@ CONVERSION_CMD="".join([
     " && rm -f $${TMP_FILE}"])
 
 [genrule(
-  name = "generate-" + t + "-" + f + "-pdf",
+  name = "shortest-" + t + "-" + f + "-csv",
+  tools = [dep],
+  outs = ["shortest-" + t + "-" + f + ".csv"],
+  cmd = "$(location " + dep + ") " + o + " -classic -samples=1000 -v > $@",
+) for (t,f,o,dep) in [
+    ("c", "float", "-32", "//ryu/benchmark:ryu_benchmark"),
+    ("c", "double", "-64", "//ryu/benchmark:ryu_benchmark"),
+    ("java", "float", "-32", "//src/main/java/info/adams/ryu/benchmark"),
+    ("java", "double", "-64", "//src/main/java/info/adams/ryu/benchmark"),
+]]
+
+[genrule(
+  name = "shortest-" + t + "-" + f + "-pdf",
   srcs = ["shortest-" + t + "-" + f + ".csv"],
   tools = [f + ".template"],
   outs = ["shortest-" + t + "-" + f + ".pdf"],
-  cmd = CONVERSION_CMD % (f, c, d),
+  cmd = CONVERSION_CMD_RYU % (f, c, d),
 ) for (t,c,d) in [("c","Grisu3",""),("java","Jdk","Jaffer")] for f in ["float","double"]]
 
+
+
+CONVERSION_CMD_RYU_PRINTF="".join([
+    "TMP_FILE=$$(mktemp /tmp/plot.XXXXXX)",
+    " && cat $(location %s.template)",
+    "  | sed \"s|INPUT_FILE|$<|g\"",
+    "  | sed \"s|COMPARISON_NAME_1|%s|g\"",
+    "  > $${TMP_FILE}",
+    " && gnuplot $${TMP_FILE} > $@",
+    " && rm -f $${TMP_FILE}"])
+
 [genrule(
-  name = "fixed-" + t + "-" + f + "-csv",
+  name = "f-" + t + "-" + f + "-" + p + "-csv",
   tools = [dep],
-  outs = ["fixed-" + t + "-" + f + ".csv"],
-  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=100 -v > $@",
+  outs = ["f-" + t + "-" + f + "-" + p + ".csv"],
+  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=" + p + " -v > $@",
 ) for (t,f,o,dep) in [
-    ("c", "double", "-64", "//ryu/benchmark:benchmark_fixed"),
-]]
+    ("c", "double", "-f", "//ryu/benchmark:ryu_printf_benchmark"),
+  ]
+  for p in ["1", "10", "100", "1000"]
+]
 
 [genrule(
-  name = "fixed-" + t + "-" + f + "-pdf",
-  srcs = ["fixed-" + t + "-" + f + ".csv"],
-  tools = [f + ".template"],
-  outs = ["fixed-" + t + "-" + f + ".pdf"],
-  cmd = CONVERSION_CMD % (f, c, d),
-) for (t,c,d) in [("c","printf","")] for f in ["double"]]
+  name = "f-" + t + "-" + f + "-" + p + "-pdf",
+  srcs = ["f-" + t + "-" + f + "-" + p + ".csv"],
+  tools = ["printf.template"],
+  outs = ["f-" + t + "-" + f + "-" + p + ".pdf"],
+  cmd = CONVERSION_CMD_RYU_PRINTF % ("printf", c),
+) for (t,c,d) in [("c","snprintf","")] for f in ["double"]
+  for p in ["1", "10", "100", "1000"]
+]
 
 [genrule(
-  name = "exp-" + t + "-" + f + "-csv",
+  name = "e-" + t + "-" + f + "-" + p + "-csv",
   tools = [dep],
-  outs = ["exp-" + t + "-" + f + ".csv"],
-  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=100 -v -exp > $@",
+  outs = ["e-" + t + "-" + f + "-" + p + ".csv"],
+  cmd = "$(location " + dep + ") " + o + " -classic -samples=2000 -precision=" + p + " -v > $@",
 ) for (t,f,o,dep) in [
-    ("c", "double", "-64", "//ryu/benchmark:benchmark_fixed"),
-]]
+    ("c", "double", "-e", "//ryu/benchmark:ryu_printf_benchmark"),
+  ]
+  for p in ["1", "10", "100", "1000"]
+]
 
 [genrule(
-  name = "exp-" + t + "-" + f + "-pdf",
-  srcs = ["exp-" + t + "-" + f + ".csv"],
-  tools = [f + ".template"],
-  outs = ["exp-" + t + "-" + f + ".pdf"],
-  cmd = CONVERSION_CMD % (f, c, d),
-) for (t,c,d) in [("c","printf","")] for f in ["double"]]
+  name = "e-" + t + "-" + f + "-" + p + "-pdf",
+  srcs = ["e-" + t + "-" + f + "-" + p + ".csv"],
+  tools = ["printf.template"],
+  outs = ["e-" + t + "-" + f + "-" + p + ".pdf"],
+  cmd = CONVERSION_CMD_RYU_PRINTF % ("printf", c),
+) for (t,c,d) in [("c","snprintf","")] for f in ["double"]
+  for p in ["1", "10", "100", "1000"]
+]
 
