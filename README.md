@@ -25,7 +25,7 @@ the closest number to the decimal number ```0.3```, so that is what Ryu
 outputs.
 
 This problem of generating the shortest possible representation was originally
-presented by White and Steele [1], for which they described an algorithm called
+posed by White and Steele [1], for which they described an algorithm called
 "Dragon". It was subsequently improved upon with algorithms that also had
 dragon-themed names. I followed in the same vein using the japanese word for
 dragon, Ryu. In general, all these algorithms should produce identical output
