@@ -235,9 +235,9 @@ int main(int argc, char** argv) {
   }
 
   if (verbose) {
-    printf("%sryu_time_in_ns%s\n", "ryu_output,float_bits_as_int,", ",grisu3_time_in_ns");
+    printf("ryu_output,float_bits_as_int,ryu_time_in_ns,snprintf_time_in_ns\n");
   } else {
-    printf("    Average & Stddev Ryu%s\n", "  Average & Stddev Grisu3");
+    printf("    Average & Stddev Ryu%s\n", "  Average & Stddev snprintf");
   }
   int throwaway = 0;
   if (fixed) {
