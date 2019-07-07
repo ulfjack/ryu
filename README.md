@@ -134,6 +134,11 @@ $ export CC=clang-4.0
 $ bazel build //ryu
 ```
 
+Building Ryu against musl and msys requires installing the corresponding
+packages. We only tested against the musl Debian package that installs a gcc
+wrapper and can be by setting ```CC```. However, building against msys requires
+manually adjusting Bazel's compiler configuration files.
+
 ### Tests
 You can run both C and Java tests with
 ```
@@ -201,30 +206,22 @@ Additional parameters can be passed to the benchmark after the `--` parameter:
   -v            generate verbose output in CSV format
 ```
 
+See above for selecting a different compiler. Note that msys C++ compilation
+does not work out of the box.
+
+We also provide a simplified C benchmark for platforms that do not support C++
+compilation, but *note* that pure C compilation is not natively supported by
+Bazel:
+```
+$ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark_c --
+```
+
 If you have gnuplot installed, you can generate plots from the benchmark data
 with:
 ```
 $ bazel build -c opt --jobs=1 //scripts:{f,e}-c-double-{1,10,100,1000}.pdf
 ```
 
-
-### Building without Bazel on Linux / MacOS
-You can build and run the C benchmark without using Bazel with the following shell
-command:
-```
-$ gcc -o benchmark -I. -O2 -l m -l stdc++ ryu/*.c ryu/benchmark/benchmark.cc \
-    third_party/double-conversion/double-conversion/*.cc
-$ ./benchmark
-```
-
-You can build and run the Java benchmark with the following shell command:
-```
-$ mkdir out
-$ javac -d out \
-    -sourcepath src/main/java/:third_party/mersenne_java/java/:third_party/jaffer/java/ \
-    src/main/java/info/adams/ryu/benchmark/BenchmarkMain.java
-$ java -cp out info.adams.ryu.benchmark.BenchmarkMain
-```
 
 ### Ryu: Comparison with Other Implementations
 
