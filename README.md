@@ -137,9 +137,8 @@ $ bazel build //ryu:ryu_printf
 ```
 
 ### Big-Endian Architectures
-The C implementation of Ryu should work on big-endian architectures provided
-that the floating point type and the corresponding integer type use the same
-endianness.
+The C implementations should work on big-endian architectures provided that the
+floating point type and the corresponding integer type use the same endianness.
 
 There are no concerns around endianness for the Java implementation.
 
@@ -168,7 +167,7 @@ $ bazel test //ryu/... //src/...
 
 ### Jaffer
 The code given by Jaffer in the original paper does not come with a license
-declaration. Instead, we're using code found on GitHub, which contains a
+declaration. Instead, we're using code found on GitHub [3], which contains a
 license declaration by Jaffer. Compared to the original code, this
 implementation no longer outputs incorrect values for negative numbers.
 
@@ -182,6 +181,8 @@ Add the `-mode=csv` option to get all the discovered differences as a CSV. Use
 `-mode=latex` instead to get a latex snippet of the first 20. Use
 `-mode=summary` to only print the number of discovered differences (this is the
 default mode).
+
+[3]: https://github.com/coconut2015/cookjson/blob/master/cookjson-core/src/main/java/org/yuanheng/cookjson/DoubleUtils.java
 
 ### Computing Required Lookup Table Sizes
 You can compute the required lookup table sizes with:
