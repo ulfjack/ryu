@@ -23,10 +23,14 @@ before_script:
 - bazel version
 script:
 - bazel test //ryu/... //src/...
-- bazel run //ryu/benchmark
+- bazel run -c opt //ryu/benchmark:ryu_benchmark
+- bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
 - bazel test --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
-- bazel run --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark
+- bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark
+- bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
 - bazel test --copt=-DRYU_OPTIMIZE_SIZE //ryu/... //src/...
-- bazel run --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark
+- bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_benchmark
+- bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_printf_benchmark -- -samples=200
 - bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
-- bazel run --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark
+- bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark
+- bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
