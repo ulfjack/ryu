@@ -25,7 +25,7 @@ the closest number to the decimal number ```0.3```, so that is what Ryu
 outputs.
 
 This problem of generating the shortest possible representation was originally
-posed by White and Steele [1], for which they described an algorithm called
+posed by White and Steele [[1]], for which they described an algorithm called
 "Dragon". It was subsequently improved upon with algorithms that also had
 dragon-themed names. I followed in the same vein using the japanese word for
 dragon, Ryu. In general, all these algorithms should produce identical output
@@ -43,7 +43,7 @@ representation as a struct, allowing clients to implement their own formatting.
 These are still subject to change.
 
 *Note*: The Java implementation differs from the output of ```Double.toString```
-[2] in some cases: sometimes the output is shorter (which is arguably more
+[[2]] in some cases: sometimes the output is shorter (which is arguably more
 accurate) and sometimes the output may differ in the precise digits output
 (e.g., see https://github.com/ulfjack/ryu/issues/83).
 
@@ -65,8 +65,9 @@ Other implementations of Ryu:
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 
-[1] "How to Print Floating-Point Numbers Accurately", PLDI '90, https://dl.acm.org/citation.cfm?id=93559
-[2] https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
+[1]: https://dl.acm.org/citation.cfm?id=93559
+
+[2]: https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
 
 
 ## Ryu Printf
