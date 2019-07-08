@@ -3,6 +3,7 @@ os:
 - linux
 - osx
 language: c
+osx_image: xcode11
 addons:
   apt:
     sources:
