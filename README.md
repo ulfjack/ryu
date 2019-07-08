@@ -299,3 +299,5 @@ with:
 ```
 $ bazel build -c opt --jobs=1 //scripts:{f,e}-c-double-{1,10,100,1000}.pdf
 ```
+
+The resulting files are `bazel-genfiles/scripts/{f,e}-c-double-{1,10,100,1000}.pdf`.
