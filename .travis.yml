@@ -31,10 +31,12 @@ install:
   - echo "build --build_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_output=errors" >> $HOME/.bazelrc
-  before_script:
+
+before_script:
   - mkdir -p "$HOME/.cache/bazel/"
   - bazel version
-  script:
+
+script:
   - bazel test //ryu/... //src/...
   - bazel run -c opt //ryu/benchmark:ryu_benchmark --
   - bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
