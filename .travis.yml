@@ -1,6 +1,7 @@
 os:
-- linux
-- osx
+  - linux
+  - osx
+  - windows
 
 dist: xenial
 osx_image: xcode11
@@ -19,6 +20,9 @@ addons:
 language: c
 language: cpp
 language: java
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install bazel; fi
 
 install:
 - echo "build --conlyopt=-std=c99 --compilation_mode=opt" > $HOME/.bazelrc
