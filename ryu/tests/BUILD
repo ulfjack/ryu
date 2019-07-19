@@ -38,6 +38,8 @@ cc_test(
 cc_test(
   name = "generic_128_test",
   srcs = ["generic_128_test.cc"],
+  # The code does not run on Windows yet.
+  tags = ["nowindows"],
   deps = [
     "//ryu:generic_128",
     "//third_party/gtest",

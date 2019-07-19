@@ -28,19 +28,21 @@ install:
   - echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
   - echo "build --announce_rc" >> $HOME/.bazelrc
   - echo "build --keep_going" >> $HOME/.bazelrc
+  - echo "build --build_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
+  - echo "test --test_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_output=errors" >> $HOME/.bazelrc
   before_script:
   - mkdir -p "$HOME/.cache/bazel/"
   - bazel version
   script:
   - bazel test //ryu/... //src/...
-  - bazel run -c opt //ryu/benchmark:ryu_benchmark
+  - bazel run -c opt //ryu/benchmark:ryu_benchmark --
   - bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
   - bazel test --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
-  - bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark
+  - bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark --
   - bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
   - bazel test --copt=-DRYU_OPTIMIZE_SIZE //ryu/... //src/...
-  - bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_benchmark
+  - bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_benchmark --
   - bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_printf_benchmark -- -samples=200
   - bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
   - bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark
