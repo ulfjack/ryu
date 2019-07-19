@@ -6,6 +6,9 @@ os:
 dist: xenial
 osx_image: xcode11
 
+cache:
+  apt: true
+
 addons:
   apt:
     sources:
