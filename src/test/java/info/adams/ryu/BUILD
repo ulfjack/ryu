@@ -11,5 +11,5 @@ java_test(
     "//third_party/junit",
   ],
   # Travis CI: No Java support on Windows.
-  tag = ["nowindows"],
+  tags = ["nowindows"],
 )
