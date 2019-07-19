@@ -19,7 +19,6 @@ addons:
 
 language: c
 language: cpp
-language: java
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install bazel; fi
