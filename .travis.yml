@@ -1,19 +1,24 @@
-dist: xenial
 os:
 - linux
+  dist: xenial
+  addons:
+    apt:
+      sources:
+        - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
+          key_url: 'https://bazel.build/bazel-release.pub.gpg'
+      packages:
+        - bazel
 - osx
+  osx_image: xcode11
+  addons:
+    homebrew:
+      taps: bazelbuild/tap
+      packages: bazelbuild/tap/bazel
+
 language: c
-osx_image: xcode11
-addons:
-  apt:
-    sources:
-      - sourceline: 'deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8'
-        key_url: 'https://bazel.build/bazel-release.pub.gpg'
-    packages:
-      - bazel
-  homebrew:
-    taps: bazelbuild/tap
-    packages: bazelbuild/tap/bazel
+language: cpp
+language: java
+
 install:
 - echo "build --conlyopt=-std=c99 --compilation_mode=opt" > $HOME/.bazelrc
 - echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
