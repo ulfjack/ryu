@@ -23,6 +23,8 @@ cc_library(
   hdrs = [
     "ryu_generic_128.h",
   ],
+  # The code does not compile on Windows.
+  tags = ["nowindows"],
 )
 
 cc_library(

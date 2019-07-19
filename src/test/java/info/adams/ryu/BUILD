@@ -10,4 +10,6 @@ java_test(
     "//third_party/jaffer",
     "//third_party/junit",
   ],
+  # Windows CI does not support Java.
+  tags = ["nowindows"],
 )
