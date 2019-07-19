@@ -34,6 +34,7 @@ install:
   - echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
   - echo "build --announce_rc" >> $HOME/.bazelrc
   - echo "build --keep_going" >> $HOME/.bazelrc
+  - echo "build --strategy=Javac=worker" >> $HOME/.bazelrc
   - echo "build --build_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_output=errors" >> $HOME/.bazelrc
