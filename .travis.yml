@@ -3,6 +3,8 @@ os:
 - osx
 
 dist: xenial
+osx_image: xcode11
+
 addons:
   apt:
     sources:
@@ -10,9 +12,6 @@ addons:
         key_url: 'https://bazel.build/bazel-release.pub.gpg'
     packages:
       - bazel
-
-osx_image: xcode11
-addons:
   homebrew:
     taps: bazelbuild/tap
     packages: bazelbuild/tap/bazel
