@@ -1,19 +1,21 @@
 os:
 - linux
-  dist: xenial
-  addons:
-    apt:
-      sources:
-        - sourceline: 'deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8'
-          key_url: 'https://bazel.build/bazel-release.pub.gpg'
-      packages:
-        - bazel
 - osx
-  osx_image: xcode11
-  addons:
-    homebrew:
-      taps: bazelbuild/tap
-      packages: bazelbuild/tap/bazel
+
+dist: xenial
+addons:
+  apt:
+    sources:
+      - sourceline: 'deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8'
+        key_url: 'https://bazel.build/bazel-release.pub.gpg'
+    packages:
+      - bazel
+
+osx_image: xcode11
+addons:
+  homebrew:
+    taps: bazelbuild/tap
+    packages: bazelbuild/tap/bazel
 
 language: c
 language: cpp
