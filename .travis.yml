@@ -35,6 +35,7 @@ install:
   - echo "build --build_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_tag_filters=-no$TRAVIS_OS_NAME" >> $HOME/.bazelrc
   - echo "test --test_output=errors" >> $HOME/.bazelrc
+  - echo "test --test_verbose_timeout_warnings" >> $HOME/.bazelrc
 
 before_script:
   - mkdir -p "$HOME/.cache/bazel/"
