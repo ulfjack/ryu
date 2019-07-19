@@ -3,7 +3,7 @@ os:
   - osx
   - windows
 
-dist: xenial
+dist: bionic
 osx_image: xcode11
 
 addons:
