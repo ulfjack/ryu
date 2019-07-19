@@ -24,7 +24,8 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install bazel; fi
 
 install:
-  - echo "build --conlyopt=-std=c99 --compilation_mode=opt" > $HOME/.bazelrc
+  - echo "build --compilation_mode=opt" > $HOME/.bazelrc
+  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then echo "build --conlyopt=-std=c99" > $HOME/.bazelrc; fi
   - echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
   - echo "build --announce_rc" >> $HOME/.bazelrc
   - echo "build --keep_going" >> $HOME/.bazelrc
