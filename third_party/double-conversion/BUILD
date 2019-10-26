@@ -31,6 +31,7 @@ cc_library(
       "//conditions:default": ["-lm"],
     }),
     visibility = ["//visibility:public"],
+    includes = ["."],
 )
 
 cc_test(
