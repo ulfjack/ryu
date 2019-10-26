@@ -172,43 +172,82 @@ static int bench64_fixed(const benchmark_options& options) {
   mean_and_variance mv1;
   mean_and_variance mv2;
   int throwaway = 0;
-  for (int i = 0; i < options.samples(); ++i) {
-    uint64_t r = 0;
-    const double f = generate_double(options, mt32, r);
+  if (options.classic()) {
+    for (int i = 0; i < options.samples(); ++i) {
+      uint64_t r = 0;
+      const double f = generate_double(options, mt32, r);
 
-//    printf("%f\n", f);
-    auto t1 = steady_clock::now();
-    for (int j = 0; j < options.iterations(); ++j) {
-      d2fixed_buffered(f, static_cast<uint32_t>(precision), bufferown);
-      throwaway += bufferown[2];
-    }
-    auto t2 = steady_clock::now();
-    double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
-    mv1.update(delta1);
-
-    double delta2 = 0.0;
-    if (!options.ryu_only()) {
-      t1 = steady_clock::now();
+  //    printf("%f\n", f);
+      auto t1 = steady_clock::now();
       for (int j = 0; j < options.iterations(); ++j) {
-        snprintf(buffer, BUFFER_SIZE, fmt, f);
-        throwaway += buffer[2];
+        d2fixed_buffered(f, static_cast<uint32_t>(precision), bufferown);
+        throwaway += bufferown[2];
       }
-      t2 = steady_clock::now();
-      delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
-      mv2.update(delta2);
+      auto t2 = steady_clock::now();
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
+      mv1.update(delta1);
+
+      double delta2 = 0.0;
+      if (!options.ryu_only()) {
+        t1 = steady_clock::now();
+        for (int j = 0; j < options.iterations(); ++j) {
+          snprintf(buffer, BUFFER_SIZE, fmt, f);
+          throwaway += buffer[2];
+        }
+        t2 = steady_clock::now();
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.iterations());
+        mv2.update(delta2);
+      }
+
+      if (options.verbose()) {
+        if (options.ryu_only()) {
+          printf("%s,%" PRIu64 ",%f\n", bufferown, r, delta1);
+        } else {
+          printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
+        }
+      }
+
+  //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+      if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
+        printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+      }
+    }
+  } else {
+    std::vector<double> vec(options.samples());
+    for (int i = 0; i < options.samples(); ++i) {
+      uint64_t r = 0;
+      vec[i] = generate_double(options, mt32, r);
     }
 
-    if (options.verbose()) {
-      if (options.ryu_only()) {
-        printf("%s,%" PRIu64 ",%f\n", bufferown, r, delta1);
-      } else {
-        printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
+    for (int j = 0; j < options.iterations(); ++j) {
+      auto t1 = steady_clock::now();
+      for (int i = 0; i < options.samples(); ++i) {
+        d2fixed_buffered(vec[i], static_cast<uint32_t>(precision), bufferown);
+        throwaway += bufferown[2];
       }
-    }
+      auto t2 = steady_clock::now();
+      double delta1 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.samples());
+      mv1.update(delta1);
 
-//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
-    if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
-      printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+      double delta2 = 0.0;
+      if (!options.ryu_only()) {
+        t1 = steady_clock::now();
+        for (int i = 0; i < options.samples(); ++i) {
+          snprintf(buffer, BUFFER_SIZE, fmt, vec[i]);
+          throwaway += buffer[2];
+        }
+        t2 = steady_clock::now();
+        delta2 = duration_cast<nanoseconds>(t2 - t1).count() / static_cast<double>(options.samples());
+        mv2.update(delta2);
+      }
+
+      if (options.verbose()) {
+        if (options.ryu_only()) {
+          printf("%f\n", delta1);
+        } else {
+          printf("%f,%f\n", delta1, delta2);
+        }
+      }
     }
   }
   if (!options.verbose()) {
