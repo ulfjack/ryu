@@ -20,9 +20,6 @@ default: $(ALIB)
 $(ALIB): $(OBJ)
 	$(AR) rcs $(ALIB) $(OBJ)
 
-clean:
-	rm -f $(OBJ) $(ALIB)
-
 libs: $(ALIB)
 
 .PHONY: install
@@ -37,4 +34,20 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/lib/$(ALIB)
 	rm -f $(DESTDIR)$(PREFIX)/include/ryu.h
 
+TESTSRC=tests/d2fixed_test.cc tests/d2s_intrinsics_test.cc tests/d2s_table_test.cc tests/d2s_test.cc tests/f2s_test.cc tests/generic_128_test.cc
+
+TESTS = $(TESTSRC:.cc=.test)
+
+# Assumes gtest is somehow available (e.g. installed in the system)
+%.test: %.cc $(ALIB)
+	$(CXX) -L/usr/lib64 -lgtest_main -lgtest $< -I.. $(ALIB) -frtti -o $@
+	$@
+
+.PHONY: test
+test: $(TESTS)
+	@echo DONE
+
+.PHONY: clean
+clean:
+	rm -f $(OBJ) $(ALIB) $(TESTS)
 
