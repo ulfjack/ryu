@@ -46,6 +46,7 @@ before_script:
 
 script:
   - bazel test //ryu/... //src/...
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then bazel test --run_under="leaks --atExit -- " //ryu/...; fi
   - bazel run -c opt //ryu/benchmark:ryu_benchmark --
   - bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
   - bazel test --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
