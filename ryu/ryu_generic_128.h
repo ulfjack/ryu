@@ -24,6 +24,17 @@
 extern "C" {
 #endif
 
+// This is a generic 128-bit implementation of float to shortest conversion
+// using the Ryu algorithm. It can handle any IEEE-compatible floating-point
+// type up to 128 bits. In order to use this correctly, you must use the
+// appropriate *_to_fd128 function for the underlying type - DO NOT CAST your
+// input to another floating-point type, doing so will result in incorrect
+// output!
+//
+// For any floating-point type that is not natively defined by the compiler,
+// you can use generic_binary_to_decimal to work directly on the underlying bit
+// representation.
+
 #define FD128_EXCEPTIONAL_EXPONENT 0x7FFFFFFF
 
 // A floating decimal representing (-1)^s * m * 10^e.
