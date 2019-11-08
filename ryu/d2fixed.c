@@ -36,13 +36,6 @@
 #include <stdio.h>
 #endif
 
-#if !defined(RYU_ONLY_64_BIT_OPS) && !defined(RYU_AVOID_UINT128) && defined(__SIZEOF_INT128__)
-#define HAS_UINT128
-typedef __uint128_t uint128_t;
-#elif !defined(RYU_ONLY_64_BIT_OPS) && defined(_MSC_VER) && defined(_M_X64)
-#define HAS_64_BIT_INTRINSICS
-#endif
-
 #include "ryu/common.h"
 #include "ryu/digit_table.h"
 #include "ryu/d2fixed_full_table.h"

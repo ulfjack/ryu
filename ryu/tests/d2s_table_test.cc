@@ -19,20 +19,9 @@
 #include <math.h>
 
 #include "third_party/gtest/gtest.h"
-
-#if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS)
-#define HAS_UINT128
-#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64) \
-  && !defined(__clang__) // https://bugs.llvm.org/show_bug.cgi?id=37755
-#define HAS_64_BIT_INTRINSICS
-#endif
-
-// We want to test the size-optimized case here.
-#if !defined(RYU_OPTIMIZE_SIZE)
-#define RYU_OPTIMIZE_SIZE
-#endif
-#include "ryu/d2s.h"
-
+#include "ryu/common.h"
+#include "ryu/d2s_intrinsics.h"
+#include "ryu/d2s_small_table.h"
 #include "ryu/d2s_full_table.h"
 
 TEST(D2sTableTest, double_computePow5) {

@@ -20,8 +20,20 @@
 #include <assert.h>
 #include <stdint.h>
 
-// This sets RYU_32_BIT_PLATFORM as a side effect if applicable.
+// Defines RYU_32_BIT_PLATFORM if applicable.
 #include "ryu/common.h"
+
+// ABSL avoids uint128_t on Win32 even if __SIZEOF_INT128__ is defined.
+// Let's do the same for now.
+#if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS)
+#define HAS_UINT128
+#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64)
+#define HAS_64_BIT_INTRINSICS
+#endif
+
+#if defined(HAS_UINT128)
+typedef __uint128_t uint128_t;
+#endif
 
 #if defined(HAS_64_BIT_INTRINSICS)
 
@@ -91,7 +103,7 @@ static inline uint64_t shiftright128(const uint64_t lo, const uint64_t hi, const
 
 #endif // defined(HAS_64_BIT_INTRINSICS)
 
-#ifdef RYU_32_BIT_PLATFORM
+#if defined(RYU_32_BIT_PLATFORM)
 
 // Returns the high 64 bits of the 128-bit product of a and b.
 static inline uint64_t umulh(const uint64_t a, const uint64_t b) {
@@ -151,7 +163,7 @@ static inline uint32_t mod1e9(const uint64_t x) {
   return ((uint32_t) x) - 1000000000 * ((uint32_t) div1e9(x));
 }
 
-#else // RYU_32_BIT_PLATFORM
+#else // defined(RYU_32_BIT_PLATFORM)
 
 static inline uint64_t div5(const uint64_t x) {
   return x / 5;
@@ -177,7 +189,7 @@ static inline uint32_t mod1e9(const uint64_t x) {
   return (uint32_t) (x - 1000000000 * div1e9(x));
 }
 
-#endif // RYU_32_BIT_PLATFORM
+#endif // defined(RYU_32_BIT_PLATFORM)
 
 static inline uint32_t pow5Factor(uint64_t value) {
   uint32_t count = 0;

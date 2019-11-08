@@ -17,6 +17,9 @@
 #ifndef RYU_D2S_SMALL_TABLE_H
 #define RYU_D2S_SMALL_TABLE_H
 
+// Defines HAS_UINT128 and uint128_t if applicable.
+#include "ryu/d2s_intrinsics.h"
+
 #define DOUBLE_POW5_INV_BITCOUNT 122
 #define DOUBLE_POW5_BITCOUNT 121
 

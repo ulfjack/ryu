@@ -5,7 +5,6 @@ cc_library(
   srcs = [
     "f2s.c",
     "d2s.c",
-    "d2s.h",
     "d2fixed.c",
     "d2fixed_full_table.h",
     "d2s_full_table.h",

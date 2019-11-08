@@ -40,18 +40,20 @@
 #include <stdio.h>
 #endif
 
-// ABSL avoids uint128_t on Win32 even if __SIZEOF_INT128__ is defined.
-// Let's do the same for now.
-#if defined(__SIZEOF_INT128__) && !defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS)
-#define HAS_UINT128
-#elif defined(_MSC_VER) && !defined(RYU_ONLY_64_BIT_OPS) && defined(_M_X64)
-#define HAS_64_BIT_INTRINSICS
-#endif
-
 #include "ryu/common.h"
 #include "ryu/digit_table.h"
-#include "ryu/d2s.h"
 #include "ryu/d2s_intrinsics.h"
+
+// Include either the small or the full lookup tables depending on the mode.
+#if defined(RYU_OPTIMIZE_SIZE)
+#include "ryu/d2s_small_table.h"
+#else
+#include "ryu/d2s_full_table.h"
+#endif
+
+#define DOUBLE_MANTISSA_BITS 52
+#define DOUBLE_EXPONENT_BITS 11
+#define DOUBLE_BIAS 1023
 
 // We need a 64x128-bit multiplication and a subsequent 128-bit shift.
 // Multiplication:
