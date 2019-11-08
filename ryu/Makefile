@@ -34,13 +34,12 @@ uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/lib/$(ALIB)
 	rm -f $(DESTDIR)$(PREFIX)/include/ryu.h
 
-TESTSRC=tests/d2fixed_test.cc tests/d2s_intrinsics_test.cc tests/d2s_table_test.cc tests/d2s_test.cc tests/f2s_test.cc tests/generic_128_test.cc
+TESTSRC=tests/common_test.cc tests/d2fixed_test.cc tests/d2s_intrinsics_test.cc tests/d2s_table_test.cc tests/d2s_test.cc tests/f2s_test.cc tests/generic_128_test.cc
 
 TESTS = $(TESTSRC:.cc=.test)
 
-# Assumes gtest is somehow available (e.g. installed in the system)
 %.test: %.cc $(ALIB)
-	$(CXX) -L/usr/lib64 -lgtest_main -lgtest $< -I.. $(ALIB) -frtti -o $@
+	$(CXX) -L/usr/lib64 $< ../third_party/gtest/gtest-all.cc ../third_party/gtest/gtest_main.cc -lpthread -I.. $(ALIB) -frtti -o $@
 	$@
 
 .PHONY: test
