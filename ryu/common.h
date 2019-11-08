@@ -25,10 +25,13 @@
 #define RYU_32_BIT_PLATFORM
 #endif
 
+// Returns the number of decimal digits in v, which must not be negative, and must not contain
+// more than 9 digits.
 static inline uint32_t decimalLength9(const uint32_t v) {
   // Function precondition: v is not a 10-digit number.
   // (f2s: 9 digits are sufficient for round-tripping.)
   // (d2fixed: We print 9-digit blocks.)
+  assert(v >= 0);
   assert(v < 1000000000);
   if (v >= 100000000) { return 9; }
   if (v >= 10000000) { return 8; }
@@ -41,7 +44,7 @@ static inline uint32_t decimalLength9(const uint32_t v) {
   return 1;
 }
 
-// Returns e == 0 ? 1 : ceil(log_2(5^e)).
+// Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 3528.
 static inline int32_t pow5bits(const int32_t e) {
   // This approximation works up to the point that the multiplication overflows at e = 3529.
   // If the multiplication were done in 64 bits, it would fail at 5^4004 which is just greater
@@ -51,7 +54,7 @@ static inline int32_t pow5bits(const int32_t e) {
   return (int32_t) (((((uint32_t) e) * 1217359) >> 19) + 1);
 }
 
-// Returns floor(log_10(2^e)).
+// Returns floor(log_10(2^e)); requires 0 <= e <= 1650.
 static inline uint32_t log10Pow2(const int32_t e) {
   // The first value this approximation fails for is 2^1651 which is just greater than 10^297.
   assert(e >= 0);
@@ -59,7 +62,7 @@ static inline uint32_t log10Pow2(const int32_t e) {
   return (((uint32_t) e) * 78913) >> 18;
 }
 
-// Returns floor(log_10(5^e)).
+// Returns floor(log_10(5^e)); requires 0 <= e <= 2620.
 static inline uint32_t log10Pow5(const int32_t e) {
   // The first value this approximation fails for is 5^2621 which is just greater than 10^1832.
   assert(e >= 0);
