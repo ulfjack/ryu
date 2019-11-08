@@ -38,7 +38,7 @@ public final class PrintPrintfLookupTable {
   private static final BigInteger mask = BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.ONE);
 
   public static void main(String[] args) {
-//    printTables();
+    printTables();
     printInverseTables();
   }
 
