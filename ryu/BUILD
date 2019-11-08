@@ -1,6 +1,15 @@
 package(default_visibility=["//visibility:public"])
 
 cc_library(
+  name = "common",
+  hdrs = [
+    "common.h",
+  ],
+  testonly = True,
+  visibility=["//ryu/tests:__pkg__"],
+)
+
+cc_library(
   name = "ryu",
   srcs = [
     "f2s.c",

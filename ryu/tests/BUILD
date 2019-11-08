@@ -1,5 +1,14 @@
 
 cc_test(
+  name = "common_test",
+  srcs = ["common_test.cc"],
+  deps = [
+    "//ryu:common",
+    "//third_party/gtest",
+  ],
+)
+
+cc_test(
   name = "d2s_test",
   srcs = ["d2s_test.cc"],
   deps = [

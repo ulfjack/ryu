@@ -25,8 +25,7 @@
 #define RYU_32_BIT_PLATFORM
 #endif
 
-// Returns the number of decimal digits in v, which must not be negative, and must not contain
-// more than 9 digits.
+// Returns the number of decimal digits in v, which must not contain more than 9 digits.
 static inline uint32_t decimalLength9(const uint32_t v) {
   // Function precondition: v is not a 10-digit number.
   // (f2s: 9 digits are sufficient for round-tripping.)
@@ -52,6 +51,11 @@ static inline int32_t pow5bits(const int32_t e) {
   assert(e >= 0);
   assert(e <= 3528);
   return (int32_t) (((((uint32_t) e) * 1217359) >> 19) + 1);
+}
+
+// Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 3528.
+static inline int32_t ceil_log2pow5(const int32_t e) {
+  return pow5bits(e);
 }
 
 // Returns floor(log_10(2^e)); requires 0 <= e <= 1650.
