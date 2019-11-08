@@ -39,8 +39,8 @@ TEST(D2sTableTest, double_computePow5) {
   for (int i = 0; i < 326; i++) {
     uint64_t m[2];
     double_computePow5(i, m);
-    ASSERT_EQ(m[0], DOUBLE_POW5_SPLIT[i][0]);
-    ASSERT_EQ(m[1], DOUBLE_POW5_SPLIT[i][1]);
+    EXPECT_EQ(m[0], DOUBLE_POW5_SPLIT[i][0]);
+    EXPECT_EQ(m[1], DOUBLE_POW5_SPLIT[i][1]);
   }
 }
 
@@ -60,15 +60,15 @@ TEST(D2sTableTest, compute_offsets_for_double_computePow5) {
       printf("0x%08x,\n", offsets[i]);
     }
   }
-  ASSERT_EQ(totalErrors, 0);
+  EXPECT_EQ(0u, totalErrors);
 }
 
 TEST(D2sTableTest, double_computeInvPow5) {
   for (int i = 0; i < 292; i++) {
     uint64_t m[2];
     double_computeInvPow5(i, m);
-    ASSERT_EQ(m[0], DOUBLE_POW5_INV_SPLIT[i][0]);
-    ASSERT_EQ(m[1], DOUBLE_POW5_INV_SPLIT[i][1]);
+    EXPECT_EQ(m[0], DOUBLE_POW5_INV_SPLIT[i][0]);
+    EXPECT_EQ(m[1], DOUBLE_POW5_INV_SPLIT[i][1]);
   }
 }
 
@@ -88,5 +88,5 @@ TEST(D2sTableTest, compute_offsets_for_double_computeInvPow5) {
       printf("0x%08x,\n", offsets[i]);
     }
   }
-  ASSERT_EQ(totalErrors, 0);
+  EXPECT_EQ(0u, totalErrors);
 }

@@ -101,8 +101,8 @@ TEST(Generic128Test, multipleOfPowerOf2) {
 
 TEST(Generic128Test, mulShift) {
   uint64_t m[4] = { 0, 0, 2, 0 };
-  ASSERT_EQ(1, mulShift(1, m, 129));
-  ASSERT_EQ(12345, mulShift(12345, m, 129));
+  ASSERT_EQ(1u, mulShift(1, m, 129));
+  ASSERT_EQ(12345u, mulShift(12345, m, 129));
 }
 
 TEST(Generic128Test, mulShiftHuge) {
@@ -112,27 +112,27 @@ TEST(Generic128Test, mulShiftHuge) {
 }
 
 TEST(Generic128Test, decimalLength) {
-  ASSERT_EQ(1, decimalLength(1));
-  ASSERT_EQ(1, decimalLength(9));
-  ASSERT_EQ(2, decimalLength(10));
-  ASSERT_EQ(2, decimalLength(99));
-  ASSERT_EQ(3, decimalLength(100));
+  ASSERT_EQ(1u, decimalLength(1));
+  ASSERT_EQ(1u, decimalLength(9));
+  ASSERT_EQ(2u, decimalLength(10));
+  ASSERT_EQ(2u, decimalLength(99));
+  ASSERT_EQ(3u, decimalLength(100));
   uint128_t tenPow38 = (((uint128_t) 5421010862427522170ull) << 64) | 687399551400673280ull;
   // 10^38 has 39 digits.
-  ASSERT_EQ(39, decimalLength(tenPow38));
+  ASSERT_EQ(39u, decimalLength(tenPow38));
 }
 
 TEST(Generic128Test, log10Pow2) {
-  ASSERT_EQ(0, log10Pow2(1));
-  ASSERT_EQ(1, log10Pow2(5));
-  ASSERT_EQ(9864, log10Pow2(1 << 15));
+  ASSERT_EQ(0u, log10Pow2(1));
+  ASSERT_EQ(1u, log10Pow2(5));
+  ASSERT_EQ(9864u, log10Pow2(1 << 15));
 }
 
 TEST(Generic128Test, log10Pow5) {
-  ASSERT_EQ(0, log10Pow5(1));
-  ASSERT_EQ(1, log10Pow5(2));
-  ASSERT_EQ(2, log10Pow5(3));
-  ASSERT_EQ(22903, log10Pow5(1 << 15));
+  ASSERT_EQ(0u, log10Pow5(1));
+  ASSERT_EQ(1u, log10Pow5(2));
+  ASSERT_EQ(2u, log10Pow5(3));
+  ASSERT_EQ(22903u, log10Pow5(1 << 15));
 }
 
 TEST(Generic128Test, generic_to_chars) {
