@@ -24,10 +24,11 @@ public final class PrintDoubleLookupTable {
   // The C version has two code paths, one of which requires an additional entry here.
   private static final int NEG_TABLE_SIZE = 291 + 1;
 
-  private static final int POW5_BITCOUNT = 121; // max 127
-  private static final int POW5_INV_BITCOUNT = 122; // max 127
+  // We intentionally choose these to be larger than or equal to the float equivalent + 64.
+  private static final int POW5_BITCOUNT = 125; // max 127
+  private static final int POW5_INV_BITCOUNT = 125; // max 127
 
-  private static final boolean PRINT_LARGE_TABLES = true;
+  private static final boolean PRINT_LARGE_TABLES = false;
 
   private static final BigInteger MASK64 = BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.ONE);
 
