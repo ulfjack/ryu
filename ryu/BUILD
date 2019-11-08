@@ -29,12 +29,6 @@ cc_library(
   tags = ["nowindows"],
 )
 
-cc_library(
-  name = "ryu_printf",
-  hdrs = ["ryu.h"],
-  deps = [":ryu"],
-)
-
 # For testing only:
 
 cc_library(
