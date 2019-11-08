@@ -1,11 +1,35 @@
 # Ryu & Ryu Printf [![Build Status](https://travis-ci.org/ulfjack/ryu.svg?branch=master)](https://travis-ci.org/ulfjack/ryu)
 
-This project contains C and Java implementation of Ryu, as well as a C
-implementation of Ryu Printf. Ryu converts a floating point number to its
-shortest decimal representation, whereas Ryu Printf converts a floating point
-number according to the printf ```%f``` or ```%e``` format. At the time of this
-writing, these are the fastest known float-to-string conversion algorithms. We
-have tested the code on Ubuntu 19.04, MacOS Mojave, and Windows 10.
+This project contains routines to convert IEEE-754 floating-point numbers to
+decimal strings using shortest, fixed ```%f```, and scientific ```%e```
+formatting. The primary implementation is in C, and there is a port of the
+shortest conversion to Java. All algorithms have been published in
+peer-reviewed publications. At the time of this writing, these are the fastest
+known float-to-string conversion algorithms. The fixed, and scientific
+conversion routines are several times faster than the usual implementations
+of sprintf (we compared against glibc, Apple's libc, MSVC, and others).
+
+Generating scientific and fixed output format for 16 and 32 bit IEEE floating
+point numbers can be implemented by converting to 64 bit, and then using the
+64 bit routines. Note that there is no 128 bit implementation at this time.
+
+When converting to shortest, DO NOT CAST; shortest conversion is based on the
+precision of the source type, and casting to a different type will not return
+the expected output. There are highly optimized 32 and 64 bit implementations
+as well as a generic 128 bit implementation that can handle any IEEE format
+up to 128 bits.
+
+These are the supported conversion modes for the C implementation:
+
+| IEEE Type            | Supported Output Formats         |
+| -------------------- | -------------------------------- |
+| 16 Bit (half)        | Shortest (via ryu_generic_128.h) |
+| 32 Bit (float)       | Shortest                         |
+| 64 Bit (double)      | Shortest, Scientific, Fixed      |
+| 80 Bit (long double) | Shortest (via ryu_generic_128.h) |
+| 128 Bit (__float128) | Shortest (via ryu_generic_128.h) |
+
+The code is tested on Ubuntu 19.04, MacOS Mojave, and Windows 10.
 
 All code outside of third_party/ is copyrighted by Ulf Adams and contributors,
 and may be used freely in accordance with the Apache 2.0 license.
@@ -13,7 +37,6 @@ Alternatively, the files in the ryu/ directory may be used freely in accordance
 with the Boost 1.0 license.
 
 All contributions are required to maintain these licenses.
-
 
 ## Ryu
 Ryu generates the shortest decimal representation of a floating point number
