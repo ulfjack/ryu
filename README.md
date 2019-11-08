@@ -29,7 +29,8 @@ These are the supported conversion modes for the C implementation:
 | 80 Bit (long double) | Shortest (via ryu_generic_128.h) |
 | 128 Bit (__float128) | Shortest (via ryu_generic_128.h) |
 
-The code is tested on Ubuntu 19.04, MacOS Mojave, and Windows 10.
+The code is continuously tested on Ubuntu 18.04, MacOS High Sierra, and Windows
+Server version 1803.
 
 All code outside of third_party/ is copyrighted by Ulf Adams and contributors,
 and may be used freely in accordance with the Apache 2.0 license.
