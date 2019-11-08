@@ -9,6 +9,7 @@ cc_library(
     "d2fixed.c",
     "d2fixed_full_table.h",
     "d2s_full_table.h",
+    "d2s_small_table.h",
     "d2s_intrinsics.h",
     "digit_table.h",
     "common.h",
