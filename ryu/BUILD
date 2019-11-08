@@ -4,6 +4,7 @@ cc_library(
   name = "ryu",
   srcs = [
     "f2s.c",
+    "f2s_full_table.h",
     "d2s.c",
     "d2fixed.c",
     "d2fixed_full_table.h",
