@@ -15,7 +15,7 @@ cc_binary(
   name = "ryu_printf_benchmark_c",
   srcs = ["benchmark_fixed.c"],
   deps = [
-    "//ryu:ryu_printf",
+    "//ryu",
     "//third_party/mersenne",
   ],
 )
@@ -24,7 +24,7 @@ cc_binary(
   name = "ryu_printf_benchmark",
   srcs = ["benchmark_fixed.cc"],
   deps = [
-    "//ryu:ryu_printf",
+    "//ryu",
     "//third_party/mersenne",
   ],
 )

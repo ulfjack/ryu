@@ -23,7 +23,7 @@
 //
 // -DRYU_AVOID_UINT128 Avoid using uint128_t. Slower, depending on your compiler.
 
-#include "ryu/ryu2.h"
+#include "ryu/ryu.h"
 
 #include <assert.h>
 #include <stdbool.h>

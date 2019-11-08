@@ -34,7 +34,7 @@
 #include <sched.h>
 #endif
 
-#include "ryu/ryu2.h"
+#include "ryu/ryu.h"
 #include "third_party/mersenne/random.h"
 
 #define BUFFER_SIZE 2000

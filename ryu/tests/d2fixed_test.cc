@@ -18,7 +18,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#include "ryu/ryu2.h"
+#include "ryu/ryu.h"
 #include "third_party/gtest/gtest.h"
 
 struct test_case {

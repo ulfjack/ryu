@@ -30,7 +30,7 @@
 #include <unistd.h>
 #endif
 
-#include "ryu/ryu2.h"
+#include "ryu/ryu.h"
 
 using namespace std::chrono;
 
