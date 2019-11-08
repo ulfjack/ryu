@@ -457,8 +457,8 @@ static inline void generic_computeInvPow5(const uint32_t i, uint64_t* const resu
   }
 }
 
-static inline int32_t pow5Factor(uint128_t value) {
-  for (int32_t count = 0; value > 0; ++count) {
+static inline uint32_t pow5Factor(uint128_t value) {
+  for (uint32_t count = 0; value > 0; ++count) {
     if (value % 5 != 0) {
       return count;
     }
