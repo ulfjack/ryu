@@ -30,7 +30,7 @@ typedef __uint128_t uint128_t;
 
 // There's no way to define 128-bit constants in C, so we use little-endian
 // pairs of 64-bit constants.
-static uint64_t GENERIC_POW5_TABLE[POW5_TABLE_SIZE][2] = {
+static const uint64_t GENERIC_POW5_TABLE[POW5_TABLE_SIZE][2] = {
  {                    1u,                    0u },
  {                    5u,                    0u },
  {                   25u,                    0u },
@@ -89,7 +89,7 @@ static uint64_t GENERIC_POW5_TABLE[POW5_TABLE_SIZE][2] = {
  { 18443565265187884909u, 15046327690525280101u }
 };
 
-static uint64_t GENERIC_POW5_SPLIT[89][4] = {
+static const uint64_t GENERIC_POW5_SPLIT[89][4] = {
  {                    0u,                    0u,                    0u,    72057594037927936u },
  {                    0u,  5206161169240293376u,  4575641699882439235u,    73468396926392969u },
  {  3360510775605221349u,  6983200512169538081u,  4325643253124434363u,    74906821675075173u },
@@ -183,7 +183,7 @@ static uint64_t GENERIC_POW5_SPLIT[89][4] = {
 
 // Unfortunately, the results are sometimes off by one or two. We use an additional
 // lookup table to store those cases and adjust the result.
-static uint64_t POW5_ERRORS[156] = {
+static const uint64_t POW5_ERRORS[156] = {
  0x0000000000000000u, 0x0000000000000000u, 0x0000000000000000u, 0x9555596400000000u, 
  0x65a6569525565555u, 0x4415551445449655u, 0x5105015504144541u, 0x65a69969a6965964u, 
  0x5054955969959656u, 0x5105154515554145u, 0x4055511051591555u, 0x5500514455550115u, 
@@ -225,7 +225,7 @@ static uint64_t POW5_ERRORS[156] = {
  0x5044044040000000u, 0x1045040440010500u, 0x0000400000040000u, 0x0000000000000000u
 };
 
-static uint64_t GENERIC_POW5_INV_SPLIT[89][4] = {
+static const uint64_t GENERIC_POW5_INV_SPLIT[89][4] = {
  {                    0u,                    0u,                    0u,   144115188075855872u },
  {  1573859546583440065u,  2691002611772552616u,  6763753280790178510u,   141347765182270746u },
  { 12960290449513840412u, 12345512957918226762u, 18057899791198622765u,   138633484706040742u },
@@ -317,7 +317,7 @@ static uint64_t GENERIC_POW5_INV_SPLIT[89][4] = {
  {  7184427196661305643u, 14332510582433188173u, 14230167953789677901u,   104649889046128358u }
 };
 
-static uint64_t POW5_INV_ERRORS[154] = {
+static const uint64_t POW5_INV_ERRORS[154] = {
  0x1144155514145504u, 0x0000541555401141u, 0x0000000000000000u, 0x0154454000000000u, 
  0x4114105515544440u, 0x0001001111500415u, 0x4041411410011000u, 0x5550114515155014u, 
  0x1404100041554551u, 0x0515000450404410u, 0x5054544401140004u, 0x5155501005555105u, 
