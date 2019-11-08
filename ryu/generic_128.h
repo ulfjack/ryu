@@ -359,7 +359,7 @@ static uint64_t POW5_INV_ERRORS[154] = {
  0x0040000400105555u, 0x0000000000000001u, 
 };
 
-// Returns e == 0 ? 1 : ceil(log_2(5^e)).
+// Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 32768.
 static inline uint32_t pow5bits(const int32_t e) {
   assert(e >= 0);
   assert(e <= 1 << 15);
