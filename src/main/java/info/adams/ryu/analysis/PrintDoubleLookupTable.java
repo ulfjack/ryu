@@ -30,8 +30,8 @@ public final class PrintDoubleLookupTable {
   public static void main(String[] args) {
     BigInteger mask = BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.ONE);
 
-    System.out.println("#define POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
-    System.out.println("#define POW5_BITCOUNT " + POW5_BITCOUNT);
+    System.out.println("#define DOUBLE_POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
+    System.out.println("#define DOUBLE_POW5_BITCOUNT " + POW5_BITCOUNT);
     System.out.println();
     System.out.println("static const uint64_t DOUBLE_POW5_INV_SPLIT[" + NEG_TABLE_SIZE + "][2] = {");
     for (int i = 0; i < NEG_TABLE_SIZE; i++) {
