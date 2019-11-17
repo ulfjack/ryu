@@ -18,6 +18,17 @@ cc_library(
 )
 
 cc_library(
+  name = "ryu_parse",
+  srcs = [
+    "s2d.c",
+    "d2s_intrinsics.h",
+    "d2s_full_table.h",
+    "common.h",
+  ],
+  hdrs = ["ryu_parse.h"],
+)
+
+cc_library(
   name = "generic_128",
   srcs = [
     "generic_128.c",
