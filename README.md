@@ -88,6 +88,7 @@ Other implementations of Ryu:
 | Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
+| C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
 
 [1]: https://dl.acm.org/citation.cfm?id=93559
 
