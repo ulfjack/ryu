@@ -38,7 +38,7 @@
 #define DOUBLE_EXPONENT_BIAS 1023
 
 static inline uint32_t floor_log2(const uint64_t value) {
-  return 63 - __builtin_clzl(value);
+  return 63 - __builtin_clzll(value);
 }
 
 static inline int32_t max(int32_t a, int32_t b) {
