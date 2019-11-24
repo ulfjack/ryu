@@ -29,4 +29,5 @@ TEST(S2dTest, Basic) {
   EXPECT_EQ(123.456, s2d("123.456"));
   EXPECT_EQ(123.456, s2d("123456e-3"));
   EXPECT_EQ(123.456, s2d("1234.56e-1"));
+  EXPECT_EQ(1.453, s2d("1.453"));
 }

@@ -189,12 +189,12 @@ double s2d_n(const char * buffer, const int len) {
   // trailing zeros or the result would otherwise be odd.
   //
   // We need to update trailingZeros given that we have the exact output exponent ieee_e2 now.
-  trailingZeros &= (m2 & ((1L << (shift - 1)) - 1)) == 0;
+  trailingZeros &= (m2 & ((1ull << (shift - 1)) - 1)) == 0;
   uint64_t lastRemovedBit = (m2 >> (shift - 1)) & 1;
   bool roundUp = (lastRemovedBit != 0) && (!trailingZeros || (((m2 >> shift) & 1) != 0));
 
   // TODO: (m2 >> shift) + roundUp could overflow!
-  uint64_t ieee_m2 = ((m2 >> shift) + roundUp) & ((1L << DOUBLE_MANTISSA_BITS) - 1);
+  uint64_t ieee_m2 = ((m2 >> shift) + roundUp) & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
   uint64_t ieee = (((((uint64_t) signedM) << DOUBLE_EXPONENT_BITS) | (uint64_t)ieee_e2) << DOUBLE_MANTISSA_BITS) | ieee_m2;
   return int64Bits2Double(ieee);
 }
