@@ -142,6 +142,9 @@ In addition, Ryu Printf has a more predictable performance profile. In theory,
 an implementation that performs particularly badly for some subset of numbers
 could be exploited as a denial-of-service attack vector.
 
+My OOPSLA'2019 paper provides a correctness proof:
+https://dl.acm.org/citation.cfm?doid=3366395.3360595
+
 
 
 ## Building, Testing, Running
