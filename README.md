@@ -76,8 +76,7 @@ other specifications, such as for JavaScript, always require the shortest output
 We may change the Java implementation in the future to support both.
 
 My PLDI'18 paper includes a complete correctness proof of the algorithm:
-https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
-CC-BY-SA license.
+https://dl.acm.org/citation.cfm?doid=3296979.3192369
 
 Other implementations of Ryu:
 
