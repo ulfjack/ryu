@@ -22,7 +22,7 @@ import java.math.BigInteger;
 public final class PrintDoubleLookupTable {
   private static final int POS_TABLE_SIZE = 326;
   // The C version has two code paths, one of which requires an additional entry here.
-  private static final int NEG_TABLE_SIZE = 326;
+  private static final int NEG_TABLE_SIZE = 342;
 
   // We intentionally choose these to be larger than or equal to the float equivalent + 64.
   private static final int POW5_BITCOUNT = 125; // max 127

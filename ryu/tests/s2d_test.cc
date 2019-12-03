@@ -58,3 +58,7 @@ TEST(S2dTest, Overflow) {
   EXPECT_EQ(INFINITY, s2d("2e308"));
   EXPECT_EQ(INFINITY, s2d("1e309"));
 }
+
+TEST(S2dTest, TableSizeDenormal) {
+  EXPECT_EQ(5e-324, s2d("4.9406564584124654e-324"));
+}
