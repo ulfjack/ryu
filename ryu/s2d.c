@@ -152,6 +152,7 @@ double s2d_n(const char * buffer, const int len) {
     // To that end, we use the DOUBLE_POW5_SPLIT table.
     int j = e2 - e10 - ceil_log2pow5(e10) + DOUBLE_POW5_BITCOUNT;
     assert(j >= 0);
+    assert(e10 < DOUBLE_POW5_TABLE_SIZE);
     m2 = mulShift(m10, DOUBLE_POW5_SPLIT[e10], j);
 
     // We also compute if the result is exact, i.e.,
@@ -163,6 +164,7 @@ double s2d_n(const char * buffer, const int len) {
   } else {
     e2 = floor_log2(m10) + e10 - ceil_log2pow5(-e10) - (DOUBLE_MANTISSA_BITS + 1);
     int j = e2 - e10 + ceil_log2pow5(-e10) - 1 + DOUBLE_POW5_INV_BITCOUNT;
+    assert(-e10 < DOUBLE_POW5_INV_TABLE_SIZE);
     m2 = mulShift(m10, DOUBLE_POW5_INV_SPLIT[-e10], j);
     trailingZeros = multipleOfPowerOf5(m10, -e10);
   }

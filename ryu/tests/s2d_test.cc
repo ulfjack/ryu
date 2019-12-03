@@ -35,6 +35,7 @@ TEST(S2dTest, Basic) {
 
 TEST(S2dTest, MinMax) {
   EXPECT_EQ(1.7976931348623157e308, s2d("1.7976931348623157e308"));
+  EXPECT_EQ(5E-324, s2d("5E-324"));
 }
 
 TEST(S2dTest, MaybeOverflow) {
