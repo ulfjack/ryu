@@ -52,6 +52,10 @@ TEST(S2dTest, Underflow) {
   EXPECT_EQ(0.0, s2d("2.4e-324"));
   EXPECT_EQ(0.0, s2d("1e-324"));
   EXPECT_EQ(0.0, s2d("9.99999e-325"));
+  // These are just about halfway between 0 and the smallest float.
+  // The first is just below the halfway point, the second just above.
+  EXPECT_EQ(0.0, s2d("2.4703282292062327e-324"));
+  EXPECT_EQ(5e-324, s2d("2.4703282292062328e-324"));
 }
 
 TEST(S2dTest, Overflow) {
