@@ -128,8 +128,21 @@ double s2d_n(const char * buffer, const int len) {
 
 #ifdef RYU_DEBUG
   printf("Input=%s\n", buffer);
+  printf("m10digits = %d\n", m10digits);
+  printf("e10digits = %d\n", e10digits);
   printf("m10 * 10^e10 = %" PRIu64 " * 10^%d\n", m10, e10);
 #endif
+
+  if ((m10digits + e10 <= -324) || (m10 == 0)) {
+    // Number is less than 1e-324, which should be rounded down to 0; return +/-0.0.
+    uint64_t ieee = ((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS);
+    return int64Bits2Double(ieee);
+  }
+  if (m10digits + e10 >= 310) {
+    // Number is larger than 1e+309, which should be rounded down to 0; return +/-Infinity.
+    uint64_t ieee = (((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS)) | (0x7ffull << DOUBLE_MANTISSA_BITS);
+    return int64Bits2Double(ieee);
+  }
 
   // Convert to binary float m2 * 2^e2, while retaining information about whether the conversion
   // was exact (trailingZeros).
@@ -176,6 +189,12 @@ double s2d_n(const char * buffer, const int len) {
   // Compute the final IEEE exponent.
   uint32_t ieee_e2 = (uint32_t) max(0, e2 + DOUBLE_EXPONENT_BIAS + floor_log2(m2));
 
+  if (ieee_e2 > 0x7fe) {
+    // Final IEEE exponent is larger than the maximum representable; return +/-Infinity.
+    uint64_t ieee = (((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS)) | (0x7ffull << DOUBLE_MANTISSA_BITS);
+    return int64Bits2Double(ieee);
+  }
+
   // We need to figure out how much we need to shift m2. The tricky part is that we need to take
   // the final IEEE exponent into account, so we need to reverse the bias and also special-case
   // the value 0.
@@ -195,6 +214,10 @@ double s2d_n(const char * buffer, const int len) {
   uint64_t lastRemovedBit = (m2 >> (shift - 1)) & 1;
   bool roundUp = (lastRemovedBit != 0) && (!trailingZeros || (((m2 >> shift) & 1) != 0));
 
+#ifdef RYU_DEBUG
+  printf("roundUp = %d\n", roundUp);
+  printf("ieee_m2 = %" PRIu64 "\n", (m2 >> shift) + roundUp);
+#endif
   uint64_t ieee_m2 = (m2 >> shift) + roundUp;
   if (ieee_m2 == (1ull << (DOUBLE_MANTISSA_BITS + 1))) {
     // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
