@@ -193,8 +193,12 @@ double s2d_n(const char * buffer, const int len) {
   uint64_t lastRemovedBit = (m2 >> (shift - 1)) & 1;
   bool roundUp = (lastRemovedBit != 0) && (!trailingZeros || (((m2 >> shift) & 1) != 0));
 
-  // TODO: (m2 >> shift) + roundUp could overflow!
-  uint64_t ieee_m2 = ((m2 >> shift) + roundUp) & ((1ull << DOUBLE_MANTISSA_BITS) - 1);
+  uint64_t ieee_m2 = (m2 >> shift) + roundUp;
+  if (ieee_m2 == (1ull << (DOUBLE_MANTISSA_BITS + 1))) {
+    // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
+    ieee_e2++;
+  }
+  ieee_m2 &= (1ull << DOUBLE_MANTISSA_BITS) - 1;
   uint64_t ieee = (((((uint64_t) signedM) << DOUBLE_EXPONENT_BITS) | (uint64_t)ieee_e2) << DOUBLE_MANTISSA_BITS) | ieee_m2;
   return int64Bits2Double(ieee);
 }

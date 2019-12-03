@@ -32,3 +32,17 @@ TEST(S2dTest, Basic) {
   EXPECT_EQ(1.453, s2d("1.453"));
   EXPECT_EQ(1453.0, s2d("1.453e+3"));
 }
+
+TEST(S2dTest, MinMax) {
+  EXPECT_EQ(1.7976931348623157e308, s2d("1.7976931348623157e308"));
+}
+
+TEST(S2dTest, MaybeOverflow) {
+  // This results in binary mantissa that is all ones and requires rounding up
+  // because it is closer to 1 than to the next smaller float. This is a
+  // regression test that the mantissa overflow is handled correctly by
+  // increasing the exponent.
+  EXPECT_EQ(1.0, s2d("0.99999999999999999"));
+  // This number overflows the mantissa *and* the IEEE exponent.
+  EXPECT_EQ(INFINITY, s2d("1.7976931348623159e308"));
+}
