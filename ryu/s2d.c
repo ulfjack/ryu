@@ -94,8 +94,8 @@ double s2d_n(const char * buffer, const int len) {
   if (i < len && ((buffer[i] == 'e') || (buffer[i] == 'E'))) {
     eIndex = i;
     i++;
-    if (i < len && (buffer[i] == '-')) {
-      signedE = true;
+    if (i < len && ((buffer[i] == '-') || (buffer[i] == '+'))) {
+      signedE = buffer[i] == '-';
       i++;
     }
     for (; i < len; i++) {
