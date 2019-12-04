@@ -37,9 +37,21 @@
 #define DOUBLE_EXPONENT_BITS 11
 #define DOUBLE_EXPONENT_BIAS 1023
 
+#if defined(HAS_64_BIT_INTRINSICS)
+#include <intrin.h>
+
+static inline uint32_t floor_log2(const uint64_t value) {
+  long index;
+  return _BitScanReverse64(&index, value) ? 63 - index : 64;
+}
+
+#else
+
 static inline uint32_t floor_log2(const uint64_t value) {
   return 63 - __builtin_clzll(value);
 }
+
+#endif
 
 static inline int32_t max(int32_t a, int32_t b) {
   return a < b ? b : a;
