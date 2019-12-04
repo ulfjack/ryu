@@ -37,7 +37,7 @@
 #define DOUBLE_EXPONENT_BITS 11
 #define DOUBLE_EXPONENT_BIAS 1023
 
-#if defined(HAS_64_BIT_INTRINSICS)
+#if defined(_MSC_VER)
 #include <intrin.h>
 
 static inline uint32_t floor_log2(const uint64_t value) {
