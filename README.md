@@ -76,8 +76,7 @@ other specifications, such as for JavaScript, always require the shortest output
 We may change the Java implementation in the future to support both.
 
 My PLDI'18 paper includes a complete correctness proof of the algorithm:
-https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
-CC-BY-SA license.
+https://dl.acm.org/citation.cfm?doid=3296979.3192369
 
 Other implementations of Ryu:
 
@@ -88,6 +87,7 @@ Other implementations of Ryu:
 | Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
+| C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
 
 [1]: https://dl.acm.org/citation.cfm?id=93559
 
@@ -140,6 +140,9 @@ implementations of printf for precision parameters 1, 10, 100, and 1000:
 In addition, Ryu Printf has a more predictable performance profile. In theory,
 an implementation that performs particularly badly for some subset of numbers
 could be exploited as a denial-of-service attack vector.
+
+My OOPSLA'2019 paper provides a correctness proof:
+https://dl.acm.org/citation.cfm?doid=3366395.3360595
 
 
 
