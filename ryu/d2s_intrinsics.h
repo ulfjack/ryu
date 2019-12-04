@@ -308,6 +308,19 @@ static inline uint64_t mulShiftAll(const uint64_t m, const uint64_t* const mul, 
 
 #else // !defined(HAS_UINT128) && !defined(HAS_64_BIT_INTRINSICS)
 
+static inline uint64_t mulShift(const uint64_t m, const uint64_t* const mul, const int32_t j) {
+  // m is maximum 55 bits
+  uint64_t high1;                                   // 128
+  const uint64_t low1 = umul128(m, mul[1], &high1); // 64
+  uint64_t high0;                                   // 64
+  umul128(m, mul[0], &high0);                       // 0
+  const uint64_t sum = high0 + low1;
+  if (sum < high0) {
+    ++high1; // overflow into high1
+  }
+  return shiftright128(sum, high1, j - 64);
+}
+
 static inline uint64_t mulShiftAll(uint64_t m, const uint64_t* const mul, const int32_t j,
   uint64_t* const vp, uint64_t* const vm, const uint32_t mmShift) {
   m <<= 1;
