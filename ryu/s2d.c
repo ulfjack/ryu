@@ -51,10 +51,9 @@ static inline double int64Bits2Double(uint64_t bits) {
   return f;
 }
 
-double s2d_n(const char * buffer, const int len) {
+enum Status s2d_n(const char * buffer, const int len, double * result) {
   if (len == 0) {
-    // TODO: Error handling?
-    return 0;
+    return INPUT_TOO_SHORT;
   }
   int m10digits = 0;
   int e10digits = 0;
@@ -73,8 +72,7 @@ double s2d_n(const char * buffer, const int len) {
     char c = buffer[i];
     if (c == '.') {
       if (dotIndex != len) {
-        // TODO: Error handling!
-        return 0;
+        return MALFORMED_INPUT;
       }
       dotIndex = i;
       continue;
@@ -83,8 +81,7 @@ double s2d_n(const char * buffer, const int len) {
       break;
     }
     if (m10digits >= 17) {
-      // TODO: Error handling!
-      return 0;
+      return INPUT_TOO_LONG;
     }
     m10 = 10 * m10 + (c - '0');
     if (m10 != 0) {
@@ -101,12 +98,11 @@ double s2d_n(const char * buffer, const int len) {
     for (; i < len; i++) {
       char c = buffer[i];
       if ((c < '0') || (c > '9')) {
-        // TODO: Error handling!
-        return 0;
+        return MALFORMED_INPUT;
       }
       if (e10digits > 3) {
-        // TODO: Error handling!
-        return 0;
+        // TODO: Be more lenient. Return +/-Infinity or +/-0 instead.
+        return INPUT_TOO_LONG;
       }
       e10 = 10 * e10 + (c - '0');
       if (e10 != 0) {
@@ -115,15 +111,15 @@ double s2d_n(const char * buffer, const int len) {
     }
   }
   if (i < len) {
-    // TODO: Error handling!
-    return 0;
+    return MALFORMED_INPUT;
   }
   if (signedE) {
     e10 = -e10;
   }
   e10 -= dotIndex < eIndex ? eIndex - dotIndex - 1 : 0;
   if (m10 == 0) {
-    return signedM ? -0.0 : 0.0;
+    *result = signedM ? -0.0 : 0.0;
+    return SUCCESS;
   }
 
 #ifdef RYU_DEBUG
@@ -136,12 +132,14 @@ double s2d_n(const char * buffer, const int len) {
   if ((m10digits + e10 <= -324) || (m10 == 0)) {
     // Number is less than 1e-324, which should be rounded down to 0; return +/-0.0.
     uint64_t ieee = ((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS);
-    return int64Bits2Double(ieee);
+    *result = int64Bits2Double(ieee);
+    return SUCCESS;
   }
   if (m10digits + e10 >= 310) {
     // Number is larger than 1e+309, which should be rounded down to 0; return +/-Infinity.
     uint64_t ieee = (((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS)) | (0x7ffull << DOUBLE_MANTISSA_BITS);
-    return int64Bits2Double(ieee);
+    *result = int64Bits2Double(ieee);
+    return SUCCESS;
   }
 
   // Convert to binary float m2 * 2^e2, while retaining information about whether the conversion
@@ -192,7 +190,8 @@ double s2d_n(const char * buffer, const int len) {
   if (ieee_e2 > 0x7fe) {
     // Final IEEE exponent is larger than the maximum representable; return +/-Infinity.
     uint64_t ieee = (((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS)) | (0x7ffull << DOUBLE_MANTISSA_BITS);
-    return int64Bits2Double(ieee);
+    *result = int64Bits2Double(ieee);
+    return SUCCESS;
   }
 
   // We need to figure out how much we need to shift m2. The tricky part is that we need to take
@@ -225,9 +224,10 @@ double s2d_n(const char * buffer, const int len) {
   }
   ieee_m2 &= (1ull << DOUBLE_MANTISSA_BITS) - 1;
   uint64_t ieee = (((((uint64_t) signedM) << DOUBLE_EXPONENT_BITS) | (uint64_t)ieee_e2) << DOUBLE_MANTISSA_BITS) | ieee_m2;
-  return int64Bits2Double(ieee);
+  *result = int64Bits2Double(ieee);
+  return SUCCESS;
 }
 
-double s2d(const char * buffer) {
-  return s2d_n(buffer, strlen(buffer));
+enum Status s2d(const char * buffer, double * result) {
+  return s2d_n(buffer, strlen(buffer), result);
 }

@@ -21,8 +21,20 @@
 extern "C" {
 #endif
 
-double s2d_n(const char * buffer, int len);
-double s2d(const char * buffer);
+// This is an experimental implementation of parsing strings to 64-bit floats
+// using a Ryu-like algorithm. At this time, it only support up to 17 non-zero
+// digits in the input, and also does not support all formats. Use at your own
+// risk.
+
+enum Status {
+  SUCCESS,
+  INPUT_TOO_SHORT,
+  INPUT_TOO_LONG,
+  MALFORMED_INPUT
+};
+
+enum Status s2d_n(const char * buffer, const int len, double * result);
+enum Status s2d(const char * buffer, double * result);
 
 #ifdef __cplusplus
 }
