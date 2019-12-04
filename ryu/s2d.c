@@ -42,7 +42,7 @@
 
 static inline uint32_t floor_log2(const uint64_t value) {
   long index;
-  return _BitScanReverse64(&index, value) ? 63 - index : 64;
+  return _BitScanReverse64(&index, value) ? index : 64;
 }
 
 #else
