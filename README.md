@@ -42,7 +42,7 @@ All contributions are required to maintain these licenses.
 ## Ryu
 Ryu generates the shortest decimal representation of a floating point number
 that maintains round-trip safety. That is, a correct parser can recover the
-exact original number. For example, consider the binary 64-bit floating point
+exact original number. For example, consider the binary 32-bit floating point
 number ```00111110100110011001100110011010```. The stored value is exactly
 ```0.300000011920928955078125```. However, this floating point number is also
 the closest number to the decimal number ```0.3```, so that is what Ryu
