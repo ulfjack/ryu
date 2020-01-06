@@ -445,19 +445,16 @@ static inline int to_chars(const floating_decimal_32 v, const bool sign, char* c
   // Print the exponent.
   result[index++] = 'e';
 
-  if (exp)
-  {
-    if (exp < 0) {
-        result[index++] = '-';
-        exp = -exp;
-    }
+  if (exp < 0) {
+    result[index++] = '-';
+    exp = -exp;
+  }
 
-    if (exp >= 10) {
-        memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
-        index += 2;
-    } else {
-        result[index++] = (char) ('0' + exp);
-    }
+  if (exp >= 10) {
+    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
+    index += 2;
+  } else {
+    result[index++] = (char) ('0' + exp);
   }
 
   return index;
