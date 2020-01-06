@@ -85,18 +85,18 @@ static inline uint32_t log10Pow5(const int32_t e) {
 
 static inline int copy_special_str(char * const result, const bool sign, const bool exponent, const bool mantissa) {
   if (mantissa) {
-    memcpy(result, "NaN", 3);
+    memcpy(result, "nan", 3);
     return 3;
   }
   if (sign) {
     result[0] = '-';
   }
   if (exponent) {
-    memcpy(result + sign, "Infinity", 8);
-    return sign + 8;
+    memcpy(result + sign, "inf", 3);
+    return sign + 3;
   }
-  memcpy(result + sign, "0E0", 3);
-  return sign + 3;
+  memcpy(result + sign, "0", 1);
+  return sign + 1;
 }
 
 static inline uint32_t float_to_bits(const float f) {
