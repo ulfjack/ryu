@@ -42,7 +42,7 @@ All contributions are required to maintain these licenses.
 ## Ryu
 Ryu generates the shortest decimal representation of a floating point number
 that maintains round-trip safety. That is, a correct parser can recover the
-exact original number. For example, consider the binary 64-bit floating point
+exact original number. For example, consider the binary 32-bit floating point
 number ```00111110100110011001100110011010```. The stored value is exactly
 ```0.300000011920928955078125```. However, this floating point number is also
 the closest number to the decimal number ```0.3```, so that is what Ryu
@@ -76,8 +76,7 @@ other specifications, such as for JavaScript, always require the shortest output
 We may change the Java implementation in the future to support both.
 
 My PLDI'18 paper includes a complete correctness proof of the algorithm:
-https://dl.acm.org/citation.cfm?id=3192369, available under the creative commons
-CC-BY-SA license.
+https://dl.acm.org/citation.cfm?doid=3296979.3192369
 
 Other implementations of Ryu:
 
@@ -141,6 +140,9 @@ implementations of printf for precision parameters 1, 10, 100, and 1000:
 In addition, Ryu Printf has a more predictable performance profile. In theory,
 an implementation that performs particularly badly for some subset of numbers
 could be exploited as a denial-of-service attack vector.
+
+My OOPSLA'2019 paper provides a correctness proof:
+https://dl.acm.org/citation.cfm?doid=3366395.3360595
 
 
 
