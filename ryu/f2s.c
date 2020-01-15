@@ -441,3 +441,17 @@ char* f2s(float f) {
   f2s_buffered(f, result);
   return result;
 }
+
+char* f2s_maximum_size(double f,char* result,size_t maximum_size) {
+  if(maximum_size<16)
+  {
+    char buffer[16];
+    int n=f2s_buffered(f, buffer);
+    if(maximum_size<n+1)
+      return NULL;
+    memcpy(result,buffer,n);
+    result[n]='\0';
+    return result+n;
+  }
+  return result+f2s_buffered(f,result);
+}

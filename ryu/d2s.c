@@ -631,3 +631,17 @@ char* d2s(double f) {
   d2s_buffered(f, result);
   return result;
 }
+
+char* d2s_maximum_size(double f,char* result,size_t maximum_size) {
+  if(maximum_size<25)
+  {
+    char buffer[25];
+    int n=d2s_buffered_n(f, buffer);
+    if(maximum_size<n+1)
+      return NULL;
+    memcpy(result,buffer,n);
+    result[n]='\0';
+    return result+n;
+  }
+  return result+d2s_buffered_n(f,result);
+}
