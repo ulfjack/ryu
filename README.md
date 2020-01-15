@@ -88,6 +88,7 @@ Other implementations of Ryu:
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 | C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
+| C#               | Dogwei             | https://github.com/Dogwei/RyuCsharp           |
 
 [1]: https://dl.acm.org/citation.cfm?id=93559
 
