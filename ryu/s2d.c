@@ -149,7 +149,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     return SUCCESS;
   }
   if (m10digits + e10 >= 310) {
-    // Number is larger than 1e+309, which should be rounded down to 0; return +/-Infinity.
+    // Number is larger than 1e+309, which should be rounded to +/-Infinity.
     uint64_t ieee = (((uint64_t) signedM) << (DOUBLE_EXPONENT_BITS + DOUBLE_MANTISSA_BITS)) | (0x7ffull << DOUBLE_MANTISSA_BITS);
     *result = int64Bits2Double(ieee);
     return SUCCESS;
