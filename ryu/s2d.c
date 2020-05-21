@@ -231,11 +231,17 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
   printf("ieee_m2 = %" PRIu64 "\n", (m2 >> shift) + roundUp);
 #endif
   uint64_t ieee_m2 = (m2 >> shift) + roundUp;
-  if (ieee_m2 == (1ull << (DOUBLE_MANTISSA_BITS + 1))) {
+  assert(ieee_m2 <= 1ull << (DOUBLE_MANTISSA_BITS + 1));
+
+  ieee_m2 &= (1ull << DOUBLE_MANTISSA_BITS) - 1;
+
+  // Rounding up may overflow the 52-bit significand.
+  if (ieee_m2 == 0 && roundUp) {
+    // Move a trailing zero of the significand into the exponent.
     // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
     ieee_e2++;
   }
-  ieee_m2 &= (1ull << DOUBLE_MANTISSA_BITS) - 1;
+
   uint64_t ieee = (((((uint64_t) signedM) << DOUBLE_EXPONENT_BITS) | (uint64_t)ieee_e2) << DOUBLE_MANTISSA_BITS) | ieee_m2;
   *result = int64Bits2Double(ieee);
   return SUCCESS;
