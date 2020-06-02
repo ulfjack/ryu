@@ -192,6 +192,10 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 }
 #endif // HAS_UINT128
 
+// Convert `digits` to a sequence of decimal digits. Append the digits to the result.
+// The caller has to guarantee that:
+//   10^(olength-1) <= digits < 10^olength
+// e.g., by passing `olength` as `decimalLength9(digits)`.
 static inline void append_n_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
@@ -225,6 +229,10 @@ static inline void append_n_digits(const uint32_t olength, uint32_t digits, char
   }
 }
 
+// Convert `digits` to a sequence of decimal digits. Print the first digit, followed by a decimal
+// dot '.' followed by the remaining digits. The caller has to guarantee that:
+//   10^(olength-1) <= digits < 10^olength
+// e.g., by passing `olength` as `decimalLength9(digits)`.
 static inline void append_d_digits(const uint32_t olength, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
@@ -261,22 +269,28 @@ static inline void append_d_digits(const uint32_t olength, uint32_t digits, char
   }
 }
 
+// Convert `digits` to decimal and write the last `count` decimal digits to result.
+// If `digits` contains additional digits, then those are silently ignored.
 static inline void append_c_digits(const uint32_t count, uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
 #endif
+  // Copy pairs of digits from DIGIT_TABLE.
   uint32_t i = 0;
   for (; i < count - 1; i += 2) {
     const uint32_t c = (digits % 100) << 1;
     digits /= 100;
     memcpy(result + count - i - 2, DIGIT_TABLE + c, 2);
   }
+  // Generate the last digit if count is odd.
   if (i < count) {
     const char c = (char) ('0' + (digits % 10));
     result[count - i - 1] = c;
   }
 }
 
+// Convert `digits` to decimal and write the last 9 decimal digits to result.
+// If `digits` contains additional digits, then those are silently ignored.
 static inline void append_nine_digits(uint32_t digits, char* const result) {
 #ifdef RYU_DEBUG
   printf("DIGITS=%u\n", digits);
