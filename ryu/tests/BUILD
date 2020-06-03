@@ -54,6 +54,15 @@ cc_test(
 )
 
 cc_test(
+  name = "s2f_test",
+  srcs = ["s2f_test.cc"],
+  deps = [
+    "//ryu:ryu_parse",
+    "//third_party/gtest",
+  ],
+)
+
+cc_test(
   name = "ryu_printf_test",
   srcs = ["d2fixed_test.cc"],
   deps = [
