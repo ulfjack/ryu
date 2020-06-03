@@ -22,8 +22,11 @@ cc_library(
   name = "ryu_parse",
   srcs = [
     "s2d.c",
+    "s2f.c",
     "d2s_intrinsics.h",
     "d2s_full_table.h",
+    "f2s_intrinsics.h",
+    "f2s_full_table.h",
     "common.h",
   ],
   hdrs = ["ryu_parse.h"],
