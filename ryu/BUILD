@@ -25,6 +25,7 @@ cc_library(
     "s2f.c",
     "d2s_intrinsics.h",
     "d2s_full_table.h",
+    "d2s_small_table.h",
     "f2s_intrinsics.h",
     "f2s_full_table.h",
     "common.h",
