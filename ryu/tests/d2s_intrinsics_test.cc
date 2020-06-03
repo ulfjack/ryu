@@ -39,3 +39,7 @@ TEST(D2sIntrinsicsTest, mod1e9) {
   EXPECT_EQ(123456789u, mod1e9(12345123456789ull));
   EXPECT_EQ(123456789u, mod1e9(123456789123456789ull));
 }
+
+TEST(D2sIntrinsicsTest, shiftRight128) {
+  EXPECT_EQ(0x100000000ull, shiftright128(0x1ull, 0x1ull, 32));
+}
