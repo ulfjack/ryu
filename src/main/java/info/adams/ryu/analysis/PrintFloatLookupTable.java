@@ -21,14 +21,14 @@ import java.math.BigInteger;
  */
 public final class PrintFloatLookupTable {
   private static final int POS_TABLE_SIZE = 47;
-  private static final int INV_TABLE_SIZE = 31;
+  private static final int INV_TABLE_SIZE = 55;
 
   private static final int POW5_BITCOUNT = 61; // max 63
   private static final int POW5_INV_BITCOUNT = 59; // max 63
 
   public static void main(String[] args) {
     System.out.println("#define POW5_INV_BITCOUNT " + POW5_INV_BITCOUNT);
-    System.out.println("static uint64_t POW5_INV_SPLIT[" + INV_TABLE_SIZE + "] = {");
+    System.out.println("static uint64_t FLOAT_POW5_INV_SPLIT[" + INV_TABLE_SIZE + "] = {");
     for (int i = 0; i < INV_TABLE_SIZE; i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
@@ -48,7 +48,7 @@ public final class PrintFloatLookupTable {
     System.out.println("};");
 
     System.out.println("#define POW5_BITCOUNT " + POW5_BITCOUNT);
-    System.out.println("static uint64_t POW5_SPLIT[" + POS_TABLE_SIZE + "] = {");
+    System.out.println("static uint64_t FLOAT_POW5_SPLIT[" + POS_TABLE_SIZE + "] = {");
     for (int i = 0; i < POS_TABLE_SIZE; i++) {
       BigInteger pow = BigInteger.valueOf(5).pow(i);
       int pow5len = pow.bitLength();
