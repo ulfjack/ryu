@@ -50,6 +50,7 @@ TEST(S2dTest, Basic) {
   EXPECT_S2D(1.0, "1e0");
   EXPECT_S2D(1.0, "1E0");
   EXPECT_S2D(1.0, "000001.000000");
+  EXPECT_S2D(0.2316419, "0.2316419");
 }
 
 TEST(S2dTest, MinMax) {
