@@ -240,11 +240,14 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
   printf("ieee_m2 = %u\n", (m2 >> shift) + roundUp);
 #endif
   uint32_t ieee_m2 = (m2 >> shift) + roundUp;
-  if (ieee_m2 == (1u << (FLOAT_MANTISSA_BITS + 1))) {
+  assert(ieee_m2 <= (1u << (FLOAT_MANTISSA_BITS + 1)));
+  ieee_m2 &= (1u << FLOAT_MANTISSA_BITS) - 1;
+  if (ieee_m2 == 0 && roundUp) {
+    // Rounding up may overflow the mantissa.
+    // In this case we move a trailing zero of the mantissa into the exponent.
     // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
     ieee_e2++;
   }
-  ieee_m2 &= (1u << FLOAT_MANTISSA_BITS) - 1;
   uint32_t ieee = (((((uint32_t) signedM) << FLOAT_EXPONENT_BITS) | (uint32_t)ieee_e2) << FLOAT_MANTISSA_BITS) | ieee_m2;
   *result = int32Bits2Float(ieee);
   return SUCCESS;
