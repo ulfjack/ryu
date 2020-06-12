@@ -82,18 +82,23 @@ Other implementations of Ryu:
 
 | Language         | Author             | Link                                          |
 |------------------|--------------------|-----------------------------------------------|
-| Scala            | Andriy Plokhotnyuk | https://github.com/plokhotnyuk/jsoniter-scala |
+| Scala            | Andriy Plokhotnyuk | [https://github.com/plokhotnyuk/jsoniter-scala][3] |
 | Rust             | David Tolnay       | https://github.com/dtolnay/ryu                |
 | Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 | C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
 | C#               | Dogwei             | https://github.com/Dogwei/RyuCsharp           |
+| Scala            | Denys Shabalin     | [https://github.com/scala-native/scala-native][4] |
+
 
 [1]: https://dl.acm.org/citation.cfm?id=93559
 
 [2]: https://docs.oracle.com/javase/10/docs/api/java/lang/Double.html#toString(double)
 
+[3]: https://github.com/plokhotnyuk/jsoniter-scala/blob/6e6bb9d7bed6de341ce0b781b403eb671d008468/jsoniter-scala-core/jvm/src/main/scala/com/github/plokhotnyuk/jsoniter_scala/core/JsonWriter.scala#L1777-L2262
+
+[4]: https://github.com/scala-native/scala-native/tree/master/nativelib/src/main/scala/scala/scalanative/runtime/ieee754tostring/ryu
 
 ## Ryu Printf
 Since Ryu generates the shortest decimal representation, it is not immediately
