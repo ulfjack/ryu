@@ -31,7 +31,11 @@
 #include "ryu/common.h"
 #include "ryu/d2s_intrinsics.h"
 
+#if defined(RYU_OPTIMIZE_SIZE)
+#include "ryu/d2s_small_table.h"
+#else
 #include "ryu/d2s_full_table.h"
+#endif
 
 #define DOUBLE_MANTISSA_BITS 52
 #define DOUBLE_EXPONENT_BITS 11
@@ -176,9 +180,14 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     // To that end, we use the DOUBLE_POW5_SPLIT table.
     int j = e2 - e10 - ceil_log2pow5(e10) + DOUBLE_POW5_BITCOUNT;
     assert(j >= 0);
+#if defined(RYU_OPTIMIZE_SIZE)
+    uint64_t pow5[2];
+    double_computePow5(e10, pow5);
+    m2 = mulShift64(m10, pow5, j);
+#else
     assert(e10 < DOUBLE_POW5_TABLE_SIZE);
     m2 = mulShift64(m10, DOUBLE_POW5_SPLIT[e10], j);
-
+#endif
     // We also compute if the result is exact, i.e.,
     //   [m10 * 10^e10 / 2^e2] == m10 * 10^e10 / 2^e2.
     // This can only be the case if 2^e2 divides m10 * 10^e10, which in turn requires that the
@@ -188,8 +197,14 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
   } else {
     e2 = floor_log2(m10) + e10 - ceil_log2pow5(-e10) - (DOUBLE_MANTISSA_BITS + 1);
     int j = e2 - e10 + ceil_log2pow5(-e10) - 1 + DOUBLE_POW5_INV_BITCOUNT;
+#if defined(RYU_OPTIMIZE_SIZE)
+    uint64_t pow5[2];
+    double_computeInvPow5(-e10, pow5);
+    m2 = mulShift64(m10, pow5, j);
+#else
     assert(-e10 < DOUBLE_POW5_INV_TABLE_SIZE);
     m2 = mulShift64(m10, DOUBLE_POW5_INV_SPLIT[-e10], j);
+#endif
     trailingZeros = multipleOfPowerOf5(m10, -e10);
   }
 
