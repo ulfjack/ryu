@@ -70,6 +70,13 @@ struct floating_decimal_128 double_to_fd128(double d) {
 struct floating_decimal_128 long_double_to_fd128(long double d) {
   uint128_t bits = 0;
   memcpy(&bits, &d, sizeof(long double));
+#ifdef RYU_DEBUG
+  // For some odd reason, this ends up with noise in the top 48 bits. We can
+  // clear out those bits with the following line; this is not required, the
+  // conversion routine should ignore those bits, but the debug output can be
+  // confusing if they aren't 0s.
+  bits &= (ONE << 80) - 1;
+#endif
   return generic_binary_to_decimal(bits, LONG_DOUBLE_MANTISSA_BITS, LONG_DOUBLE_EXPONENT_BITS, true);
 }
 
