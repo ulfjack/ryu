@@ -140,7 +140,9 @@ struct floating_decimal_128 generic_binary_to_decimal(
   // Step 2: Determine the interval of legal decimal representations.
   const uint128_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
-  const uint32_t mmShift = (ieeeMantissa != 0) || (ieeeExponent == 0);
+  const uint32_t mmShift =
+      (ieeeMantissa != (explicitLeadingBit ? ONE << (mantissaBits - 1) : 0))
+      || (ieeeExponent == 0);
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
   uint128_t vr, vp, vm;

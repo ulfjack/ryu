@@ -342,3 +342,19 @@ TEST(Generic128Test, long_double_to_fd128) {
   ASSERT_L2S("9.409340012568248E18", 9.409340012568248E18L);
   ASSERT_L2S("1.2345678E0", 1.2345678L);
 }
+
+TEST(Generic128Test, regression_test_long_double) {
+  // The binary 80-bit representation of this number has a mantissa that is a
+  // one followed by zeros. This is a special case, because the next lower
+  // number is closer to X than the next higher number, so it is possible that
+  // we need to print more digits.
+  // Before this test was added, the code incorrectly checked for an all-zeroes
+  // mantissa in this case - the 80-bit format has an *explicit* leading one,
+  // and the code did not take that into account.
+  long double l = 1.10169395793497080013e-4927L;
+  ASSERT_L2S("1.10169395793497080013E-4927", l);
+  // Also check that the next higher and next lower number have *different*
+  // decimal representations.
+  ASSERT_L2S("1.1016939579349708003E-4927", nextafterl(l, INFINITY));
+  ASSERT_L2S("1.1016939579349708001E-4927", nextafterl(l, -INFINITY));
+}
