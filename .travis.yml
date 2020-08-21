@@ -19,7 +19,6 @@ addons:
     packages:
       - bazel
   homebrew:
-    taps: bazelbuild/tap
     packages: bazel
 
 language: c
