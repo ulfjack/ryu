@@ -43,9 +43,9 @@ All contributions are required to maintain these licenses.
 Ryu generates the shortest decimal representation of a floating point number
 that maintains round-trip safety. That is, a correct parser can recover the
 exact original number. For example, consider the binary 32-bit floating point
-number ```00111110100110011001100110011010```. The stored value is exactly
-```0.300000011920928955078125```. However, this floating point number is also
-the closest number to the decimal number ```0.3```, so that is what Ryu
+number `00111110100110011001100110011010`. The stored value is exactly
+`0.300000011920928955078125`. However, this floating point number is also
+the closest number to the decimal number `0.3`, so that is what Ryu
 outputs.
 
 This problem of generating the shortest possible representation was originally
@@ -66,7 +66,7 @@ experimental low-level C API that returns the decimal floating-point
 representation as a struct, allowing clients to implement their own formatting.
 These are still subject to change.
 
-*Note*: The Java implementation differs from the output of ```Double.toString```
+*Note*: The Java implementation differs from the output of `Double.toString`
 [[2]] in some cases: sometimes the output is shorter (which is arguably more
 accurate) and sometimes the output may differ in the precise digits output
 (e.g., see https://github.com/ulfjack/ryu/issues/83).
@@ -104,17 +104,17 @@ Other implementations of Ryu:
 Since Ryu generates the shortest decimal representation, it is not immediately
 suitable for use in languages that have printf-like facilities. In most
 implementations, printf provides three floating-point specific formatters,
-```%f```, ```%e```, and ```%g```:
+`%f`, `%e`, and `%g`:
 
- - The ```%f``` format prints the full decimal part of the given floating point
+ - The `%f` format prints the full decimal part of the given floating point
    number, and then appends as many digits of the fractional part as specified
    using the precision parameter.
 
- - The ```%e``` format prints the decimal number in scientific notation with as
+ - The `%e` format prints the decimal number in scientific notation with as
    many digits after the initial digit as specified using the precision
    parameter.
 
- - The ```%g``` format prints either ```%f``` or ```%e``` format, whichever is
+ - The `%g` format prints either `%f` or `%e` format, whichever is
    shorter.
 
 Ryu Printf implements %f and %e formatting in a way that should be drop-in
@@ -185,7 +185,7 @@ $ bazel build //ryu
 
 Building Ryu Printf against musl and msys requires installing the corresponding
 packages. We only tested against the musl Debian package that installs a gcc
-wrapper and is enabled by setting ```CC```. However, building against msys
+wrapper and is enabled by setting `CC`. However, building against msys
 requires manually adjusting Bazel's compiler configuration files.
 
 ### Tests
@@ -297,7 +297,7 @@ The resulting files are `bazel-genfiles/scripts/shortest-{c,java}-{float,double}
 
 ### Ryu Printf
 We provide a C++ benchmark program that runs against the implementation of
-```snprintf``` bundled with the selected C++ compiler. You need to enable
+`snprintf` bundled with the selected C++ compiler. You need to enable
 optimization using "-c opt" on the command line:
 ```
 $ bazel run -c opt //ryu/benchmark:ryu_printf_benchmark --
