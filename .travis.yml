@@ -20,7 +20,7 @@ addons:
       - bazel
   homebrew:
     taps: bazelbuild/tap
-    packages: bazelbuild/tap/bazel
+    packages: bazel
 
 language: c
 language: cpp
