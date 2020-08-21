@@ -1,7 +1,7 @@
 # Ryu & Ryu Printf [![Build Status](https://travis-ci.org/ulfjack/ryu.svg?branch=master)](https://travis-ci.org/ulfjack/ryu)
 
 This project contains routines to convert IEEE-754 floating-point numbers to
-decimal strings using shortest, fixed ```%f```, and scientific ```%e```
+decimal strings using shortest, fixed `%f`, and scientific `%e`
 formatting. The primary implementation is in C, and there is a port of the
 shortest conversion to Java. All algorithms have been published in
 peer-reviewed publications. At the time of this writing, these are the fastest
