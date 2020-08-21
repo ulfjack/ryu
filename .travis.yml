@@ -4,7 +4,7 @@ os:
   - windows
 
 dist: bionic
-osx_image: xcode11
+osx_image: xcode12
 
 cache:
   apt: true
@@ -19,8 +19,7 @@ addons:
     packages:
       - bazel
   homebrew:
-    taps: bazelbuild/tap
-    packages: bazelbuild/tap/bazel
+    packages: bazel
 
 language: c
 language: cpp
