@@ -817,3 +817,97 @@ char* d2exp(double d, uint32_t precision) {
   buffer[index] = '\0';
   return buffer;
 }
+
+typedef union _f64i {
+  uint64_t i;
+  double f;
+} f64i;
+
+inline static uint32_t i32_to_u32(int32_t a) {
+  return a < 0 ? 0 : a;
+}
+
+inline static uint32_t minu32(uint32_t a, uint32_t b) {
+  return a < b ? a : b;
+}
+
+// https://reviews.llvm.org/D70631
+// _Floating_to_chars_general_precision
+int d2gen_buffered_n(double d, uint32_t precision, char* result) {
+  f64i onion = {.f = d};
+  int index = 0;
+  if (onion.i == 0) {
+    result[index++] = '0';
+    return index;
+  }
+
+  // Omitting the _Precision stuff. Are we sure the allocating APIs won't blow up though?
+  const uint64_t *table_begin;
+  ptrdiff_t table_length;
+  if (precision < MAX_SPECIAL_P) {
+    table_begin = SPECIAL_X + (precision - 1) * (precision + 10) / 2;
+    table_length = precision + 5;
+  } else {
+    table_begin = ORDINARY_X;
+    table_length = minu32(precision, MAX_ORDINARY_P) + 5;
+  }
+
+  ptrdiff_t index;
+  for (index = 0; index < table_length; index++) {
+    if (onion.i <= table_begin[index]) {
+      break;
+    }
+  }
+
+  const int sci_exp_x = index - 5;
+  const bool use_fixed_notation = precision > sci_exp_x && sci_exp_x >= -4;
+  const int max_fixed_precision = 66;
+  const int max_sci_precision = 766;
+  int effective_precision;
+
+  char* significand_last = NULL;
+  char* exponent_first = NULL;
+  char* exponent_last = NULL;
+
+ // Write into the local buffer.
+  if (use_fixed_notation) {
+    effective_precision = minu32(i32_to_u32(precision - (sci_exp_x + 1)), max_fixed_precision);
+    int len = d2fixed_buffered_n(d, effective_precision, result);
+    significand_last = result + len;
+  } else {
+    effective_precision = minu32(i32_to_u32(precision - 1), max_sci_precision);
+    int len = d2exp_buffered_n(d, effective_precision, result);
+    exponent_first = memchr(result, 'e', len);
+    significand_last = exponent_first - 1;
+    exponent_last = result + len;
+  }
+
+  // If we printed a decimal point followed by digits, perform zero-trimming.
+  if (effective_precision > 0) {
+    while (significand_last[-1] == '0') {
+      --significand_last;
+    }
+
+    if (significand_last[-1] == '.') {
+      --significand_last;
+    }
+  }
+
+  // My head hurts asdfghklgu
+  if (!use_fixed_notation) {
+    memmove(significand_last, exponent_first, exponent_last - exponent_first);
+  }
+  return significand_last - result + exponent_last - exponent_first;
+}
+
+void d2gen_buffered(double d, uint32_t precision, char* result) {
+  const int len = d2gen_buffered_n(d, precision, result);
+  result[len] = '\0';
+}
+
+char* d2gen(double d, uint32_t precision) {
+  char* const buffer = (char*)malloc(2000);
+  const int index = d2gen_buffered_n(d, precision, buffer);
+  buffer[index] = '\0';
+  return buffer;
+}
