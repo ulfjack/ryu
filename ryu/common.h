@@ -83,6 +83,93 @@ static inline uint32_t log10Pow5(const int32_t e) {
   return (((uint32_t) e) * 732923) >> 20;
 }
 
+
+// a target string writer
+typedef struct
+{
+  char * str;
+  int size;
+  int pos;
+} tgt_str;
+
+inline void tgt_init_empty(tgt_str *t)
+{
+  t->str = NULL;
+  t->size = 0;
+  t->pos = 0;
+}
+
+inline void tgt_init(tgt_str *t, char *tgt, int size)
+{
+  t->str = tgt;
+  t->size = size;
+  t->pos = 0;
+}
+
+inline void tgt_write_char(tgt_str *t, int dst_pos, char c)
+{
+  if(dst_pos < t->size)
+  {
+    t->str[dst_pos] = c;
+  }
+}
+
+inline void tgt_append_char(tgt_str *t, char c)
+{
+  if(t->pos < t->size)
+  {
+    t->str[t->pos] = c;
+  }
+  ++t->pos;
+}
+
+inline void tgt_append_char_n(tgt_str *t, char c, int num_chars)
+{
+  assert(num_chars >= 0);
+  int remainder = t->size >= t->pos ? t->size - t->pos : 0;
+  int num = num_chars <= remainder ? num_chars : remainder;
+  for(int i = 0; i < num; ++i)
+  {
+      t->str[t->pos + i] = c;
+  }
+  t->pos += num_chars;
+}
+
+inline void tgt_append_str(tgt_str *t, const char *str, int size)
+{
+  assert(size >= 0);
+  int remainder = t->size >= t->pos ? t->size - t->pos : 0;
+  int num = size <= remainder ? size : remainder;
+  memcpy(t->str + t->pos, str, num);
+  t->pos += size;
+}
+
+inline void tgt_write_str(tgt_str *t, int dst_pos, const char *str, int size)
+{
+  assert(size >= 0);
+  int remainder = t->size >= t->pos ? t->size - t->pos : 0;
+  int num = size <= remainder ? size : remainder;
+  memcpy(t->str + dst_pos, str, num);
+}
+
+
+static inline void tgt_copy_special_str(tgt_str *result, const bool sign, const bool exponent, const bool mantissa) {
+  if (mantissa) {
+    tgt_append_str(result, "NaN", 3);
+    return;
+  }
+  if (sign) {
+    tgt_append_char(result, '-');
+  }
+  if (exponent) {
+    tgt_append_str(result, "Infinity", 8);
+    return;
+  }
+  tgt_append_str(result, "0E0", 3);
+  return;
+}
+
+
 static inline int copy_special_str(char * const result, const bool sign, const bool exponent, const bool mantissa) {
   if (mantissa) {
     memcpy(result, "NaN", 3);
