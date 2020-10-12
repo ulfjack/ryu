@@ -102,9 +102,10 @@ TEST(S2dTest, TrailingDecimalZeros) {
   EXPECT_S2D(1.      , "1");
   EXPECT_S2D(1.      , "1.000");
   EXPECT_S2D(1.      , "1.0000000000000000");
-  EXPECT_S2D(1.      , "1.00000000000000000"); // fail: INPUT_TOO_LONG
+  EXPECT_S2D(1.      , "1.00000000000000000");
+  EXPECT_S2D(1.      , "1.000000000000000000"); // fail: INPUT_TOO_LONG
   EXPECT_S2D(8388605., "8388605");
   EXPECT_S2D(8388605., "8388605.000");
   EXPECT_S2D(8388605., "8388605.0000000000");
-  EXPECT_S2D(8388605., "8388605.00000000000"); // fail: INPUT_TOO_LONG
+  EXPECT_S2D(8388605., "8388605.00000000000"); // Assertion failed: dist < 64, file C:\users\jpmag\_bazel_jpmag\lajl3dfu\execroot\__main__\ryu/d2s_intrinsics.h, line 58
 }

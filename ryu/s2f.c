@@ -91,7 +91,7 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     if ((c < '0') || (c > '9')) {
       break;
     }
-    if (m10digits >= 9) {
+    if (m10digits - (dotIndex != len ? dotIndex : 0) >= 9) {
       return INPUT_TOO_LONG;
     }
     m10 = 10 * m10 + (c - '0');

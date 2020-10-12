@@ -57,8 +57,9 @@ TEST(S2fTest, TrailingZeros) {
 TEST(S2fTest, TrailingDecimalZeros) {
   EXPECT_S2F(1.f, "1");
   EXPECT_S2F(1.f, "1.000");
-  EXPECT_S2F(1.f, "1.000000000");  // fail: INPUT_TOO_LONG
+  EXPECT_S2F(1.f, "1.000000000");
+  EXPECT_S2F(1.f, "1.0000000000"); // SUCCESS, but wrong value: 1.4013e-45
   EXPECT_S2F(8388605.f, "8388605");
   EXPECT_S2F(8388605.f, "8388605.00");
-  EXPECT_S2F(8388605.f, "8388605.000"); // fail: INPUT_TOO_LONG
+  EXPECT_S2F(8388605.f, "8388605.000"); // SUCCESS, but wrong value: 4.09364e+06
 }
