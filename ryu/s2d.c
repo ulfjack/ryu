@@ -45,14 +45,14 @@
 #include <intrin.h>
 
 static inline uint32_t floor_log2(const uint64_t value) {
-  long index;
-  return _BitScanReverse64(&index, value) ? index : 64;
+  unsigned long index;
+  return _BitScanReverse64(&index, value) ? index : 64u;
 }
 
 #else
 
 static inline uint32_t floor_log2(const uint64_t value) {
-  return 63 - __builtin_clzll(value);
+  return (uint32_t)(63 - __builtin_clzll(value));
 }
 
 #endif
@@ -100,7 +100,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     if (m10digits >= 17) {
       return INPUT_TOO_LONG;
     }
-    m10 = 10 * m10 + (c - '0');
+    m10 = 10 * m10 + (uint32_t)(c - '0');
     if (m10 != 0) {
       m10digits++;
     }
@@ -174,7 +174,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     //
     // We use floor(log2(5^e10)) so that we get at least this many bits; better to
     // have an additional bit than to not have enough bits.
-    e2 = floor_log2(m10) + e10 + log2pow5(e10) - (DOUBLE_MANTISSA_BITS + 1);
+    e2 = (int32_t)floor_log2(m10) + e10 + log2pow5(e10) - (DOUBLE_MANTISSA_BITS + 1);
 
     // We now compute [m10 * 10^e10 / 2^e2] = [m10 * 5^e10 / 2^(e2-e10)].
     // To that end, we use the DOUBLE_POW5_SPLIT table.
@@ -193,9 +193,9 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     // This can only be the case if 2^e2 divides m10 * 10^e10, which in turn requires that the
     // largest power of 2 that divides m10 + e10 is greater than e2. If e2 is less than e10, then
     // the result must be exact. Otherwise we use the existing multipleOfPowerOf2 function.
-    trailingZeros = e2 < e10 || (e2 - e10 < 64 && multipleOfPowerOf2(m10, e2 - e10));
+    trailingZeros = e2 < e10 || (e2 - e10 < 64 && multipleOfPowerOf2(m10, (uint32_t)(e2 - e10)));
   } else {
-    e2 = floor_log2(m10) + e10 - ceil_log2pow5(-e10) - (DOUBLE_MANTISSA_BITS + 1);
+    e2 = (int32_t)floor_log2(m10) + e10 - ceil_log2pow5(-e10) - (DOUBLE_MANTISSA_BITS + 1);
     int j = e2 - e10 + ceil_log2pow5(-e10) - 1 + DOUBLE_POW5_INV_BITCOUNT;
 #if defined(RYU_OPTIMIZE_SIZE)
     uint64_t pow5[2];
@@ -205,7 +205,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     assert(-e10 < DOUBLE_POW5_INV_TABLE_SIZE);
     m2 = mulShift64(m10, DOUBLE_POW5_INV_SPLIT[-e10], j);
 #endif
-    trailingZeros = multipleOfPowerOf5(m10, -e10);
+    trailingZeros = multipleOfPowerOf5(m10, (uint32_t)(-e10));
   }
 
 #ifdef RYU_DEBUG
@@ -213,7 +213,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
 #endif
 
   // Compute the final IEEE exponent.
-  uint32_t ieee_e2 = (uint32_t) max32(0, e2 + DOUBLE_EXPONENT_BIAS + floor_log2(m2));
+  uint32_t ieee_e2 = (uint32_t) max32(0, e2 + DOUBLE_EXPONENT_BIAS + (int32_t)floor_log2(m2));
 
   if (ieee_e2 > 0x7fe) {
     // Final IEEE exponent is larger than the maximum representable; return +/-Infinity.
@@ -225,7 +225,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
   // We need to figure out how much we need to shift m2. The tricky part is that we need to take
   // the final IEEE exponent into account, so we need to reverse the bias and also special-case
   // the value 0.
-  int32_t shift = (ieee_e2 == 0 ? 1 : ieee_e2) - e2 - DOUBLE_EXPONENT_BIAS - DOUBLE_MANTISSA_BITS;
+  int32_t shift = (ieee_e2 == 0 ? 1 : (int32_t)ieee_e2) - e2 - DOUBLE_EXPONENT_BIAS - DOUBLE_MANTISSA_BITS;
   assert(shift >= 0);
 #ifdef RYU_DEBUG
   printf("ieee_e2 = %d\n", ieee_e2);
@@ -259,5 +259,5 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
 }
 
 enum Status s2d(const char * buffer, double * result) {
-  return s2d_n(buffer, strlen(buffer), result);
+  return s2d_n(buffer, (int)strlen(buffer), result);
 }

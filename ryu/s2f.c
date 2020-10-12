@@ -40,13 +40,13 @@
 
 static inline uint32_t floor_log2(const uint32_t value) {
   unsigned long index;
-  return _BitScanReverse(&index, value) ? index : 32;
+  return _BitScanReverse(&index, value) ? index : 32u;
 }
 
 #else
 
 static inline uint32_t floor_log2(const uint32_t value) {
-  return 31 - __builtin_clz(value);
+  return (uint32_t)(31 - __builtin_clz(value));
 }
 
 #endif
@@ -94,7 +94,7 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     if (m10digits >= 9) {
       return INPUT_TOO_LONG;
     }
-    m10 = 10 * m10 + (c - '0');
+    m10 = 10 * m10 + (uint32_t)(c - '0');
     if (m10 != 0) {
       m10digits++;
     }
@@ -168,26 +168,27 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     //
     // We use floor(log2(5^e10)) so that we get at least this many bits; better to
     // have an additional bit than to not have enough bits.
-    e2 = floor_log2(m10) + e10 + log2pow5(e10) - (FLOAT_MANTISSA_BITS + 1);
+    e2 = (int32_t)floor_log2(m10) + e10 + log2pow5(e10) - (FLOAT_MANTISSA_BITS + 1);
 
     // We now compute [m10 * 10^e10 / 2^e2] = [m10 * 5^e10 / 2^(e2-e10)].
     // To that end, we use the FLOAT_POW5_SPLIT table.
     int j = e2 - e10 - ceil_log2pow5(e10) + FLOAT_POW5_BITCOUNT;
     assert(j >= 0);
-    m2 = mulPow5divPow2(m10, e10, j);
+    assert(e10 >= 0);
+    m2 = mulPow5divPow2(m10, (uint32_t)e10, j);
 
     // We also compute if the result is exact, i.e.,
     //   [m10 * 10^e10 / 2^e2] == m10 * 10^e10 / 2^e2.
     // This can only be the case if 2^e2 divides m10 * 10^e10, which in turn requires that the
     // largest power of 2 that divides m10 + e10 is greater than e2. If e2 is less than e10, then
     // the result must be exact. Otherwise we use the existing multipleOfPowerOf2 function.
-    trailingZeros = e2 < e10 || (e2 - e10 < 32 && multipleOfPowerOf2_32(m10, e2 - e10));
+    trailingZeros = e2 < e10 || (e2 - e10 < 32 && multipleOfPowerOf2_32(m10, (uint32_t)(e2 - e10)));
   } else {
-    e2 = floor_log2(m10) + e10 - ceil_log2pow5(-e10) - (FLOAT_MANTISSA_BITS + 1);
+    e2 = (int32_t)floor_log2(m10) + e10 - ceil_log2pow5(-e10) - (FLOAT_MANTISSA_BITS + 1);
 
     // We now compute [m10 * 10^e10 / 2^e2] = [m10 / (5^(-e10) 2^(e2-e10))].
     int j = e2 - e10 + ceil_log2pow5(-e10) - 1 + FLOAT_POW5_INV_BITCOUNT;
-    m2 = mulPow5InvDivPow2(m10, -e10, j);
+    m2 = mulPow5InvDivPow2(m10, (uint32_t)(-e10), j);
 
     // We also compute if the result is exact, i.e.,
     //   [m10 / (5^(-e10) 2^(e2-e10))] == m10 / (5^(-e10) 2^(e2-e10))
@@ -198,8 +199,8 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     // If e2-e10 < 0, we have actually computed [m10 * 2^(e10 e2) / 5^(-e10)] above,
     // and we need to check whether 5^(-e10) divides (m10 * 2^(e10-e2)), which is the case iff
     // pow5(m10 * 2^(e10-e2)) = pow5(m10) >= -e10.
-    trailingZeros = (e2 < e10 || (e2 - e10 < 32 && multipleOfPowerOf2_32(m10, e2 - e10)))
-        && multipleOfPowerOf5_32(m10, -e10);
+    trailingZeros = (e2 < e10 || (e2 - e10 < 32 && multipleOfPowerOf2_32(m10, (uint32_t)(e2 - e10))))
+        && multipleOfPowerOf5_32(m10, (uint32_t)(-e10));
   }
 
 #ifdef RYU_DEBUG
@@ -207,7 +208,7 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
 #endif
 
   // Compute the final IEEE exponent.
-  uint32_t ieee_e2 = (uint32_t) max32(0, e2 + FLOAT_EXPONENT_BIAS + floor_log2(m2));
+  uint32_t ieee_e2 = (uint32_t) max32(0, e2 + FLOAT_EXPONENT_BIAS + (int32_t)floor_log2(m2));
 
   if (ieee_e2 > 0xfe) {
     // Final IEEE exponent is larger than the maximum representable; return +/-Infinity.
@@ -219,7 +220,7 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
   // We need to figure out how much we need to shift m2. The tricky part is that we need to take
   // the final IEEE exponent into account, so we need to reverse the bias and also special-case
   // the value 0.
-  int32_t shift = (ieee_e2 == 0 ? 1 : ieee_e2) - e2 - FLOAT_EXPONENT_BIAS - FLOAT_MANTISSA_BITS;
+  int32_t shift = (ieee_e2 == 0 ? 1 : (int32_t)ieee_e2) - e2 - FLOAT_EXPONENT_BIAS - FLOAT_MANTISSA_BITS;
   assert(shift >= 0);
 #ifdef RYU_DEBUG
   printf("ieee_e2 = %d\n", ieee_e2);
@@ -248,11 +249,11 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
     ieee_e2++;
   }
-  uint32_t ieee = (((((uint32_t) signedM) << FLOAT_EXPONENT_BITS) | (uint32_t)ieee_e2) << FLOAT_MANTISSA_BITS) | ieee_m2;
+  uint32_t ieee = (((((uint32_t) signedM) << FLOAT_EXPONENT_BITS) | ieee_e2) << FLOAT_MANTISSA_BITS) | ieee_m2;
   *result = int32Bits2Float(ieee);
   return SUCCESS;
 }
 
 enum Status s2f(const char * buffer, float * result) {
-  return s2f_n(buffer, strlen(buffer), result);
+  return s2f_n(buffer, (int)strlen(buffer), result);
 }

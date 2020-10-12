@@ -411,12 +411,13 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
     const uint32_t idx = e2 < 0 ? 0 : indexForExponent((uint32_t) e2);
     const uint32_t p10bits = pow10BitsForIndex(idx);
     const int32_t len = (int32_t) lengthForIndex(idx);
+    assert((int32_t)p10bits >= e2);
+    const uint32_t j = (uint32_t) ((int32_t)p10bits - e2);
 #ifdef RYU_DEBUG
     printf("idx=%u\n", idx);
     printf("len=%d\n", len);
 #endif
     for (int32_t i = len - 1; i >= 0; --i) {
-      const uint32_t j = p10bits - e2;
       // Temporary: j is usually around 128, and by shifting a bit, we push it to 128 or above, which is
       // a slightly faster code path in mulShift_mod1e9. Instead, we can just increase the multipliers.
       const uint32_t digits = mulShift_mod1e9(m2 << 8, POW10_SPLIT[POW10_OFFSET[idx] + i], (int32_t) (j + 8));
