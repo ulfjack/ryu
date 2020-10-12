@@ -20,7 +20,7 @@
 #include "ryu/ryu_parse.h"
 #include "third_party/gtest/gtest.h"
 
-#define EXPECT_S2F(a, b) do { float value; EXPECT_EQ(SUCCESS, s2f(b, &value)); EXPECT_EQ(a, value); } while (0);
+#define EXPECT_S2F(a, b) do { float value; EXPECT_EQ(SUCCESS, s2f(b, &value)) << "str=" << b; EXPECT_EQ(a, value) << "str=" << b; } while (0);
 
 TEST(S2fTest, Basic) {
   EXPECT_S2F(0.0f, "0");
@@ -52,4 +52,13 @@ TEST(S2fTest, TrailingZeros) {
   EXPECT_S2F(26843550.0f, "26843549.5");
   EXPECT_S2F(50000004.0f, "50000002.5");
   EXPECT_S2F(99999992.0f, "99999989.5");
+}
+
+TEST(S2fTest, TrailingDecimalZeros) {
+  EXPECT_S2F(1.f, "1");
+  EXPECT_S2F(1.f, "1.000");
+  EXPECT_S2F(1.f, "1.000000000");  // fail: INPUT_TOO_LONG
+  EXPECT_S2F(8388605.f, "8388605");
+  EXPECT_S2F(8388605.f, "8388605.00");
+  EXPECT_S2F(8388605.f, "8388605.000"); // fail: INPUT_TOO_LONG
 }

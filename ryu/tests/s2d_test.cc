@@ -20,7 +20,7 @@
 #include "ryu/ryu_parse.h"
 #include "third_party/gtest/gtest.h"
 
-#define EXPECT_S2D(a, b) { double value; EXPECT_EQ(SUCCESS, s2d(b, &value)); EXPECT_EQ(a, value); } while (0);
+#define EXPECT_S2D(a, b) { double value; EXPECT_EQ(SUCCESS, s2d(b, &value)) << "str=" << b; EXPECT_EQ(a, value) << "str=" << b; } while (0);
 
 TEST(S2dTest, BadInput) {
   double value;
@@ -96,4 +96,15 @@ TEST(S2dTest, Issue173) {
 	EXPECT_S2D(2.2250738585072012e-308, "2.2250738585072012e-308");
 	EXPECT_S2D(2.2250738585072013e-308, "2.2250738585072013e-308");
 	EXPECT_S2D(2.2250738585072014e-308, "2.2250738585072014e-308");
+}
+
+TEST(S2dTest, TrailingDecimalZeros) {
+  EXPECT_S2D(1.      , "1");
+  EXPECT_S2D(1.      , "1.000");
+  EXPECT_S2D(1.      , "1.0000000000000000");
+  EXPECT_S2D(1.      , "1.00000000000000000"); // fail: INPUT_TOO_LONG
+  EXPECT_S2D(8388605., "8388605");
+  EXPECT_S2D(8388605., "8388605.000");
+  EXPECT_S2D(8388605., "8388605.0000000000");
+  EXPECT_S2D(8388605., "8388605.00000000000"); // fail: INPUT_TOO_LONG
 }
