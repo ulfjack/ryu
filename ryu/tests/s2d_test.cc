@@ -20,7 +20,7 @@
 #include "ryu/ryu_parse.h"
 #include "third_party/gtest/gtest.h"
 
-#define EXPECT_S2D(a, b) { double value; EXPECT_EQ(SUCCESS, s2d(b, &value)); EXPECT_EQ(a, value); } while (0);
+#define EXPECT_S2D(a, b) std::cout  << "wtf:" << __LINE__ << "\n"; { double value; EXPECT_EQ(SUCCESS, s2d(b, &value)) << "str=" << b; EXPECT_EQ(a, value) << "str=" << b; } while (0);
 
 TEST(S2dTest, BadInput) {
   double value;

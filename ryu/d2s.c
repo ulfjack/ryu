@@ -311,11 +311,10 @@ static inline floating_decimal_64 d2d(const uint64_t ieeeMantissa, const uint32_
   return fd;
 }
 
-static inline int to_chars(const floating_decimal_64 v, const bool sign, char* const result) {
+static inline void to_chars(const floating_decimal_64 v, const bool sign, tgt_str *tgt) {
   // Step 5: Print the decimal representation.
-  int index = 0;
   if (sign) {
-    result[index++] = '-';
+    tgt_append_char(tgt, '-');
   }
 
   uint64_t output = v.mantissa;
@@ -353,10 +352,10 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     const uint32_t c1 = (c / 100) << 1;
     const uint32_t d0 = (d % 100) << 1;
     const uint32_t d1 = (d / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
-    memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
-    memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
+    tgt_write_str(tgt, olength - i - 1, DIGIT_TABLE + c0, 2);
+    tgt_write_str(tgt, olength - i - 3, DIGIT_TABLE + c1, 2);
+    tgt_write_str(tgt, olength - i - 5, DIGIT_TABLE + d0, 2);
+    tgt_write_str(tgt, olength - i - 7, DIGIT_TABLE + d1, 2);
     i += 8;
   }
   uint32_t output2 = (uint32_t) output;
@@ -369,54 +368,50 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     output2 /= 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
+    tgt_write_str(tgt, tgt->pos + olength - i - 1, DIGIT_TABLE + c0, 2);
+    tgt_write_str(tgt, tgt->pos + olength - i - 3, DIGIT_TABLE + c1, 2);
     i += 4;
   }
   if (output2 >= 100) {
     const uint32_t c = (output2 % 100) << 1;
     output2 /= 100;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c, 2);
+    tgt_write_str(tgt, tgt->pos + olength - i - 1, DIGIT_TABLE + c, 2);
     i += 2;
   }
   if (output2 >= 10) {
     const uint32_t c = output2 << 1;
     // We can't use memcpy here: the decimal dot goes between these two digits.
-    result[index + olength - i] = DIGIT_TABLE[c + 1];
-    result[index] = DIGIT_TABLE[c];
+    tgt_write_char(tgt, tgt->pos + olength - i, DIGIT_TABLE[c + 1]);
+    tgt_write_char(tgt, tgt->pos, DIGIT_TABLE[c]);
   } else {
-    result[index] = (char) ('0' + output2);
+    tgt_write_char(tgt, tgt->pos, (char) ('0' + output2));
   }
 
   // Print decimal point if needed.
   if (olength > 1) {
-    result[index + 1] = '.';
-    index += olength + 1;
+    tgt_write_char(tgt, tgt->pos + 1, '.');
+    tgt->pos += olength + 1;
   } else {
-    ++index;
+    ++tgt->pos;
   }
 
   // Print the exponent.
-  result[index++] = 'E';
+  tgt_append_char(tgt, 'E');
   int32_t exp = v.exponent + (int32_t) olength - 1;
   if (exp < 0) {
-    result[index++] = '-';
+    tgt_append_char(tgt, '-');
     exp = -exp;
   }
 
   if (exp >= 100) {
     const int32_t c = exp % 10;
-    memcpy(result + index, DIGIT_TABLE + 2 * (exp / 10), 2);
-    result[index + 2] = (char) ('0' + c);
-    index += 3;
+    tgt_append_str(tgt, DIGIT_TABLE + 2 * (exp / 10), 2);
+    tgt_append_char(tgt, (char) ('0' + c));
   } else if (exp >= 10) {
-    memcpy(result + index, DIGIT_TABLE + 2 * exp, 2);
-    index += 2;
+    tgt_append_str(tgt, DIGIT_TABLE + 2 * exp, 2);
   } else {
-    result[index++] = (char) ('0' + exp);
+    tgt_append_char(tgt, (char) ('0' + exp));
   }
-
-  return index;
 }
 
 static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent,
@@ -451,7 +446,7 @@ static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t iee
   return true;
 }
 
-int d2s_buffered_n(double f, char* result) {
+void d2s_buffered_tgt(double f, tgt_str *tgt) {
   // Step 1: Decode the floating-point number, and unify normalized and subnormal cases.
   const uint64_t bits = double_to_bits(f);
 
@@ -469,7 +464,8 @@ int d2s_buffered_n(double f, char* result) {
   const uint32_t ieeeExponent = (uint32_t) ((bits >> DOUBLE_MANTISSA_BITS) & ((1u << DOUBLE_EXPONENT_BITS) - 1));
   // Case distinction; exit early for the easy cases.
   if (ieeeExponent == ((1u << DOUBLE_EXPONENT_BITS) - 1u) || (ieeeExponent == 0 && ieeeMantissa == 0)) {
-    return copy_special_str(result, ieeeSign, ieeeExponent, ieeeMantissa);
+    tgt_copy_special_str(tgt, ieeeSign, ieeeExponent, ieeeMantissa);
+    return;
   }
 
   floating_decimal_64 v;
@@ -492,7 +488,28 @@ int d2s_buffered_n(double f, char* result) {
     v = d2d(ieeeMantissa, ieeeExponent);
   }
 
-  return to_chars(v, ieeeSign, result);
+  to_chars(v, ieeeSign, tgt);
+}
+
+int d2s_buffered_sz(double f, char* result, int size) {
+  tgt_str tgt;
+  tgt_init(&tgt, result, size);
+  d2s_buffered_tgt(f, &tgt);
+  return tgt.pos;
+}
+
+int d2s_buffered_n(double f, char* result) {
+  tgt_str tgt;
+  if(result)
+  {
+    tgt_init(&tgt, result, RYU_MAX_SIZE_2S); // dangerous, but the original code assumes infinity
+  }
+  else
+  {
+    tgt_init_empty(&tgt);
+  }
+  d2s_buffered_tgt(f, &tgt);
+  return tgt.pos;
 }
 
 void d2s_buffered(double f, char* result) {
@@ -504,6 +521,6 @@ void d2s_buffered(double f, char* result) {
 
 char* d2s(double f) {
   char* const result = (char*) malloc(25);
-  d2s_buffered(f, result);
+  d2s_buffered_sz(f, result, 25);
   return result;
 }
