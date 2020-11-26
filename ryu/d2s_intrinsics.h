@@ -193,6 +193,7 @@ static inline uint32_t pow5Factor(uint64_t value) {
   const uint64_t n_div_5 = 3689348814741910323u;  // #{ n | n = 0 (mod 2^64) } = 2^54 / 5
   uint32_t count = 0;
   for (;;) {
+    assert(value != 0);
     value *= m_inv_5;
     if (value > n_div_5)
       break;
