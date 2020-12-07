@@ -84,7 +84,7 @@ Other implementations of Ryu:
 |------------------|--------------------|-----------------------------------------------|
 | Scala            | Andriy Plokhotnyuk | [https://github.com/plokhotnyuk/jsoniter-scala][3] |
 | Rust             | David Tolnay       | https://github.com/dtolnay/ryu                |
-| Julia            | Jacob Quinn        | https://github.com/quinnj/Ryu.jl              |
+| Julia            | Jacob Quinn        | https://github.com/JuliaLang/julia/tree/master/base/ryu |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 | C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
