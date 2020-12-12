@@ -127,7 +127,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
       m2 = ieeeMantissa;
     } else {
       e2 = ieeeExponent - bias - mantissaBits - 2;
-      m2 = (ONE << mantissaBits) | ieeeMantissa;
+      m2 = (ONE << (mantissaBits - 1)) | ieeeMantissa;
     }
   }
   const bool even = (m2 & 1) == 0;
