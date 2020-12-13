@@ -89,6 +89,7 @@ Other implementations of Ryu:
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
 | C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
 | C#               | Dogwei             | https://github.com/Dogwei/RyuCsharp           |
+| D                | Ilya Yaroshenko    | [https://github.com/libmir/mir-algorithm][5]  |
 | Scala            | Denys Shabalin     | [https://github.com/scala-native/scala-native][4] |
 
 
@@ -99,6 +100,8 @@ Other implementations of Ryu:
 [3]: https://github.com/plokhotnyuk/jsoniter-scala/blob/6e6bb9d7bed6de341ce0b781b403eb671d008468/jsoniter-scala-core/jvm/src/main/scala/com/github/plokhotnyuk/jsoniter_scala/core/JsonWriter.scala#L1777-L2262
 
 [4]: https://github.com/scala-native/scala-native/tree/master/nativelib/src/main/scala/scala/scalanative/runtime/ieee754tostring/ryu
+
+[5]: https://github.com/libmir/mir-algorithm/tree/master/source/mir/bignum/internal/ryu
 
 ## Ryu Printf
 Since Ryu generates the shortest decimal representation, it is not immediately
