@@ -91,6 +91,7 @@ Other implementations of Ryu:
 | C#               | Dogwei             | https://github.com/Dogwei/RyuCsharp           |
 | D                | Ilya Yaroshenko    | [https://github.com/libmir/mir-algorithm][5]  |
 | Scala            | Denys Shabalin     | [https://github.com/scala-native/scala-native][4] |
+| Erlang/BEAM      | Thomas Depierre    | https://github.com/erlang/otp/tree/master/erts/emulator/ryu |
 
 
 [1]: https://dl.acm.org/citation.cfm?id=93559
