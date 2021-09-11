@@ -313,8 +313,8 @@ public final class RyuDouble {
     }
 
     // Step 5: Print the decimal representation.
-    // We follow Double.toString semantics here,
-    // but adjusting the boundaries at which we switch to scientific notation
+    // We follow Double.toString semantics here, possibly with different boundaries for switching
+    // to scientific notation.
     char[] result = new char[14 - lowExp + highExp];
     int index = 0;
     if (sign) {
