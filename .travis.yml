@@ -29,6 +29,7 @@ language: c
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install bazel; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install bazel; fi
 
 install:
   - echo "build --compilation_mode=opt" > $HOME/.bazelrc
