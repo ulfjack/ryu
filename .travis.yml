@@ -2,13 +2,12 @@ jobs:
   include:
   - os: linux
     arch: amd64
-  - os:osx
+    dist: focal
+  - os: osx
     arch: amd64
-  - os:windows
+    osx_image: xcode12
+  - os: windows
     arch: amd64
-
-dist: focal
-osx_image: xcode12
 
 cache:
   apt: true
