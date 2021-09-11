@@ -94,7 +94,8 @@ public final class RyuDouble {
   }
 
   public static String doubleToString(double value, RoundingMode roundingMode) {
-      return doubleToString(value, roundingMode, -3, 7);
+    // Double.toString semantics requires using scientific notation if and only if outside this range.
+    return doubleToString(value, roundingMode, -3, 7);
   }
 
   public static String doubleToString(double value, RoundingMode roundingMode, int lowExp, int highExp) {
@@ -245,7 +246,6 @@ public final class RyuDouble {
     final int vplength = decimalLength(dp);
     int exp = e10 + vplength - 1;
 
-    // Double.toString semantics requires using scientific notation if and only if outside this range.
     boolean scientificNotation = !((exp >= lowExp) && (exp < highExp));
 
     int removed = 0;
