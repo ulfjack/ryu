@@ -1,7 +1,11 @@
-os:
-  - linux
-  - osx
-  - windows
+jobs:
+  include:
+  - os: linux
+    arch: amd64
+  - os:osx
+    arch: amd64
+  - os:windows
+    arch: amd64
 
 dist: focal
 osx_image: xcode12
