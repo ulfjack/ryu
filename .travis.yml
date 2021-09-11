@@ -3,7 +3,7 @@ os:
   - osx
   - windows
 
-dist: bionic
+dist: focal
 osx_image: xcode12
 
 cache:
