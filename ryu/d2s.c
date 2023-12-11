@@ -335,9 +335,9 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   // }
   // result[index] = '0' + output % 10;
 
-  uint32_t i = 0;
   {
-    // only i and result are mutated in this block
+    // only i, output2, and *result are mutated in this block
+    uint32_t i = 0;
     uint32_t output2 = (uint32_t) output;
     const int indexC = index;
     // const int indexOC = result + indexC + olength;
