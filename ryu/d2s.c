@@ -353,10 +353,10 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     const uint32_t c1 = (c / 100) << 1;
     const uint32_t d0 = (d % 100) << 1;
     const uint32_t d1 = (d / 100) << 1;
-    memcpy(result + index + olength - i - 1, DIGIT_TABLE + c0, 2);
-    memcpy(result + index + olength - i - 3, DIGIT_TABLE + c1, 2);
-    memcpy(result + index + olength - i - 5, DIGIT_TABLE + d0, 2);
-    memcpy(result + index + olength - i - 7, DIGIT_TABLE + d1, 2);
+    memcpy(result + index + olength - 1, DIGIT_TABLE + c0, 2);
+    memcpy(result + index + olength - 3, DIGIT_TABLE + c1, 2);
+    memcpy(result + index + olength - 5, DIGIT_TABLE + d0, 2);
+    memcpy(result + index + olength - 7, DIGIT_TABLE + d1, 2);
     i += 8;
   }
   uint32_t output2 = (uint32_t) output;
