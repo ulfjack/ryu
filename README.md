@@ -94,7 +94,7 @@ Other implementations of Ryu:
 | Scala            | Denys Shabalin     | [https://github.com/scala-native/scala-native][4] |
 | Erlang/BEAM      | Thomas Depierre    | https://github.com/erlang/otp/tree/master/erts/emulator/ryu |
 | Zig              | Marc Tiehuis       | https://github.com/tiehuis/zig-ryu            |
-
+| Haskell          | [Lawrence Wu](https://github.com/la-wu) | [https://github.com/haskell/bytestring][6] |
 
 [1]: https://dl.acm.org/citation.cfm?id=93559
 
@@ -105,6 +105,8 @@ Other implementations of Ryu:
 [4]: https://github.com/scala-native/scala-native/tree/master/nativelib/src/main/scala/scala/scalanative/runtime/ieee754tostring/ryu
 
 [5]: https://github.com/libmir/mir-algorithm/tree/master/source/mir/bignum/internal/ryu
+
+[6]: https://github.com/haskell/bytestring/pull/365
 
 ## Ryu Printf
 Since Ryu generates the shortest decimal representation, it is not immediately
