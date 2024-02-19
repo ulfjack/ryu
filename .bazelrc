@@ -1,5 +1,5 @@
 common --enable_platform_specific_config
 
 build:windows --conlyopt=-std=c99
-build:windows --build_tag_filters=-nowindows
-test:windows --test_tag_filters=-nowindows
+#build:windows --build_tag_filters=-nowindows
+#test:windows --test_tag_filters=-nowindows
