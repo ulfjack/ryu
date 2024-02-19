@@ -87,7 +87,6 @@ Other implementations of Ryu:
 | Julia            | Jacob Quinn        | https://github.com/JuliaLang/julia/tree/master/base/ryu |
 | Factor           | Alexander Iljin    | https://github.com/AlexIljin/ryu              |
 | Go               | Caleb Spare        | https://github.com/cespare/ryu                |
-| C++              | Cqwrteur           | https://github.com/expnkx/fast_io             |
 | C#               | Dogwei             | https://github.com/Dogwei/RyuCsharp           |
 | C#               | Shad Storhaug      | https://github.com/NightOwl888/J2N            |
 | D                | Ilya Yaroshenko    | [https://github.com/libmir/mir-algorithm][5]  |
