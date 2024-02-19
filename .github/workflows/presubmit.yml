@@ -32,6 +32,7 @@ jobs:
       run: |
         echo "build --conlyopt=-std=c99" > $HOME/.bazelrc
         echo "build --build_tag_filters=-nowindows" > $HOME/.bazelrc
+        echo "test --test_tag_filters=-nowindows" > $HOME/.bazelrc
 
     - name: Test
       run: |
