@@ -43,6 +43,10 @@ jobs:
       run: |
         bazel test --run_under="leaks --atExit -- " //ryu/...
 
+    # Build and run the benchmarks to make sure that they continue to work; the
+    # results cannot be compared to other results, because we don't know how the
+    # machines are configured and what other things are run on the same
+    # instances.
     - name: Benchmark
       run: |
         bazel run -c opt //ryu/benchmark:ryu_benchmark --
