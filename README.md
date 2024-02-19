@@ -107,6 +107,10 @@ Other implementations of Ryu:
 
 [6]: https://github.com/haskell/bytestring/pull/365
 
+### Paper Errata
+
+1. The condition in the modified `compute_shortest` algorithm is not correct.
+
 ## Ryu Printf
 Since Ryu generates the shortest decimal representation, it is not immediately
 suitable for use in languages that have printf-like facilities. In most
