@@ -93,6 +93,10 @@ public final class RyuFloat {
   }
 
   public static String floatToString(float value, RoundingMode roundingMode) {
+      return floatToString(value, roundingMode, -3, 7);
+  }
+
+  public static String floatToString(float value, RoundingMode roundingMode, int lowExp, int highExp) {
     // Step 1: Decode the floating point number, and unify normalized and subnormal cases.
     // First, handle all the trivial cases.
     if (Float.isNaN(value)) return "NaN";
@@ -222,7 +226,7 @@ public final class RyuFloat {
     // Step 4: Find the shortest decimal representation in the interval of legal representations.
     //
     // We do some extra work here in order to follow Float/Double.toString semantics. In particular,
-    // that requires printing in scientific format if and only if the exponent is between -3 and 7,
+    // that requires printing in scientific format if and only if the exponent is between lowExp and highExp,
     // and it requires printing at least two decimal digits.
     //
     // Above, we moved the decimal dot all the way to the right, so now we need to count digits to
@@ -231,7 +235,7 @@ public final class RyuFloat {
     int exp = e10 + dplength - 1;
 
     // Float.toString semantics requires using scientific notation if and only if outside this range.
-    boolean scientificNotation = !((exp >= -3) && (exp < 7));
+    boolean scientificNotation = !((exp >= lowExp) && (exp < highExp));
 
     int removed = 0;
     if (dpIsTrailingZeros && !roundingMode.acceptUpperBound(even)) {
@@ -287,13 +291,15 @@ public final class RyuFloat {
     }
 
     // Step 5: Print the decimal representation.
-    // We follow Float.toString semantics here.
-    char[] result = new char[15];
+    // We follow Float.toString semantics here,
+    // but adjusting the boundaries at which we switch to scientific notation
+    char[] result = new char[5 - lowExp + highExp];
     int index = 0;
     if (sign) {
       result[index++] = '-';
     }
 
+    // Values in the interval [10^lowExp, 10^highExp) are special.
     if (scientificNotation) {
       // Print in the format x.xxxxxE-yy.
       for (int i = 0; i < olength - 1; i++) {
@@ -318,7 +324,7 @@ public final class RyuFloat {
       }
       result[index++] = (char) ('0' + exp % 10);
     } else {
-      // Otherwise follow the Java spec for values in the interval [1E-3, 1E7).
+      // Otherwise follow the Java spec for values in the interval [10^lowExp, 10^highExp).
       if (exp < 0) {
         // Decimal dot is before any of the digits.
         result[index++] = '0';

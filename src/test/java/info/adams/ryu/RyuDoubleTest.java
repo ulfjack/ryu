@@ -14,13 +14,31 @@
 
 package info.adams.ryu;
 
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class RyuDoubleTest extends DoubleToStringTest {
-  @Override
+
+    @Override
   String f(double f, RoundingMode roundingMode) {
     return RyuDouble.doubleToString(f, roundingMode);
   }
+
+  @Test
+  public void testNoExpNeg() {
+    Assert.assertEquals("-1.234E-8",                  RyuDouble.doubleToString(-1.234e-8,  RoundingMode.ROUND_EVEN,  -3, 7));
+    Assert.assertEquals("-0.00000001234",             RyuDouble.doubleToString(-1.234e-8,  RoundingMode.ROUND_EVEN,  -9, 7));
+    Assert.assertEquals("-0.00000000000000000001234", RyuDouble.doubleToString(-1.234e-20, RoundingMode.ROUND_EVEN, -21, 7));
+  }
+
+  @Test
+  public void testNoExpPos() {
+    Assert.assertEquals("-1.234E8",                 RyuDouble.doubleToString(-1.234e8,  RoundingMode.ROUND_EVEN, -3,  7));
+    Assert.assertEquals("-123400000.0",             RyuDouble.doubleToString(-1.234e8,  RoundingMode.ROUND_EVEN, -3,  9));
+    Assert.assertEquals("-123400000000000000000.0", RyuDouble.doubleToString(-1.234e20, RoundingMode.ROUND_EVEN, -3, 21));
+  }
+
 }
