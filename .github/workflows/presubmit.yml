@@ -9,8 +9,9 @@ on:
 jobs:
   test-matrix:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -19,19 +20,19 @@ jobs:
     - name: Configure
       run: |
         echo "build --compilation_mode=opt" > $HOME/.bazelrc
-        echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
+        echo "# build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
         echo "build --announce_rc" >> $HOME/.bazelrc
         echo "build --keep_going" >> $HOME/.bazelrc
         echo "build --strategy=Javac=worker" >> $HOME/.bazelrc
-        echo "# build --build_tag_filters=-no$OS_NAME" >> $HOME/.bazelrc
-        echo "# test --test_tag_filters=-no$OS_NAME" >> $HOME/.bazelrc
         echo "test --test_output=errors" >> $HOME/.bazelrc
         echo "test --test_verbose_timeout_warnings" >> $HOME/.bazelrc
 
     - name: Configure (Windows)
       if: matrix.os == 'windows-latest' && success()
       run: |
-        echo "build --conlyopt=-std=c99" > $HOME/.bazelrc
+        echo "build --conlyopt=-std=c99" >> $HOME/.bazelrc
+        echo "build --build_tag_filters=-nowindows" >> $HOME/.bazelrc
+        echo "test --test_tag_filters=-nowindows" >> $HOME/.bazelrc
 
     - name: Test
       run: |
@@ -42,6 +43,10 @@ jobs:
       run: |
         bazel test --run_under="leaks --atExit -- " //ryu/...
 
+    # Build and run the benchmarks to make sure that they continue to work; the
+    # results cannot be compared to other results, because we don't know how the
+    # machines are configured and what other things are run on the same
+    # instances.
     - name: Benchmark
       run: |
         bazel run -c opt //ryu/benchmark:ryu_benchmark --
