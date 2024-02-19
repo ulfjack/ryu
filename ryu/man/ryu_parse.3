@@ -1,0 +1,33 @@
+.\" Please update the date every time you change the doc!
+.Dd October 15, 2020
+.Dt ryu_parse	3
+.Os
+.Sh NAME
+.Nm ryu_parse ,
+.Nm s2d ,
+.Nm s2d_n ,
+.Nm s2f ,
+.Nd convert decimal strings to floats
+.Sh LIBRARY
+.Lb libryu
+.Sh SYNOPSIS
+.In ryu_parse.h
+.Vt enum Status
+{
+.D1 Dv SUCCESS ,
+.D1 Dv INPUT_TOO_SHORT ,
+.D1 Dv INPUT_TOO_LONG ,
+.D1 Dv MALFORMED_INPUT
+};
+
+.\" TODO
+.Sh DESCRIPTION
+.Nm
+parses a decimal string of limited length (17) to a floating-point value,
+using an algorithm based on 
+.Xr ryu 3 .
+It is not yet able to handle all formats.
+.Sh SEE ALSO
+.Xr printf 3
+.Xr ryu_generic_128 3
+.Xr ryu 3
