@@ -20,12 +20,13 @@ jobs:
     - name: Configure
       run: |
         echo "build --compilation_mode=opt" > $HOME/.bazelrc
-        echo "# build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
+        echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
         echo "build --announce_rc" >> $HOME/.bazelrc
         echo "build --keep_going" >> $HOME/.bazelrc
         echo "build --strategy=Javac=worker" >> $HOME/.bazelrc
         echo "test --test_output=errors" >> $HOME/.bazelrc
         echo "test --test_verbose_timeout_warnings" >> $HOME/.bazelrc
+        mkdir -p "$HOME/.cache/bazel/"
 
     - name: Configure (Windows)
       if: matrix.os == 'windows-latest' && success()
