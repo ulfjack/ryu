@@ -1,0 +1,59 @@
+name: Presubmit
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+
+jobs:
+  test-matrix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: |
+        echo "build --compilation_mode=opt" > $HOME/.bazelrc
+        echo "build --disk_cache=$HOME/.cache/bazel/" >> $HOME/.bazelrc
+        echo "build --announce_rc" >> $HOME/.bazelrc
+        echo "build --keep_going" >> $HOME/.bazelrc
+        echo "build --strategy=Javac=worker" >> $HOME/.bazelrc
+        echo "# build --build_tag_filters=-no$OS_NAME" >> $HOME/.bazelrc
+        echo "# test --test_tag_filters=-no$OS_NAME" >> $HOME/.bazelrc
+        echo "test --test_output=errors" >> $HOME/.bazelrc
+        echo "test --test_verbose_timeout_warnings" >> $HOME/.bazelrc
+
+    - name: Configure (Windows)
+      if: matrix.os == 'windows-latest' && success()
+      run: |
+        echo "build --conlyopt=-std=c99" > $HOME/.bazelrc
+
+    - name: Test
+      run: |
+        bazel test //ryu/... //src/...
+
+    - name: Leak checker (macOS)
+      if: matrix.os == 'macos-latest' && success()
+      run: |
+        bazel test --run_under="leaks --atExit -- " //ryu/...
+
+    - name: Benchmark
+      run: |
+        bazel run -c opt //ryu/benchmark:ryu_benchmark --
+        bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
+        bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark --
+        bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test --copt=-DRYU_OPTIMIZE_SIZE //ryu/...
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_benchmark --
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test -c opt --copt=-DRYU_FLOAT_FULL_TABLE //ryu/...
+        bazel test -c opt --copt=-DRYU_ONLY_64_BIT_OPS --copt=-DRYU_32_BIT_PLATFORM //ryu/...
