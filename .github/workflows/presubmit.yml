@@ -27,6 +27,12 @@ jobs:
         echo "test --test_output=errors" >> $HOME/.bazelrc
         echo "test --test_verbose_timeout_warnings" >> $HOME/.bazelrc
 
+    - name: Configure (Windows)
+      if: matrix.os == 'windows-latest' && success()
+      run: |
+        echo "build --conlyopt=-std=c99" > $HOME/.bazelrc
+        echo "build --build_tag_filters=-nowindows" > $HOME/.bazelrc
+
     - name: Test
       run: |
         bazel test //ryu/... //src/...
