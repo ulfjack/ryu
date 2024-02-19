@@ -28,3 +28,22 @@ jobs:
         echo "test --test_output=errors" >> $HOME/.bazelrc
         echo "test --test_verbose_timeout_warnings" >> $HOME/.bazelrc
 
+    - name: Test
+      run: |
+        bazel test //ryu/... //src/...
+
+    - name: Benchmark
+      run: |
+        bazel run -c opt //ryu/benchmark:ryu_benchmark --
+        bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
+        bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark --
+        bazel run -c opt --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test --copt=-DRYU_OPTIMIZE_SIZE //ryu/...
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_benchmark --
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/...
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_benchmark
+        bazel run -c opt --copt=-DRYU_OPTIMIZE_SIZE --copt=-DRYU_ONLY_64_BIT_OPS //ryu/benchmark:ryu_printf_benchmark -- -samples=200
+        bazel test -c opt --copt=-DRYU_FLOAT_FULL_TABLE //ryu/...
+        bazel test -c opt --copt=-DRYU_ONLY_64_BIT_OPS --copt=-DRYU_32_BIT_PLATFORM //ryu/...
