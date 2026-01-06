@@ -323,6 +323,10 @@ static char* l2s(long double d) {
 #define ASSERT_L2S(a, b) { char* result = l2s(b); ASSERT_STREQ(a, result); free(result); } while (0);
 
 TEST(Generic128Test, long_double_to_fd128) {
+  if (sizeof(long double) != 10) {
+    // We're on an old version of gtest. Upgrade?
+    return;
+  }
   ASSERT_L2S("0E0", 0.0);
   ASSERT_L2S("-0E0", -0.0);
   ASSERT_L2S("1E0", 1.0);
@@ -344,6 +348,10 @@ TEST(Generic128Test, long_double_to_fd128) {
 }
 
 TEST(Generic128Test, regression_test_long_double) {
+  if (sizeof(long double) != 10) {
+    // We're on an old version of gtest. Upgrade?
+    return;
+  }
   // The binary 80-bit representation of this number has a mantissa that is a
   // one followed by zeros. This is a special case, because the next lower
   // number is closer to X than the next higher number, so it is possible that
