@@ -1,6 +1,7 @@
 bazel-*
 /.eclipse-bin/
 /.project
+/.lake
 .vscode/
 ryu/*.[oa]
 ryu/tests/*.test
