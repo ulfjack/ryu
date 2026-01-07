@@ -42,20 +42,19 @@ def totalBits (c : Cfg) : Nat := c.ewidth.toNat + c.prec.toNat
 -- Exponent bias in the IEEE-754 bit vector representation.
 def bias (c : Cfg) : Int := 2 ^ (c.ewidth - 1).toNat - 1
 
--- Exponent representation for +/-∞ and NaN (all exponent bits set).
-def maxExponent (c : Cfg) : Int := (2 ^ c.ewidth.toNat) - 1
-
+-- Largest (positive) representable exponent.
 def emax (c : Cfg) : Int := bias c
 
 -- Smallest (negative) representable exponent; used for denormals and the first batch of normals.
 def emin (c : Cfg) : Int := 1 - c.emax
+
+-- Exponent representation for +/-∞ and NaN (all exponent bits set).
+def maxExponent (c : Cfg) : Int := (2 ^ c.ewidth.toNat) - 1
 end Cfg
 
 def ValidFinite (c : Cfg) (e : Int) (m : Int) : Prop :=
-  -- Zero case:
-  (e = c.emin ∧ m = 0) ∨
-  -- Denormal case:
-  (e = c.emin ∧ 0 < m ∧ m < c.minNormal) ∨
+  -- Zero / Denormal case:
+  (e = c.emin ∧ 0 ≤ m ∧ m < c.minNormal) ∨
   -- Normal case:
   (c.emin ≤ e ∧ e ≤ c.emax ∧ c.minNormal ≤ m ∧ m < c.maxNormal)
 
@@ -91,6 +90,30 @@ def toBits {c : Cfg} (f : F c) : BitVec (c.totalBits) :=
       c.totalBits
       ((s <<< (c.ewidth + c.prec - 1).toNat) + (ebits <<< (c.prec - 1).toNat) + mbits)
 
+lemma bias_pos (c : Cfg) : 0 < c.bias := by
+  dsimp [Cfg.bias]
+  have h_pow_pos : 1 < 2 ^ (c.ewidth - 1).toNat := by
+    apply Nat.one_lt_pow
+    · rw [← Nat.pos_iff_ne_zero]
+      zify
+      rw [Int.toNat_of_nonneg]
+      · linarith [c.ewidth_at_least_2]
+      · linarith [c.ewidth_at_least_2]
+    · norm_num
+  linarith
+
+lemma emax_pos (c : Cfg) : 0 < c.emax := by
+  rw [Cfg.emax]
+  exact bias_pos c
+
+lemma emin_lt_emax (c : Cfg) : c.emin < c.emax := by
+  rw [Cfg.emin, Cfg.emax]
+  linarith [bias_pos c]
+
+lemma minNormal_pos (c : Cfg) : 0 < c.minNormal := by
+  rw [Cfg.minNormal]
+  positivity
+
 lemma maxExponent_eq_two_bias_plus_one (c : Cfg) : c.maxExponent = 2 * c.bias + 1 := by
   dsimp [Cfg.maxExponent, Cfg.bias]
   -- Goal: 2 ^ c.ewidth.toNat - 1 = 2 * (2 ^ (c.ewidth - 1).toNat - 1) + 1
@@ -114,12 +137,36 @@ lemma maxNormal_eq_two_minNormal (c : Cfg) : c.maxNormal = 2 * c.minNormal := by
   rw [pow_succ]
   linarith
 
-lemma minNormal_sub_one_lt_minNorml (c : Cfg) : (c.minNormal - 1).toNat < c.minNormal := by
+lemma minNormal_lt_maxNormal (c : Cfg) : c.minNormal < c.maxNormal := by
+  rw [maxNormal_eq_two_minNormal]
+  linarith [minNormal_pos c]
+
+lemma minNormal_sub_one_lt_minNormal (c : Cfg) : (c.minNormal - 1).toNat < c.minNormal := by
   rw [Int.toNat_of_nonneg]
   · linarith
   · dsimp [Cfg.minNormal]
     apply Int.le_sub_one_of_lt
     positivity
+
+lemma ValidFinite_zero (c : Cfg) : ValidFinite c c.emin 0 := by
+  dsimp [ValidFinite]
+  left
+  refine ⟨by linarith, by linarith, by linarith [minNormal_pos c]⟩
+
+lemma ValidFinite_max_finite (c : Cfg) : ValidFinite c c.emax (c.maxNormal - 1) := by
+  dsimp [ValidFinite]
+  apply Or.inr
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · simp [Cfg.emin]
+    linarith [emax_pos c]
+  · linarith
+  · simp only [Cfg.minNormal, Cfg.maxNormal]
+    rw [Int.le_sub_one_iff]
+    apply pow_lt_pow_right₀ (by norm_num : 1 < (2 : Int))
+    rw [Int.toNat_lt_toNat]
+    · linarith [c.prec_at_least_2]
+    · linarith [c.prec_at_least_2]
+  · linarith
 
 -- Deconstructs an IEEE-754 bit vector into a Float
 def fromBits {c : Cfg} (bv : BitVec c.totalBits) : (F c) :=
@@ -134,35 +181,27 @@ def fromBits {c : Cfg} (bv : BitVec c.totalBits) : (F c) :=
     else -- NaN
       .nan
   else if he: e_bits = 0 then
-    if hm : m_bits = 0 then
-      -- Zero
-      have h : ValidFinite c c.emin 0 := by
-        dsimp [ValidFinite]
-        apply Or.inl
-        simp
-      .finite (s_bit == 1) c.emin 0 h
-    else
-      -- Denormal: e is fixed to emin, m is exactly m_bits
-      let m := Int.ofNat m_bits
-      have h : ValidFinite c c.emin m := by
-        dsimp [ValidFinite]
-        apply Or.inr; apply Or.inl
-        refine ⟨?_, ?_, ?_⟩
-        · simp
-        · apply Int.ofNat_lt.mpr
-          apply Nat.pos_of_ne_zero hm
-        · dsimp [m, m_bits]
-          apply Int.lt_of_le_of_lt (b := (c.minNormal - 1).toNat)
-          · apply Int.ofNat_le.mpr
-            apply Nat.and_le_right
-          · exact minNormal_sub_one_lt_minNorml c
-      .finite (s_bit == 1) c.emin (Int.ofNat m_bits) h
+    -- Zero / Denormal: e is fixed to emin, m is exactly m_bits
+    let m := Int.ofNat m_bits
+    have h : ValidFinite c c.emin m := by
+      dsimp [ValidFinite]
+      apply Or.inl
+      refine ⟨?_, ?_, ?_⟩
+      · simp
+      · apply Int.ofNat_le.mpr
+        positivity
+      · dsimp [m, m_bits]
+        apply Int.lt_of_le_of_lt (b := (c.minNormal - 1).toNat)
+        · apply Int.ofNat_le.mpr
+          apply Nat.and_le_right
+        · exact minNormal_sub_one_lt_minNormal c
+    .finite (s_bit == 1) c.emin (Int.ofNat m_bits) h
   else -- Normal: e = e_bits - bias, m = m_bits + minNormal (hidden bit)
     let e := Int.ofNat e_bits - c.bias
     let m := Int.ofNat m_bits + c.minNormal
     have h : ValidFinite c e m := by
       dsimp [ValidFinite]
-      apply Or.inr; apply Or.inr
+      apply Or.inr
       refine ⟨?_, ?_, ?_, ?_⟩
       · dsimp [e, Cfg.emin]
         rw [Cfg.emax]
@@ -198,7 +237,7 @@ def fromBits {c : Cfg} (bv : BitVec c.totalBits) : (F c) :=
           apply Int.lt_of_le_of_lt (b:= ↑(c.minNormal - 1).toNat)
           · apply Int.ofNat_le.mpr
             apply Nat.and_le_right
-          · exact minNormal_sub_one_lt_minNorml c
+          · exact minNormal_sub_one_lt_minNormal c
         rw [maxNormal_eq_two_minNormal c]
         linarith [h_m_lt]
     .finite (s_bit == 1) e m h
@@ -212,42 +251,27 @@ def succFinitePos {c : Cfg} (e : Int) (m : Int) (_ : ValidFinite c e m) : (F c) 
     else
       (F.inf false)
 
-def succFiniteNeg {c : Cfg} (e : Int) (m : Int) (_ : ValidFinite c e m) : (F c) :=
+def predFinitePos {c : Cfg} (e : Int) (m : Int) (_ : ValidFinite c e m) : (F c) :=
   if h1 : ValidFinite c e (m - 1) then
-    (F.finite (c := c) true e (m - 1) h1)
+    (F.finite (c := c) false e (m - 1) h1)
   else
     if h2 : ValidFinite c (e - 1) (c.maxNormal - 1) then
-      (F.finite (c := c) true (e - 1) (c.maxNormal - 1) h2)
+      (F.finite (c := c) false (e - 1) (c.maxNormal - 1) h2)
     else
-      (F.finite (c := c) false (c.emin) 0 (Or.inl ⟨rfl, rfl⟩))
+      (F.finite true (c.emin) 0 (Or.inl ⟨rfl, by norm_num, minNormal_pos c⟩))
 
-lemma emax_pos (c : Cfg) : 0 < c.emax := by
-  rw [Cfg.emax]
-  dsimp [Cfg.bias]
-  have h_pow_pos : 1 < 2 ^ (c.ewidth - 1).toNat := by
-    apply Nat.one_lt_pow
-    · rw [← Nat.pos_iff_ne_zero]
-      zify
-      rw [Int.toNat_of_nonneg]
-      · linarith [c.ewidth_at_least_2]
-      · linarith [c.ewidth_at_least_2]
-    · norm_num
-  linarith
+def predFinitePos_is_finite_data (c : Cfg) (e : Int) (m : Int) (v : ValidFinite c e m) :
+    Σ' (s' : Bool) (e' : Int) (m' : Int) (v' : ValidFinite c e' m'),
+    predFinitePos e m v = F.finite s' e' m' v' := by
+  unfold predFinitePos
+  split_ifs with h1 h2
+  · exact ⟨false, e, m - 1, h1, rfl⟩
+  · exact ⟨false, e - 1, c.maxNormal - 1, h2, rfl⟩
+  · exact ⟨true, c.emin, 0, ValidFinite_zero c, rfl⟩
 
-lemma ValidFinite_max_finite (c : Cfg) : ValidFinite c c.emax (c.maxNormal - 1) := by
-  dsimp [ValidFinite]
-  apply Or.inr; apply Or.inr
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · simp [Cfg.emin]
-    linarith [emax_pos c]
-  · linarith
-  · simp only [Cfg.minNormal, Cfg.maxNormal]
-    rw [Int.le_sub_one_iff]
-    apply pow_lt_pow_right₀ (by norm_num : 1 < (2 : Int))
-    rw [Int.toNat_lt_toNat]
-    · linarith [c.prec_at_least_2]
-    · linarith [c.prec_at_least_2]
-  · linarith
+def succFiniteNeg {c : Cfg} (e : Int) (m : Int) (v : ValidFinite c e m) : (F c) :=
+  let ⟨s', e', m', v', _⟩ := predFinitePos_is_finite_data c e m v
+  F.finite (!s') e' m' v'
 
 -- Returns the next representable larger number; if the input is NaN or +∞, then that is returned
 -- (e.g., we don't wrap around to -∞).
@@ -280,9 +304,7 @@ variable {c : Cfg} {e : Int} {m : Int}
 lemma ValidFinite_m_lt_pow : ValidFinite c e m → m < c.maxNormal := by
   intro h
   unfold ValidFinite at h
-  rcases h with hzero | hden | hnorm
-  · rcases hzero with ⟨_, hm0⟩
-    simp [hm0, Cfg.maxNormal]
+  rcases h with hden | hnorm
   · rcases hden with ⟨_, _, hm_lt_pow⟩
     apply lt_of_lt_of_le hm_lt_pow
     dsimp [Cfg.minNormal, Cfg.maxNormal]
@@ -297,13 +319,7 @@ lemma ValidFinite_m_lt_pow : ValidFinite c e m → m < c.maxNormal := by
 
 lemma ValidFinite_e_le_emax : ValidFinite c e m → e ≤ c.emax := by
   intro h
-  rcases h with hzero | hden | hnorm
-  · rcases hzero with ⟨he_eq_emin, _⟩
-    simp [he_eq_emin]
-    dsimp [Cfg.emin]
-    have h_emax_pos : 1 ≤ c.emax := by
-      linarith [emax_pos c]
-    linarith
+  rcases h with hden | hnorm
   · rcases hden with ⟨he_eq_emin, _, _⟩
     simp [he_eq_emin]
     dsimp [Cfg.emin]
@@ -327,15 +343,16 @@ lemma maxNormal_toRat : c.maxNormal = (2 : ℚ) ^ c.prec := by
   apply Int.toNat_of_nonneg
   linarith [c.prec_at_least_2]
 
-lemma toRat_of_finite_lt_pow (h : ValidFinite c e m) :
-      @toRatFinite c false e m < 2 ^ (e + 1) := by
+-- Proof that a finite floating point number m * 2^(e - p + 1) is less than 2^(e + 1)
+-- regardless of the mantissa.
+lemma toRat_of_finite_lt_pow (h : ValidFinite c e m) : @toRatFinite c false e m < 2 ^ (e + 1) := by
   dsimp [toRatFinite]
   simp only [one_mul]
   -- Goal: ↑m * 2 ^ (e - c.prec + 1) < 2 ^ (e + 1)
   apply lt_of_lt_of_le (b := (2 : ℚ) ^ c.prec * (2 : ℚ) ^ (e - c.prec + 1))
   · -- Part 1: ↑m * 2 ^ (e - c.prec + 1) < 2 ^ c.prec * 2 ^ (e - c.prec + 1)
     apply mul_lt_mul_of_pos_right
-    · -- m < 2^p (this uses your ValidFinite_m_lt_pow lemma)
+    · -- m < 2^p
       have h_m_lt := ValidFinite_m_lt_pow h
       have h_m_rat : (m : ℚ) < (c.maxNormal : ℚ) := by exact_mod_cast h_m_lt
       rw [maxNormal_toRat] at h_m_rat
@@ -350,41 +367,116 @@ lemma toRat_of_finite_lt_pow (h : ValidFinite c e m) :
 
 #check toRat_of_finite_lt_pow
 
+-- Proof that succFinitePos is monotonically increasing.
 lemma succFinitePos_increases {c : Cfg} (h : ValidFinite c e m) (y : F c) :
-  succFinitePos e m h = some y → toRat (F.finite false e m h) < toRat y := by
-    intro hs
-    dsimp [succFinitePos] at hs
-    split at hs
-    · injection hs with hy
-      subst hy
+      succFinitePos e m h = y → toRat (F.finite false e m h) < toRat y := by
+  intro hs
+  dsimp [succFinitePos] at hs
+  split at hs
+  · subst hs
+    dsimp [toRat]
+    simp only [one_mul, Int.cast_add, Int.cast_one, Option.some_lt_some]
+    set k : Int := e - c.prec + 1
+    have hk : 0 < (2:ℚ) ^ k := zpow_pos (by norm_num) k
+    have hm : (m:ℚ) < m + 1 := by norm_num
+    exact mul_lt_mul_of_pos_right hm hk
+  · split_ifs at hs with h1
+    · -- Case 2: Mantissa overflows (m + 1 = maxNormal)
+      subst hs
+      rw [toRat_finite_eq _ _ _ h, toRat_finite_eq] -- Clean up both sides
+      simp only [Option.some_lt_some]
+      apply lt_of_lt_of_le (toRat_of_finite_lt_pow h)
+      apply le_of_eq
+      symm
+      dsimp [toRatFinite]
+      rw [minNormal_toRat]
+      simp only [one_mul]
+      rw [← zpow_add₀ (by norm_num)]
+      apply (congrArg (fun x : ℤ => (2 : ℚ) ^ x))
+      linarith
+    · -- Case 3: Both Mantissa and Exponent overflow (m + 1 = maxNormal & e = c.emax)
+      subst hs
+      rw [toRat_finite_eq _ _ _ h]
       dsimp [toRat]
-      simp only [one_mul, Int.cast_add, Int.cast_one, Option.some_lt_some]
-      set k : Int := e - c.prec + 1
-      have hk : 0 < (2:ℚ) ^ k := zpow_pos (by norm_num) k
-      have hm : (m:ℚ) < m + 1 := by norm_num
-      exact mul_lt_mul_of_pos_right hm hk
-    · split at hs
-      · -- Case 2: Mantissa overflows (m + 1 = maxNormal)
-        injection hs with hy; subst hy
-        rw [toRat_finite_eq _ _ _ h, toRat_finite_eq] -- Clean up both sides
-        simp only [Option.some_lt_some]
-        apply lt_of_lt_of_le (toRat_of_finite_lt_pow h)
-        apply le_of_eq
-        symm
-        dsimp [toRatFinite]
-        rw [minNormal_toRat]
-        simp only [one_mul]
-        rw [← zpow_add₀ (by norm_num)]
-        apply (congrArg (fun x : ℤ => (2 : ℚ) ^ x))
-        linarith
-      · -- Case 3: Both Mantissa and Exponent overflow (m + 1 = maxNormal & e = c.emax)
-        injection hs with hy; subst hy
-        rw [toRat_finite_eq _ _ _ h]
-        dsimp [toRat]
-        simp only [Option.some_lt_some]
-        apply lt_of_lt_of_le (toRat_of_finite_lt_pow h)
-        apply zpow_le_zpow_right₀ (by norm_num)
-        simp only [add_le_add_iff_right]
-        exact ValidFinite_e_le_emax h
+      simp only [Option.some_lt_some]
+      apply lt_of_lt_of_le (toRat_of_finite_lt_pow h)
+      apply zpow_le_zpow_right₀ (by norm_num)
+      simp only [add_le_add_iff_right]
+      exact ValidFinite_e_le_emax h
+
+lemma succExists {c : Cfg} (h : ValidFinite c e m) :
+      m ≠ c.maxNormal - 1 → ValidFinite c e (m + 1) := by
+  intro hm
+  unfold ValidFinite at *
+  rcases h with ⟨he, hm_range⟩ | ⟨he_emin, he_emax, hm_min, hm_max⟩
+  · -- Denormal branch: Case split whether m + 1 is Denormal or Normal
+    by_cases h_next : m + 1 < c.minNormal
+    · left
+      exact ⟨he, by linarith, h_next⟩
+    · right
+      exact ⟨by linarith [emin_lt_emax c], by linarith [emin_lt_emax c],
+             by linarith, by linarith [minNormal_lt_maxNormal c]⟩
+  · -- Normal branch: Stays Normal
+    right
+    exact ⟨by linarith [emin_lt_emax c], by linarith [emin_lt_emax c],
+           by linarith, by omega⟩
+
+lemma succExists2 {c : Cfg} (h : ValidFinite c e m) :
+      e ≠ c.emax → ValidFinite c (e + 1) c.minNormal := by
+  intro hm
+  unfold ValidFinite at *
+  rcases h with ⟨he, hm_range⟩ | ⟨he_emin, he_emax, hm_min, hm_max⟩
+  · -- Denormal branch
+    right
+    exact ⟨by linarith, by linarith [emin_lt_emax c], by linarith, minNormal_lt_maxNormal c⟩
+  · -- Normal branch
+    right
+    exact ⟨by linarith [emin_lt_emax c], by omega, by linarith, by omega⟩
+
+lemma succPredInverse {c : Cfg} (h : ValidFinite c e m) (h' : ValidFinite c e' m') :
+      succFinitePos e m h = (F.finite false e' m' h')
+      → (F.finite false e m h) = predFinitePos e' m' h' := by
+  intro h_succ
+  unfold succFinitePos at h_succ
+  unfold predFinitePos
+  by_cases h1 : ValidFinite c e (m + 1)
+  · simp only [h1, ↓reduceDIte, F.finite.injEq, true_and] at h_succ
+    obtain ⟨he, hm⟩ := h_succ
+    subst he hm
+    simp only [add_sub_cancel_right, h, ↓reduceDIte]
+  · simp only [h1, ↓reduceDIte] at h_succ
+    by_cases h2 : ValidFinite c (e + 1) c.minNormal
+    · simp only [h2, ↓reduceDIte, F.finite.injEq, true_and] at h_succ
+      obtain ⟨he, hm⟩ := h_succ
+      subst he hm
+      simp only [add_sub_cancel_right]
+      have h_not : ¬ ValidFinite c (e + 1) (c.minNormal - 1) := by
+        unfold ValidFinite at *
+        simp only [Int.sub_nonneg, sub_lt_self_iff, zero_lt_one, and_true, le_sub_self_iff,
+                   Int.reduceLE, false_and, and_false, or_false, not_and, not_le]
+        intro h_eq
+        rcases h with hden | hnorm
+        · obtain ⟨he, _, _⟩ := hden
+          linarith
+        · obtain ⟨he, _⟩ := hnorm
+          linarith
+      have h_must : ValidFinite c e (c.maxNormal - 1) := by
+        unfold ValidFinite at *
+        rcases h with hden | hnorm
+        · obtain ⟨he, _, hm⟩ := hden
+          right
+          exact ⟨by linarith, by linarith [emin_lt_emax c],
+                 by linarith [minNormal_lt_maxNormal c], by linarith⟩
+        · obtain ⟨he, _⟩ := hnorm
+          right
+          exact ⟨by linarith, by linarith [emin_lt_emax c],
+                 by linarith [minNormal_lt_maxNormal], by linarith⟩
+      have min_lt_max : c.minNormal < c.maxNormal := by
+        rw [maxNormal_eq_two_minNormal]
+        linarith [minNormal_pos c]
+      simp only [h_not, ↓reduceDIte, h_must, F.finite.injEq, true_and]
+      contrapose! h1
+      exact succExists h h1
+    · simp only [h2, ↓reduceDIte, reduceCtorEq] at h_succ
 
 end Ryu.IEEE754.Float
