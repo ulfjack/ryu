@@ -204,7 +204,7 @@ public final class RyuFloat {
       }
 
       dpIsTrailingZeros = 1 >= q;
-      dvIsTrailingZeros = (q < FLOAT_MANTISSA_BITS) && (mv & ((1 << (q - 1)) - 1)) == 0;
+      dvIsTrailingZeros = (q < FLOAT_MANTISSA_BITS + 3) && (mv & ((1 << (q - 1)) - 1)) == 0;
       dmIsTrailingZeros = (mm % 2 == 1 ? 0 : 1) >= q;
     }
     if (DEBUG) {
