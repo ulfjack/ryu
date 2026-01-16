@@ -77,6 +77,14 @@ public abstract class FloatToStringTest {
   }
 
   @Test
+  public void lotsOfTrailingZeros() {
+    assertF2sEquals("2.4414062E-4", 2.4414062E-4f);
+    assertF2sEquals("0.0024414062", 2.4414062E-3f);
+    assertF2sEquals("0.0043945312", 4.3945312E-3f);
+    assertF2sEquals("0.0063476562", 6.3476562E-3f);
+  }
+
+  @Test
   public void roundingEvenIfTied() {
     assertF2sEquals("0.33007812", 0.33007812f);
   }
