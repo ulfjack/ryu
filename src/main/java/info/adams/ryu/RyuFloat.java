@@ -85,7 +85,7 @@ public final class RyuFloat {
     DEBUG = true;
     float f = 0.33007812f;
     String result = floatToString(f, RoundingMode.ROUND_EVEN);
-    System.out.println(result + " " + f);
+    System.out.println("Ryu: " + result + "  Java: " + f);
   }
 
   public static String floatToString(float value) {

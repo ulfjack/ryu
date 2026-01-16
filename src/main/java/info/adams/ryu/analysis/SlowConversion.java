@@ -32,7 +32,7 @@ public final class SlowConversion {
     if (DEBUG_FLOAT) {
       float f = 0.33007812f;
       String result = floatToString(f);
-      System.out.println(result + " " + f);
+      System.out.println("Ryu: " + result + "  Java: " + f);
     } else {
       double f = 1.1873267205539228E-308;
       String result = doubleToString(f);
