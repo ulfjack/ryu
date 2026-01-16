@@ -1,4 +1,5 @@
 bazel-*
+MODULE.bazel.lock
 /.eclipse-bin/
 /.project
 /.lake
