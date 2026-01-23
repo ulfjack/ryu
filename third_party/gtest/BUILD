@@ -14,6 +14,7 @@ cc_library(
     name = "gtest-lib",
     srcs = ["gtest-all.cc"],
     hdrs = ["gtest.h"],
+    defines = ["GTEST_LANG_CXX11=1"],
     linkopts = select({
         "@bazel_tools//src/conditions:windows": [],
         "//conditions:default": ["-lpthread"],
