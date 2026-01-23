@@ -17,6 +17,8 @@
 #ifndef RYU_D2S_SMALL_TABLE_H
 #define RYU_D2S_SMALL_TABLE_H
 
+#include <assert.h>
+
 // Defines HAS_UINT128 and uint128_t if applicable.
 #include "ryu/d2s_intrinsics.h"
 
@@ -41,11 +43,11 @@ static const uint64_t DOUBLE_POW5_INV_SPLIT2[15][2] = {
   { 10313493231639821582u, 1313665730009899186u },
   { 12701016819766672773u, 2032799256770390445u }
 };
-static const uint32_t POW5_INV_OFFSETS[19] = {
+static const uint32_t POW5_INV_OFFSETS[22] = {
   0x54544554, 0x04055545, 0x10041000, 0x00400414, 0x40010000, 0x41155555,
   0x00000454, 0x00010044, 0x40000000, 0x44000041, 0x50454450, 0x55550054,
   0x51655554, 0x40004000, 0x01000001, 0x00010500, 0x51515411, 0x05555554,
-  0x00000000
+  0x50411500, 0x40040000, 0x05040110, 0x00000000
 };
 
 static const uint64_t DOUBLE_POW5_SPLIT2[13][2] = {
@@ -117,6 +119,7 @@ static inline void double_computeInvPow5(const uint32_t i, uint64_t* const resul
   const uint128_t b0 = ((uint128_t) m) * (mul[0] - 1);
   const uint128_t b2 = ((uint128_t) m) * mul[1]; // 1/5^base2 * 5^offset = 1/5^(base2-offset) = 1/5^i
   const uint32_t delta = pow5bits(base2) - pow5bits(i);
+  assert(i / 16 < sizeof(POW5_INV_OFFSETS) / sizeof(POW5_INV_OFFSETS[0]));
   const uint128_t shiftedSum =
     ((b0 >> delta) + (b2 << (64 - delta))) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);
   result[0] = (uint64_t) shiftedSum;
@@ -173,6 +176,7 @@ static inline void double_computeInvPow5(const uint32_t i, uint64_t* const resul
   }
   // high1 | sum | low0
   const uint32_t delta = pow5bits(base2) - pow5bits(i);
+  assert(i / 16 < sizeof(POW5_INV_OFFSETS) / sizeof(POW5_INV_OFFSETS[0]));
   result[0] = shiftright128(low0, sum, delta) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);
   result[1] = shiftright128(sum, high1, delta);
 }
