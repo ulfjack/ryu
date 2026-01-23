@@ -53,7 +53,7 @@ jobs:
     # machines are configured and what other things are run on the same
     # instances.
     - name: Benchmark
-      shell: ${{ runner.os == 'Windows' && 'cmd' || 'bash' }}
+      shell: bash
       run: |
         bazel run -c opt //ryu/benchmark:ryu_benchmark --
         bazel run -c opt //ryu/benchmark:ryu_printf_benchmark -- -samples=200
