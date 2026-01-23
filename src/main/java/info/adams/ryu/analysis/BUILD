@@ -1,76 +1,78 @@
-package(default_visibility=["//visibility:public"])
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+
+package(default_visibility = ["//visibility:public"])
 
 java_library(
-  name = "analysis",
-  srcs = glob(["*.java"]),
-  deps = [
-    "//src/main/java/info/adams/ryu",
-    "//third_party/jaffer",
-    "//third_party/mersenne_java",
-  ],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "analysis",
+    srcs = glob(["*.java"]),
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    deps = [
+        "//src/main/java/info/adams/ryu",
+        "//third_party/jaffer",
+        "//third_party/mersenne_java",
+    ],
 )
 
 java_binary(
-  name = "ComputeRequiredBitSizes",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "ComputeRequiredBitSizes",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "ExhaustiveFloatComparison",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "ExhaustiveFloatComparison",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "ExtensiveDoubleComparison",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "ExtensiveDoubleComparison",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "PrintFloatLookupTable",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "PrintFloatLookupTable",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "PrintDoubleLookupTable",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "PrintDoubleLookupTable",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "ComputeTableSizes",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "ComputeTableSizes",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "FindDifferences",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "FindDifferences",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "SlowConversion",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "SlowConversion",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )
 
 java_binary(
-  name = "RandomizedDoubleComparison",
-  runtime_deps = [":analysis"],
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "RandomizedDoubleComparison",
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
+    runtime_deps = [":analysis"],
 )

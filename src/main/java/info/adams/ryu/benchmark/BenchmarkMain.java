@@ -20,6 +20,7 @@ import info.adams.random.MersenneTwister;
 import info.adams.ryu.RyuDouble;
 import info.adams.ryu.RyuFloat;
 
+@SuppressWarnings("ReturnValueIgnored")
 public class BenchmarkMain {
   public static void main(String[] args) {
     boolean run32 = true;

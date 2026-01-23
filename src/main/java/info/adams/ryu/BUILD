@@ -1,8 +1,10 @@
-package(default_visibility=["//visibility:public"])
+load("@rules_java//java:defs.bzl", "java_library")
+
+package(default_visibility = ["//visibility:public"])
 
 java_library(
-  name = "ryu",
-  srcs = glob(["*.java"]),
-  # Travis CI: No Java support on Windows.
-  tags = ["nowindows"],
+    name = "ryu",
+    srcs = glob(["*.java"]),
+    # Travis CI: No Java support on Windows.
+    tags = ["nowindows"],
 )

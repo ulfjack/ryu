@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
 # Bazel(http://bazel.io) BUILD file
 
 licenses(["notice"])
@@ -26,12 +28,12 @@ cc_library(
         "double-conversion/ieee.h",
         "double-conversion/strtod.h",
     ],
+    includes = ["."],
     linkopts = select({
-      "@bazel_tools//src/conditions:windows": [],
-      "//conditions:default": ["-lm"],
+        "@bazel_tools//src/conditions:windows": [],
+        "//conditions:default": ["-lm"],
     }),
     visibility = ["//visibility:public"],
-    includes = ["."],
 )
 
 cc_test(
