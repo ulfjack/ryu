@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.10)
 project(ryu VERSION 2.0 LANGUAGES C)
 include(GNUInstallDirs)
 
@@ -29,10 +29,10 @@ install(FILES ryu/ryu.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ryu)
 
 
 # generic_128
-# Only builds on GCC/Clang/Intel due to __uint128_t. No MSVC.
+# Only builds on GCC/Clang/Intel/IntelLLVM due to __uint128_t. No MSVC.
 if ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang"
         OR "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU"
-        OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Intel")
+        OR "${CMAKE_C_COMPILER_ID}" MATCHES "Intel")
 
     add_library(generic_128
             ryu/generic_128.c
