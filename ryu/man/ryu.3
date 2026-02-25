@@ -1,0 +1,91 @@
+.\" Please update the date every time you change the doc!
+.Dd October 15, 2020
+.Dt ryu	3
+.Os
+.Sh NAME
+.Nm ryu ,
+.Nm d2s ,
+.Nm d2s_buffered ,
+.Nm d2s_buffered_n ,
+.Nm f2s ,
+.Nm f2s_buffered ,
+.Nm f2s_buffered_n ,
+.Nm d2fixed ,
+.Nm d2fixed_buffered ,
+.Nm d2fixed_buffered_n ,
+.Nm d2exp ,
+.Nm d2exp_buffered ,
+.Nm d2exp_buffered_n
+.Nd convert floats to decimal strings
+.Sh LIBRARY
+.Lb libryu
+.Sh SYNOPSIS
+.In ryu.h
+.Ft "char *"
+.Fn d2s "double f"
+.Ft "void"
+.Fn d2s_buffered "double f, char* result"
+.Ft "int"
+.Fn d2s_buffered_n "double f, char* result"
+.Ft "char *"
+.Fn f2s "float f"
+.Ft "void"
+.Fn f2s_buffered "float f, char* result"
+.Ft "int"
+.Fn f2s_buffered_n "float f, char* result"
+.Ft "char *"
+.Fn d2fixed "double f"
+.Ft "void"
+.Fn d2fixed_buffered "double f, char* result"
+.Ft "int"
+.Fn d2fixed_buffered_n "double f, char* result"
+.Ft "char *"
+.Fn d2exp "double f"
+.Ft "void"
+.Fn d2exp_buffered "double f, char* result"
+.Ft "int"
+.Fn d2exp_buffered_n "double f, char* result"
+.Sh DESCRIPTION
+The functions convert IEEE-754 floating-point numbers to decimal strings using
+shortest, fixed, or scientific formatting.
+.Ss BEHAVIOR AND RETURN VALUE
+.Bl -bullet
+.It
+The functions returning
+.Ft "char *"
+simply provide a pointer to a null-terminated string in a buffer created by
+.Xr malloc 3 .
+.It
+The functions returning
+.Ft "void"
+fills the given buffer with a null-terminated string.
+.It
+The functions returning
+.Ft "int"
+fills the given buffer with a non-terminated string, returning the number of
+characters written.
+.El
+.Ss OUTPUT FORMATS
+.Bl -tag
+.It Shortest
+Used by
+.Fn d2s
+and
+.Fn f2s .
+The shortest representation that can be parsed into the same number of the same
+precision.
+.It Fixed
+Used by
+.Fn d2fixed .
+Fixed-point notation, as in
+.Ql %f .
+.It Scientific
+Used by
+.Fn d2exp .
+Scientific notation, as in 
+.Ql %e .
+.El
+.Sh SEE ALSO
+.Xr printf 3
+.Xr ryu_generic_128 3
+.Xr ryu_parse 3

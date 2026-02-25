@@ -1,0 +1,31 @@
+.\" Please update the date every time you change the doc!
+.Dd October 15, 2020
+.Dt ryu_generic_128	3
+.Os
+.Sh NAME
+.Nm ryu_generic_128 ,
+.Nm s2d ,
+.Nm s2d_n ,
+.Nm s2f ,
+.Nd convert arbitrary-sized floats to decimal
+.Sh LIBRARY
+.Lb libryu
+.Sh SYNOPSIS
+.In ryu_generic_128.h
+.Vt struct floating_decimal_128
+{
+.D1 Fa "__uint128_t mantissa" ;
+.D1 Fa "int32_t exponent" ;
+.D1 Fa "bool sign" ;
+};
+
+.\" TODO
+.Sh DESCRIPTION
+.Nm
+extends
+.Xr ryu 3
+to handle much larger floating-point sizes. It is accordingly slower.
+.Sh SEE ALSO
+.Xr printf 3
+.Xr ryu 3
+.Xr ryu_parse 3

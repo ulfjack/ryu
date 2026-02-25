@@ -24,15 +24,15 @@ libs: $(ALIB)
 
 .PHONY: install
 install: libs
-	mkdir -p $(DESTDIR)$(PREFIX)/lib
-	mkdir -p $(DESTDIR)$(PREFIX)/include
-	cp $(ALIB) $(DESTDIR)$(PREFIX)/lib/$(ALIB)
-	cp ryu.h $(DESTDIR)$(PREFIX)/include/
+	install -m 644 -d -- $(ALIB) $(DESTDIR)$(PREFIX)/lib/
+	install -m 644 -d -- ryu.h $(DESTDIR)$(PREFIX)/include/
+	install -m 644 -d -- man/* $(DESTDIR)$(PREFIX)/share/man/
 
 .PHONY: uninstall
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/lib/$(ALIB)
 	rm -f $(DESTDIR)$(PREFIX)/include/ryu.h
+	rm -rf $(DESTDIR)$(PREFIX)/share/man/
 
 TESTSRC=tests/common_test.cc tests/d2fixed_test.cc tests/d2s_intrinsics_test.cc tests/d2s_table_test.cc tests/d2s_test.cc tests/f2s_test.cc tests/generic_128_test.cc
 
