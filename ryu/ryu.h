@@ -31,6 +31,7 @@ int f2s_buffered_n(float f, char* result);
 void f2s_buffered(float f, char* result);
 char* f2s(float f);
 
+// The Ryu Printf interfaces for %.f, %.e, and %.g.
 int d2fixed_buffered_n(double d, uint32_t precision, char* result);
 void d2fixed_buffered(double d, uint32_t precision, char* result);
 char* d2fixed(double d, uint32_t precision);
@@ -38,6 +39,10 @@ char* d2fixed(double d, uint32_t precision);
 int d2exp_buffered_n(double d, uint32_t precision, char* result);
 void d2exp_buffered(double d, uint32_t precision, char* result);
 char* d2exp(double d, uint32_t precision);
+
+int d2gen_buffered_n(double d, uint32_t precision, char* result);
+void d2gen_buffered(double d, uint32_t precision, char* result);
+char* d2gen(double d, uint32_t precision);
 
 #ifdef __cplusplus
 }
