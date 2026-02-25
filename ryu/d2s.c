@@ -318,7 +318,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     result[index++] = '-';
   }
 
-  uint64_t output = v.mantissa;
+  const uint64_t output = v.mantissa;
   const uint32_t olength = decimalLength17(output);
 
 #ifdef RYU_DEBUG
@@ -336,6 +336,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   // result[index] = '0' + output % 10;
 
   uint32_t i = 0;
+  uint32_t output2 = (uint32_t) output;
   // We prefer 32-bit operations, even on 64-bit platforms.
   // We have at most 17 digits, and uint32_t can store 9 digits.
   // If output doesn't fit into uint32_t, we cut off 8 digits,
@@ -343,12 +344,10 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
   if ((output >> 32) != 0) {
     // Expensive 64-bit division.
     const uint64_t q = div1e8(output);
-    uint32_t output2 = ((uint32_t) output) - 100000000 * ((uint32_t) q);
-    output = q;
+    output2 = ((uint32_t) output) - 100000000 * ((uint32_t) q);
 
     const uint32_t c = output2 % 10000;
-    output2 /= 10000;
-    const uint32_t d = output2 % 10000;
+    const uint32_t d = (output2 / 10000) % 10000;
     const uint32_t c0 = (c % 100) << 1;
     const uint32_t c1 = (c / 100) << 1;
     const uint32_t d0 = (d % 100) << 1;
@@ -357,9 +356,9 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
     memcpy(result + index + olength - 3, DIGIT_TABLE + c1, 2);
     memcpy(result + index + olength - 5, DIGIT_TABLE + d0, 2);
     memcpy(result + index + olength - 7, DIGIT_TABLE + d1, 2);
+    output2 = (uint32_t) q;
     i += 8;
   }
-  uint32_t output2 = (uint32_t) output;
   while (output2 >= 10000) {
 #ifdef __clang__ // https://bugs.llvm.org/show_bug.cgi?id=38217
     const uint32_t c = output2 - 10000 * (output2 / 10000);
