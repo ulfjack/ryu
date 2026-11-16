@@ -23,6 +23,15 @@ extern "C" {
 
 #include <inttypes.h>
 
+// Maximum number of bytes (including the terminating NUL) that the buffered
+// functions may write to result. The *_buffered_n functions return the number
+// of characters written, excluding the terminating NUL; the *_buffered
+// functions additionally write a terminating NUL. Use these constants to size
+// the result buffer, e.g.:
+//   char buffer[RYU_F2S_BUFFER_SIZE];
+//   f2s_buffered(f, buffer);
+#define RYU_F2S_BUFFER_SIZE 16
+
 int d2s_buffered_n(double f, char* result);
 void d2s_buffered(double f, char* result);
 char* d2s(double f);
