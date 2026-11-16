@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 #include <inttypes.h>
+#include <stddef.h>
 
 // Maximum number of bytes (including the terminating NUL) that the buffered
 // functions may write to result. The *_buffered_n functions return the number
@@ -32,6 +33,10 @@ extern "C" {
 //   f2s_buffered(f, buffer);
 #define RYU_F2S_BUFFER_SIZE 16
 #define RYU_D2S_BUFFER_SIZE 25
+// d2fixed prints at most 309 integer digits (for the largest finite double),
+// plus an optional sign, an optional decimal point, and the terminating NUL.
+#define RYU_D2FIXED_BASE_SIZE 312
+#define RYU_D2FIXED_BUFFER_SIZE(precision) ((size_t) (precision) + RYU_D2FIXED_BASE_SIZE)
 
 int d2s_buffered_n(double f, char* result);
 void d2s_buffered(double f, char* result);
