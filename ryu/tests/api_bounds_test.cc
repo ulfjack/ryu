@@ -161,6 +161,29 @@ TEST(ApiBoundsTest, D2expBufferSize) {
   }
 }
 
+// The malloc-based d2fixed()/d2exp() used to allocate a fixed 2000 bytes,
+// which overflows the heap for precision > ~1688 (issue #197). The allocation
+// must now scale with the requested precision.
+TEST(ApiBoundsTest, MallocVariantsLargePrecision) {
+  char* fixed = d2fixed(1.5, 100000);
+  // Cast to char* so gtest never has to stream a bare nullptr_t: on MSVC,
+  // `os << nullptr` is ambiguous (error C2593) between operator<<(bool) and
+  // operator<<(const void*), which broke the windows-latest CI build.
+  ASSERT_NE(static_cast<char*>(nullptr), fixed);
+  EXPECT_EQ(2 + 100000, strlen(fixed)); // "1." + 100000 digits
+  EXPECT_EQ(0, strncmp(fixed, "1.5000", 6));
+  free(fixed);
+
+  char* exp = d2exp(1.5, 100000);
+  ASSERT_NE(static_cast<char*>(nullptr), exp);
+  EXPECT_EQ(1 + 1 + 100000 + 4, strlen(exp)); // "1." + 100000 digits + "e+00"
+  free(exp);
+
+  char* fixedMax = d2fixed(1.7976931348623157e308, 100);
+  ASSERT_NE(static_cast<char*>(nullptr), fixedMax);
+  EXPECT_EQ(309 + 1 + 100, strlen(fixedMax)); // 309 integer digits + '.' + 100 digits
+  free(fixedMax);
+}
 
 TEST(ApiBoundsTest, D2fixedMatchesSnprintf) {
   const double values[] = {0.0, -0.0, 1.0, -1.0, 0.5, 1e308, 5e-324, 1e-300,
