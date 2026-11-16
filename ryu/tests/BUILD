@@ -82,3 +82,12 @@ cc_test(
         "//third_party/gtest",
     ],
 )
+
+cc_test(
+    name = "api_bounds_test",
+    srcs = ["api_bounds_test.cc"],
+    deps = [
+        "//ryu",
+        "//third_party/gtest",
+    ],
+)
