@@ -135,7 +135,7 @@ TEST(ApiBoundsTest, D2expBufferSize) {
   uint64_t state = 0x0badf00d12345678ull;
   for (size_t v = 0; v < sizeof(values) / sizeof(values[0]); ++v) {
     for (size_t p = 0; p < sizeof(precisions) / sizeof(precisions[0]); ++p) {
-      const size_t size = ((size_t) precisions[p] + 11);
+      const size_t size = RYU_D2EXP_BUFFER_SIZE(precisions[p]);
       char* buffer = new char[size + CANARY_SIZE];
       memset(buffer + size, CANARY, CANARY_SIZE);
       const int len = d2exp_buffered_n(values[v], precisions[p], buffer);
@@ -149,7 +149,7 @@ TEST(ApiBoundsTest, D2expBufferSize) {
   for (int i = 0; i < 10000; ++i) {
     const double d = int64Bits2Double(nextRandom(&state));
     const uint32_t precision = (uint32_t) (nextRandom(&state) % 1700);
-    const size_t size = ((size_t) precision + 11);
+    const size_t size = RYU_D2EXP_BUFFER_SIZE(precision);
     char* buffer = new char[size + CANARY_SIZE];
     memset(buffer + size, CANARY, CANARY_SIZE);
     const int len = d2exp_buffered_n(d, precision, buffer);
@@ -218,8 +218,8 @@ TEST(ApiBoundsTest, D2expMatchesSnprintf) {
                            123456789.123456789, 9.999999999999999e22, 2.2250738585072014e-308};
   const uint32_t precisions[] = {0, 1, 6, 17};
   uint64_t state = 0x9876543210fedcbaull;
-  char expected[((size_t) 17 + 11)];
-  char actual[((size_t) 17 + 11)];
+  char expected[RYU_D2EXP_BUFFER_SIZE(17)];
+  char actual[RYU_D2EXP_BUFFER_SIZE(17)];
   for (size_t v = 0; v < sizeof(values) / sizeof(values[0]); ++v) {
     for (size_t p = 0; p < sizeof(precisions) / sizeof(precisions[0]); ++p) {
       snprintf(expected, sizeof(expected), "%.*e", (int) precisions[p], values[v]);

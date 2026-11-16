@@ -819,7 +819,11 @@ void d2exp_buffered(double d, uint32_t precision, char* result) {
 }
 
 char* d2exp(double d, uint32_t precision) {
-  char* const buffer = (char*)malloc(2000);
+  // Reject precisions for which the size computation would overflow size_t.
+  if ((size_t) precision > SIZE_MAX - RYU_D2EXP_BASE_SIZE) {
+    return NULL;
+  }
+  char* const buffer = (char*)malloc(RYU_D2EXP_BUFFER_SIZE(precision));
   if (buffer == NULL) {
     return NULL;
   }

@@ -37,6 +37,11 @@ extern "C" {
 // plus an optional sign, an optional decimal point, and the terminating NUL.
 #define RYU_D2FIXED_BASE_SIZE 312
 #define RYU_D2FIXED_BUFFER_SIZE(precision) ((size_t) (precision) + RYU_D2FIXED_BASE_SIZE)
+// d2exp prints one integer digit, an optional decimal point, precision
+// fractional digits, and an exponent of the form e±XXX, plus the NUL. Special
+// values need up to 11 bytes ("-nan(snan)" plus NUL on MSVC).
+#define RYU_D2EXP_BASE_SIZE 11
+#define RYU_D2EXP_BUFFER_SIZE(precision) ((size_t) (precision) + RYU_D2EXP_BASE_SIZE)
 
 int d2s_buffered_n(double f, char* result);
 void d2s_buffered(double f, char* result);
