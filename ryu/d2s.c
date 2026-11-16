@@ -504,6 +504,9 @@ void d2s_buffered(double f, char* result) {
 
 char* d2s(double f) {
   char* const result = (char*) malloc(RYU_D2S_BUFFER_SIZE);
+  if (result == NULL) {
+    return NULL;
+  }
   d2s_buffered(f, result);
   return result;
 }
