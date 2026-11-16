@@ -201,6 +201,16 @@ You can run both C and Java tests with
 $ bazel test //ryu/... //src/...
 ```
 
+### Buffer sizes
+The `d2s_buffered_n()`, `f2s_buffered_n()`, `d2fixed_buffered_n()`, and
+`d2exp_buffered_n()` functions (and their `*_buffered` variants, which
+additionally write a terminating NUL) write at most `RYU_D2S_BUFFER_SIZE`,
+`RYU_F2S_BUFFER_SIZE`, `RYU_D2FIXED_BUFFER_SIZE(precision)`, and
+`RYU_D2EXP_BUFFER_SIZE(precision)` bytes, respectively; the macros are
+defined in `ryu/ryu.h`. The non-buffered `d2s()`, `f2s()`, `d2fixed()`, and
+`d2exp()` functions allocate a buffer of the appropriate size, return it
+(caller frees with `free()`), and return NULL on allocation failure.
+
 
 
 ## Ryu: Additional Notes

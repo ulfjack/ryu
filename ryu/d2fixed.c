@@ -555,7 +555,14 @@ void d2fixed_buffered(double d, uint32_t precision, char* result) {
 }
 
 char* d2fixed(double d, uint32_t precision) {
-  char* const buffer = (char*)malloc(2000);
+  // Reject precisions for which the size computation would overflow size_t.
+  if ((size_t) precision > SIZE_MAX - RYU_D2FIXED_BASE_SIZE) {
+    return NULL;
+  }
+  char* const buffer = (char*)malloc(RYU_D2FIXED_BUFFER_SIZE(precision));
+  if (buffer == NULL) {
+    return NULL;
+  }
   const int index = d2fixed_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
   return buffer;
@@ -812,7 +819,14 @@ void d2exp_buffered(double d, uint32_t precision, char* result) {
 }
 
 char* d2exp(double d, uint32_t precision) {
-  char* const buffer = (char*)malloc(2000);
+  // Reject precisions for which the size computation would overflow size_t.
+  if ((size_t) precision > SIZE_MAX - RYU_D2EXP_BASE_SIZE) {
+    return NULL;
+  }
+  char* const buffer = (char*)malloc(RYU_D2EXP_BUFFER_SIZE(precision));
+  if (buffer == NULL) {
+    return NULL;
+  }
   const int index = d2exp_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
   return buffer;
