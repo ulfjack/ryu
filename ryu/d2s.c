@@ -503,7 +503,7 @@ void d2s_buffered(double f, char* result) {
 }
 
 char* d2s(double f) {
-  char* const result = (char*) malloc(25);
+  char* const result = (char*) malloc(RYU_D2S_BUFFER_SIZE);
   d2s_buffered(f, result);
   return result;
 }

@@ -31,6 +31,7 @@ extern "C" {
 //   char buffer[RYU_F2S_BUFFER_SIZE];
 //   f2s_buffered(f, buffer);
 #define RYU_F2S_BUFFER_SIZE 16
+#define RYU_D2S_BUFFER_SIZE 25
 
 int d2s_buffered_n(double f, char* result);
 void d2s_buffered(double f, char* result);
