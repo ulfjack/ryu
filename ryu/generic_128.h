@@ -389,13 +389,13 @@ static inline void mul_128_256_shift(
   const uint128_t s3 = b03 + b12; // 196 x
   const uint128_t c3 = s3 < b03;  // 324 x
 
-  const uint128_t p0 = s0 + (s1 << 64);                                // 0
-  const uint128_t d0 = p0 < b00;                                       // 128
-  const uint128_t q1 = s2 + (s1 >> 64) + (s3 << 64);                   // 128
-  const uint128_t d1 = q1 < s2;                                        // 256
-  const uint128_t p1 = q1 + (c1 << 64) + d0;                           // 128
-  const uint128_t d2 = p1 < q1;                                        // 256
-  const uint128_t p2 = b13 + (s3 >> 64) + c2 + (c3 << 64) + d1 + d2;   // 256
+  const uint128_t p0 = s0 + (s1 << 64);                              // 0
+  const uint128_t d0 = p0 < b00;                                     // 128
+  const uint128_t q1 = s2 + (s1 >> 64) + (s3 << 64);                 // 128
+  const uint128_t d1 = q1 < s2;                                      // 256
+  const uint128_t p1 = q1 + (c1 << 64) + d0;                         // 128
+  const uint128_t d2 = p1 < q1;                                      // 256
+  const uint128_t p2 = b13 + (s3 >> 64) + c2 + (c3 << 64) + d1 + d2; // 256
 
   if (shift < 128) {
     const uint128_t r0 = corr + ((p0 >> shift) | (p1 << (128 - shift)));

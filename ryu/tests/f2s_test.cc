@@ -26,7 +26,14 @@ static float int32Bits2Float(uint32_t bits) {
   return f;
 }
 
-#define ASSERT_F2S(a, b) { char* result = f2s(b); ASSERT_STREQ(a, result); free(result); } while (0);
+#define ASSERT_F2S(a, b)     \
+  {                          \
+    char* result = f2s(b);   \
+    ASSERT_STREQ(a, result); \
+    free(result);            \
+  }                          \
+  while (0)                  \
+    ;
 
 TEST(F2sTest, Basic) {
   ASSERT_F2S("0E0", 0.0);

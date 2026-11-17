@@ -62,7 +62,7 @@ static inline float int32Bits2Float(uint32_t bits) {
   return f;
 }
 
-enum Status s2f_n(const char * buffer, const int len, float * result) {
+enum Status s2f_n(const char* buffer, const int len, float* result) {
   if (len == 0) {
     return INPUT_TOO_SHORT;
   }
@@ -198,8 +198,7 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     // If e2-e10 < 0, we have actually computed [m10 * 2^(e10 e2) / 5^(-e10)] above,
     // and we need to check whether 5^(-e10) divides (m10 * 2^(e10-e2)), which is the case iff
     // pow5(m10 * 2^(e10-e2)) = pow5(m10) >= -e10.
-    trailingZeros = (e2 < e10 || (e2 - e10 < 32 && multipleOfPowerOf2_32(m10, e2 - e10)))
-        && multipleOfPowerOf5_32(m10, -e10);
+    trailingZeros = (e2 < e10 || (e2 - e10 < 32 && multipleOfPowerOf2_32(m10, e2 - e10))) && multipleOfPowerOf5_32(m10, -e10);
   }
 
 #ifdef RYU_DEBUG
@@ -248,11 +247,11 @@ enum Status s2f_n(const char * buffer, const int len, float * result) {
     // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
     ieee_e2++;
   }
-  uint32_t ieee = (((((uint32_t) signedM) << FLOAT_EXPONENT_BITS) | (uint32_t)ieee_e2) << FLOAT_MANTISSA_BITS) | ieee_m2;
+  uint32_t ieee = (((((uint32_t) signedM) << FLOAT_EXPONENT_BITS) | (uint32_t) ieee_e2) << FLOAT_MANTISSA_BITS) | ieee_m2;
   *result = int32Bits2Float(ieee);
   return SUCCESS;
 }
 
-enum Status s2f(const char * buffer, float * result) {
+enum Status s2f(const char* buffer, float* result) {
   return s2f_n(buffer, strlen(buffer), result);
 }

@@ -49,27 +49,27 @@
 
 #if defined(HAS_UINT128)
 static inline uint128_t umul256(const uint128_t a, const uint64_t bHi, const uint64_t bLo, uint128_t* const productHi) {
-  const uint64_t aLo = (uint64_t)a;
-  const uint64_t aHi = (uint64_t)(a >> 64);
+  const uint64_t aLo = (uint64_t) a;
+  const uint64_t aHi = (uint64_t) (a >> 64);
 
-  const uint128_t b00 = (uint128_t)aLo * bLo;
-  const uint128_t b01 = (uint128_t)aLo * bHi;
-  const uint128_t b10 = (uint128_t)aHi * bLo;
-  const uint128_t b11 = (uint128_t)aHi * bHi;
+  const uint128_t b00 = (uint128_t) aLo * bLo;
+  const uint128_t b01 = (uint128_t) aLo * bHi;
+  const uint128_t b10 = (uint128_t) aHi * bLo;
+  const uint128_t b11 = (uint128_t) aHi * bHi;
 
-  const uint64_t b00Lo = (uint64_t)b00;
-  const uint64_t b00Hi = (uint64_t)(b00 >> 64);
+  const uint64_t b00Lo = (uint64_t) b00;
+  const uint64_t b00Hi = (uint64_t) (b00 >> 64);
 
   const uint128_t mid1 = b10 + b00Hi;
-  const uint64_t mid1Lo = (uint64_t)(mid1);
-  const uint64_t mid1Hi = (uint64_t)(mid1 >> 64);
+  const uint64_t mid1Lo = (uint64_t) (mid1);
+  const uint64_t mid1Hi = (uint64_t) (mid1 >> 64);
 
   const uint128_t mid2 = b01 + mid1Lo;
-  const uint64_t mid2Lo = (uint64_t)(mid2);
-  const uint64_t mid2Hi = (uint64_t)(mid2 >> 64);
+  const uint64_t mid2Lo = (uint64_t) (mid2);
+  const uint64_t mid2Hi = (uint64_t) (mid2 >> 64);
 
   const uint128_t pHi = b11 + mid1Hi + mid2Hi;
-  const uint128_t pLo = ((uint128_t)mid2Lo << 64) | b00Lo;
+  const uint128_t pLo = ((uint128_t) mid2Lo << 64) | b00Lo;
 
   *productHi = pHi;
   return pLo;
@@ -121,7 +121,7 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
 #if defined(HAS_64_BIT_INTRINSICS)
 // Returns the low 64 bits of the high 128 bits of the 256-bit product of a and b.
 static inline uint64_t umul256_hi128_lo64(
-  const uint64_t aHi, const uint64_t aLo, const uint64_t bHi, const uint64_t bLo) {
+    const uint64_t aHi, const uint64_t aLo, const uint64_t bHi, const uint64_t bLo) {
   uint64_t b00Hi;
   const uint64_t b00Lo = umul128(aLo, bLo, &b00Hi);
   uint64_t b01Hi;
@@ -158,12 +158,12 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
   const uint64_t low1 = umul128(m, mul[1], &high1); // 64
   uint64_t high2;                                   // 192
   const uint64_t low2 = umul128(m, mul[2], &high2); // 128
-  const uint64_t s0low = low0;              // 0
-  (void) s0low; // unused
-  const uint64_t s0high = low1 + high0;     // 64
+  const uint64_t s0low = low0;                      // 0
+  (void) s0low;                                     // unused
+  const uint64_t s0high = low1 + high0;             // 64
   const uint32_t c1 = s0high < low1;
   const uint64_t s1low = low2 + high1 + c1; // 128
-  const uint32_t c2 = s1low < low2; // high1 + c1 can't overflow, so compare against low2
+  const uint32_t c2 = s1low < low2;         // high1 + c1 can't overflow, so compare against low2
   const uint64_t s1high = high2 + c2;       // 192
 #ifdef RYU_DEBUG
   if (j < 128 || j > 180) {
@@ -177,7 +177,7 @@ static inline uint32_t mulShift_mod1e9(const uint64_t m, const uint64_t* const m
   const uint64_t shiftedhigh = s1high >> dist;
   const uint64_t shiftedlow = shiftright128(s1low, s1high, dist);
   return uint128_mod1e9(shiftedhigh, shiftedlow);
-#else // HAS_64_BIT_INTRINSICS
+#else  // HAS_64_BIT_INTRINSICS
   if (j < 160) { // j: [128, 160)
     const uint64_t r0 = mod1e9(s1high);
     const uint64_t r1 = mod1e9((r0 << 32) | (s1low >> 32));
@@ -493,8 +493,7 @@ int d2fixed_buffered_n(double d, uint32_t precision, char* result) {
         } else {
           // Is m * 10^(additionalDigits + 1) / 2^(-e2) integer?
           const int32_t requiredTwos = -e2 - (int32_t) precision - 1;
-          const bool trailingZeros = requiredTwos <= 0
-            || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
+          const bool trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
           roundUp = trailingZeros ? 2 : 1;
 #ifdef RYU_DEBUG
           printf("requiredTwos=%d\n", requiredTwos);
@@ -555,13 +554,11 @@ void d2fixed_buffered(double d, uint32_t precision, char* result) {
 }
 
 char* d2fixed(double d, uint32_t precision) {
-  char* const buffer = (char*)malloc(2000);
+  char* const buffer = (char*) malloc(2000);
   const int index = d2fixed_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
   return buffer;
 }
-
-
 
 int d2exp_buffered_n(double d, uint32_t precision, char* result) {
   const uint64_t bits = double_to_bits(d);
@@ -730,8 +727,7 @@ int d2exp_buffered_n(double d, uint32_t precision, char* result) {
     // precision was already increased by 1, so we don't need to write + 1 here.
     const int32_t rexp = (int32_t) precision - exp;
     const int32_t requiredTwos = -e2 - rexp;
-    bool trailingZeros = requiredTwos <= 0
-      || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
+    bool trailingZeros = requiredTwos <= 0 || (requiredTwos < 60 && multipleOfPowerOf2(m2, (uint32_t) requiredTwos));
     if (rexp < 0) {
       const int32_t requiredFives = -rexp;
       trailingZeros = trailingZeros && multipleOfPowerOf5(m2, (uint32_t) requiredFives);
@@ -812,7 +808,7 @@ void d2exp_buffered(double d, uint32_t precision, char* result) {
 }
 
 char* d2exp(double d, uint32_t precision) {
-  char* const buffer = (char*)malloc(2000);
+  char* const buffer = (char*) malloc(2000);
   const int index = d2exp_buffered_n(d, precision, buffer);
   buffer[index] = '\0';
   return buffer;

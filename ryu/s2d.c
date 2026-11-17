@@ -68,7 +68,7 @@ static inline double int64Bits2Double(uint64_t bits) {
   return f;
 }
 
-enum Status s2d_n(const char * buffer, const int len, double * result) {
+enum Status s2d_n(const char* buffer, const int len, double* result) {
   if (len == 0) {
     return INPUT_TOO_SHORT;
   }
@@ -231,7 +231,7 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
   printf("ieee_e2 = %d\n", ieee_e2);
   printf("shift = %d\n", shift);
 #endif
-  
+
   // We need to round up if the exact value is more than 0.5 above the value we computed. That's
   // equivalent to checking if the last removed bit was 1 and either the value was not just
   // trailing zeros or the result would otherwise be odd.
@@ -252,12 +252,12 @@ enum Status s2d_n(const char * buffer, const int len, double * result) {
     // Due to how the IEEE represents +/-Infinity, we don't need to check for overflow here.
     ieee_e2++;
   }
-  
-  uint64_t ieee = (((((uint64_t) signedM) << DOUBLE_EXPONENT_BITS) | (uint64_t)ieee_e2) << DOUBLE_MANTISSA_BITS) | ieee_m2;
+
+  uint64_t ieee = (((((uint64_t) signedM) << DOUBLE_EXPONENT_BITS) | (uint64_t) ieee_e2) << DOUBLE_MANTISSA_BITS) | ieee_m2;
   *result = int64Bits2Double(ieee);
   return SUCCESS;
 }
 
-enum Status s2d(const char * buffer, double * result) {
+enum Status s2d(const char* buffer, double* result) {
   return s2d_n(buffer, strlen(buffer), result);
 }

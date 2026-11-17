@@ -41,4 +41,3 @@ TEST(D2sTableTest, double_computeInvPow5) {
     EXPECT_EQ(m[1], DOUBLE_POW5_INV_SPLIT[i][1]);
   }
 }
-

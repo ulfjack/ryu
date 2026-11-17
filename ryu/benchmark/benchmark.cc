@@ -34,15 +34,14 @@
 #include "third_party/double-conversion/double-conversion/utils.h"
 #include "third_party/double-conversion/double-conversion/double-conversion.h"
 
-using double_conversion::StringBuilder;
 using double_conversion::DoubleToStringConverter;
+using double_conversion::StringBuilder;
 using namespace std::chrono;
 
 constexpr int BUFFER_SIZE = 40;
 static char buffer[BUFFER_SIZE];
 static DoubleToStringConverter converter(
-    DoubleToStringConverter::Flags::EMIT_TRAILING_DECIMAL_POINT
-        | DoubleToStringConverter::Flags::EMIT_TRAILING_ZERO_AFTER_POINT,
+    DoubleToStringConverter::Flags::EMIT_TRAILING_DECIMAL_POINT | DoubleToStringConverter::Flags::EMIT_TRAILING_ZERO_AFTER_POINT,
     "Infinity",
     "NaN",
     'E',
@@ -113,7 +112,7 @@ public:
   bool classic() const { return m_classic; }
   int small_digits() const { return m_small_digits; }
 
-  void parse(const char * const arg) {
+  void parse(const char* const arg) {
     if (strcmp(arg, "-32") == 0) {
       m_run32 = true;
       m_run64 = false;
@@ -144,7 +143,7 @@ public:
   }
 
 private:
-  void fail(const char * const arg) {
+  void fail(const char* const arg) {
     printf("Unrecognized option '%s'.\n", arg);
     exit(EXIT_FAILURE);
   }

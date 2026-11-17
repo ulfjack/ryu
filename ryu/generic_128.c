@@ -141,8 +141,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
   const uint128_t mv = 4 * m2;
   // Implicit bool -> int conversion. True is 1, false is 0.
   const uint32_t mmShift =
-      (ieeeMantissa != (explicitLeadingBit ? ONE << (mantissaBits - 1) : 0))
-      || (ieeeExponent == 0);
+      (ieeeMantissa != (explicitLeadingBit ? ONE << (mantissaBits - 1) : 0)) || (ieeeExponent == 0);
 
   // Step 3: Convert to a decimal power base using 128-bit arithmetic.
   uint128_t vr, vp, vm;
@@ -265,7 +264,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
   }
   // We need to take vr+1 if vr is outside bounds or we need to round up.
   output = vr +
-      ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
+           ((vr == vm && (!acceptBounds || !vmIsTrailingZeros)) || (lastRemovedDigit >= 5));
   const int32_t exp = e10 + removed;
 
 #ifdef RYU_DEBUG
@@ -281,7 +280,7 @@ struct floating_decimal_128 generic_binary_to_decimal(
   return fd;
 }
 
-static inline int copy_special_str(char * const result, const struct floating_decimal_128 fd) {
+static inline int copy_special_str(char* const result, const struct floating_decimal_128 fd) {
   if (fd.mantissa) {
     memcpy(result, "NaN", 3);
     return 3;

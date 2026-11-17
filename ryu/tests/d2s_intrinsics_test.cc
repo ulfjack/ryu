@@ -62,22 +62,22 @@ TEST(D2sIntrinsicsTest, pow5Factor) {
   EXPECT_EQ(0u, pow5Factor(18ull));
   EXPECT_EQ(1u, pow5Factor(20ull));
 
-  EXPECT_EQ(2u, pow5Factor(5*5ull));
-  EXPECT_EQ(3u, pow5Factor(5*5*5ull));
-  EXPECT_EQ(4u, pow5Factor(5*5*5*5ull));
-  EXPECT_EQ(5u, pow5Factor(5*5*5*5*5ull));
-  EXPECT_EQ(6u, pow5Factor(5*5*5*5*5*5ull));
-  EXPECT_EQ(7u, pow5Factor(5*5*5*5*5*5*5ull));
-  EXPECT_EQ(8u, pow5Factor(5*5*5*5*5*5*5*5ull));
-  EXPECT_EQ(9u, pow5Factor(5*5*5*5*5*5*5*5*5ull));
-  EXPECT_EQ(10u, pow5Factor(5*5*5*5*5*5*5*5*5*5ull));
+  EXPECT_EQ(2u, pow5Factor(5 * 5ull));
+  EXPECT_EQ(3u, pow5Factor(5 * 5 * 5ull));
+  EXPECT_EQ(4u, pow5Factor(5 * 5 * 5 * 5ull));
+  EXPECT_EQ(5u, pow5Factor(5 * 5 * 5 * 5 * 5ull));
+  EXPECT_EQ(6u, pow5Factor(5 * 5 * 5 * 5 * 5 * 5ull));
+  EXPECT_EQ(7u, pow5Factor(5 * 5 * 5 * 5 * 5 * 5 * 5ull));
+  EXPECT_EQ(8u, pow5Factor(5 * 5 * 5 * 5 * 5 * 5 * 5 * 5ull));
+  EXPECT_EQ(9u, pow5Factor(5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5ull));
+  EXPECT_EQ(10u, pow5Factor(5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5 * 5ull));
 
   EXPECT_EQ(0u, pow5Factor(42ull));
-  EXPECT_EQ(1u, pow5Factor(42*5ull));
-  EXPECT_EQ(2u, pow5Factor(42*5*5ull));
-  EXPECT_EQ(3u, pow5Factor(42*5*5*5ull));
-  EXPECT_EQ(4u, pow5Factor(42*5*5*5*5ull));
-  EXPECT_EQ(5u, pow5Factor(42*5*5*5*5*5ull));
+  EXPECT_EQ(1u, pow5Factor(42 * 5ull));
+  EXPECT_EQ(2u, pow5Factor(42 * 5 * 5ull));
+  EXPECT_EQ(3u, pow5Factor(42 * 5 * 5 * 5ull));
+  EXPECT_EQ(4u, pow5Factor(42 * 5 * 5 * 5 * 5ull));
+  EXPECT_EQ(5u, pow5Factor(42 * 5 * 5 * 5 * 5 * 5ull));
 
   EXPECT_EQ(27u, pow5Factor(7450580596923828125ull)); // 5^27, largest power of 5 < 2^64.
   EXPECT_EQ(1u, pow5Factor(18446744073709551615ull)); // 2^64 - 1, largest multiple of 5 < 2^64.

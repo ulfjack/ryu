@@ -28,11 +28,18 @@ static double int64Bits2Double(uint64_t bits) {
 
 static double ieeeParts2Double(const bool sign, const uint32_t ieeeExponent, const uint64_t ieeeMantissa) {
   assert(ieeeExponent <= 2047);
-  assert(ieeeMantissa <= ((uint64_t)1 << 53) - 1);
-  return int64Bits2Double(((uint64_t)sign << 63) | ((uint64_t)ieeeExponent << 52) | ieeeMantissa);
+  assert(ieeeMantissa <= ((uint64_t) 1 << 53) - 1);
+  return int64Bits2Double(((uint64_t) sign << 63) | ((uint64_t) ieeeExponent << 52) | ieeeMantissa);
 }
 
-#define ASSERT_D2S(a, b) { char* result = d2s(b); ASSERT_STREQ(a, result); free(result); } while (0);
+#define ASSERT_D2S(a, b)     \
+  {                          \
+    char* result = d2s(b);   \
+    ASSERT_STREQ(a, result); \
+    free(result);            \
+  }                          \
+  while (0)                  \
+    ;
 
 TEST(D2sTest, Basic) {
   ASSERT_D2S("0E0", 0.0);
@@ -106,7 +113,7 @@ TEST(D2sTest, OutputLength) {
 
 // Test min, max shift values in shiftright128
 TEST(D2sTest, MinMaxShift) {
-  const uint64_t maxMantissa = ((uint64_t)1 << 53) - 1;
+  const uint64_t maxMantissa = ((uint64_t) 1 << 53) - 1;
 
   // 32-bit opt-size=0:  49 <= dist <= 50
   // 32-bit opt-size=1:  30 <= dist <= 50

@@ -80,7 +80,7 @@ public:
   int small_digits() const { return m_small_digits; }
   int precision() const { return m_precision; }
 
-  void parse(const char * const arg) {
+  void parse(const char* const arg) {
     if (strcmp(arg, "-f") == 0) {
       m_run32 = false;
       m_run64 = true;
@@ -115,7 +115,7 @@ public:
   }
 
 private:
-  void fail(const char * const arg) {
+  void fail(const char* const arg) {
     printf("Unrecognized option '%s'.\n", arg);
     exit(EXIT_FAILURE);
   }
@@ -176,7 +176,7 @@ static int bench64_fixed(const benchmark_options& options) {
     uint64_t r = 0;
     const double f = generate_double(options, mt32, r);
 
-//    printf("%f\n", f);
+    //    printf("%f\n", f);
     auto t1 = steady_clock::now();
     for (int j = 0; j < options.iterations(); ++j) {
       d2fixed_buffered(f, static_cast<uint32_t>(precision), bufferown);
@@ -206,7 +206,7 @@ static int bench64_fixed(const benchmark_options& options) {
       }
     }
 
-//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     if (!options.ryu_only() && strcmp(bufferown, buffer) != 0) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
@@ -234,7 +234,7 @@ static int bench64_exp(const benchmark_options& options) {
     uint64_t r = 0;
     const double f = generate_double(options, mt32, r);
 
-//    printf("%f\n", f);
+    //    printf("%f\n", f);
     auto t1 = steady_clock::now();
     for (int j = 0; j < options.iterations(); ++j) {
       d2exp_buffered(f, static_cast<uint32_t>(precision), bufferown);
@@ -264,7 +264,7 @@ static int bench64_exp(const benchmark_options& options) {
       }
     }
 
-//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     if (!options.ryu_only() && !options.verbose() && strcmp(bufferown, buffer) != 0) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }

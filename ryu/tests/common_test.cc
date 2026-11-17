@@ -90,5 +90,3 @@ TEST(CommonTest, double_to_bits) {
   EXPECT_EQ(0ull, double_to_bits(0.0));
   EXPECT_EQ(0x400921FB54442D18ull, double_to_bits(3.1415926535897932384626433));
 }
-
-

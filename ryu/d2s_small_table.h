@@ -123,7 +123,7 @@ static inline void double_computeInvPow5(const uint32_t i, uint64_t* const resul
   const uint32_t delta = pow5bits(base2) - pow5bits(i);
   assert(i / 16 < sizeof(POW5_INV_OFFSETS) / sizeof(POW5_INV_OFFSETS[0]));
   const uint128_t shiftedSum =
-    ((b0 >> delta) + (b2 << (64 - delta))) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);
+      ((b0 >> delta) + (b2 << (64 - delta))) + 1 + ((POW5_INV_OFFSETS[i / 16] >> ((i % 16) << 1)) & 3);
   result[0] = (uint64_t) shiftedSum;
   result[1] = (uint64_t) (shiftedSum >> 64);
 }
