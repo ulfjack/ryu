@@ -33,11 +33,11 @@ enum Status {
   MALFORMED_INPUT
 };
 
-enum Status s2d_n(const char * buffer, const int len, double * result);
-enum Status s2d(const char * buffer, double * result);
+enum Status s2d_n(const char* buffer, const int len, double* result);
+enum Status s2d(const char* buffer, double* result);
 
-enum Status s2f_n(const char * buffer, const int len, float * result);
-enum Status s2f(const char * buffer, float * result);
+enum Status s2f_n(const char* buffer, const int len, float* result);
+enum Status s2f(const char* buffer, float* result);
 
 #ifdef __cplusplus
 }

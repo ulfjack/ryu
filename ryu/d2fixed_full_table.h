@@ -21,6 +21,7 @@
 
 #define TABLE_SIZE 64
 
+// clang-format off
 static const uint16_t POW10_OFFSET[TABLE_SIZE] = {
   0, 2, 5, 8, 12, 16, 21, 26, 32, 39,
   46, 54, 62, 71, 80, 90, 100, 111, 122, 134,
@@ -4416,5 +4417,6 @@ static const uint64_t POW10_SPLIT_2[3133][3] = {
   {                    0u,                    0u,         241525390625u },
   {                    0u,                    0u,          33000000000u },
 };
+// clang-format on
 
 #endif // RYU_D2FIXED_FULL_TABLE_H

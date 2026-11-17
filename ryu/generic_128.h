@@ -30,6 +30,7 @@ typedef __uint128_t uint128_t;
 
 // There's no way to define 128-bit constants in C, so we use little-endian
 // pairs of 64-bit constants.
+// clang-format off
 static const uint64_t GENERIC_POW5_TABLE[POW5_TABLE_SIZE][2] = {
  {                    1u,                    0u },
  {                    5u,                    0u },
@@ -358,6 +359,7 @@ static const uint64_t POW5_INV_ERRORS[154] = {
  0x0010501401051441u, 0x0010501450504401u, 0x4554585440044444u, 0x5155555951450455u,
  0x0040000400105555u, 0x0000000000000001u,
 };
+// clang-format on
 
 // Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 32768.
 static inline uint32_t pow5bits(const int32_t e) {
@@ -387,13 +389,13 @@ static inline void mul_128_256_shift(
   const uint128_t s3 = b03 + b12; // 196 x
   const uint128_t c3 = s3 < b03;  // 324 x
 
-  const uint128_t p0 = s0 + (s1 << 64);                                // 0
-  const uint128_t d0 = p0 < b00;                                       // 128
-  const uint128_t q1 = s2 + (s1 >> 64) + (s3 << 64);                   // 128
-  const uint128_t d1 = q1 < s2;                                        // 256
-  const uint128_t p1 = q1 + (c1 << 64) + d0;                           // 128
-  const uint128_t d2 = p1 < q1;                                        // 256
-  const uint128_t p2 = b13 + (s3 >> 64) + c2 + (c3 << 64) + d1 + d2;   // 256
+  const uint128_t p0 = s0 + (s1 << 64);                              // 0
+  const uint128_t d0 = p0 < b00;                                     // 128
+  const uint128_t q1 = s2 + (s1 >> 64) + (s3 << 64);                 // 128
+  const uint128_t d1 = q1 < s2;                                      // 256
+  const uint128_t p1 = q1 + (c1 << 64) + d0;                         // 128
+  const uint128_t d2 = p1 < q1;                                      // 256
+  const uint128_t p2 = b13 + (s3 >> 64) + c2 + (c3 << 64) + d1 + d2; // 256
 
   if (shift < 128) {
     const uint128_t r0 = corr + ((p0 >> shift) | (p1 << (128 - shift)));

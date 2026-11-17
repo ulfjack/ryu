@@ -23,37 +23,33 @@
 
 // We only test a few entries - we could test the full table instead, but should we?
 static uint32_t EXACT_POW5_IDS[10] = {
-  1, 10, 55, 56, 300, 1000, 2345, 3210, 4968 - 3, 4968 - 1
-};
+    1, 10, 55, 56, 300, 1000, 2345, 3210, 4968 - 3, 4968 - 1};
 
 static uint64_t EXACT_POW5[10][4] = {
- {                    0u,                    0u,                    0u,    90071992547409920u },
- {                    0u,                    0u,                    0u,    83886080000000000u },
- {                    0u, 15708555500268290048u, 14699724349295723422u,   117549435082228750u },
- {                    0u,  5206161169240293376u,  4575641699882439235u,    73468396926392969u },
- {  2042133660145364371u,  9702060195405861314u,  6467325284806654637u,   107597969523956154u },
- { 15128847313296546509u, 11916317791371073891u,   788593023170869613u,   137108429762886488u },
- { 10998857860460266920u,   858411415306315808u, 12732466392391605111u,   136471991906002539u },
- {  5404652432687674341u, 18039986361557197657u,  2228774284272261859u,    94370442653226447u },
- { 15313487127299642753u,  9780770376910163681u, 15213531439620567348u,    93317108016191349u },
- {  7928436552078881485u,   723697829319983520u,   932817143438521969u,    72903990637649492u }
-};
+    {0u, 0u, 0u, 90071992547409920u},
+    {0u, 0u, 0u, 83886080000000000u},
+    {0u, 15708555500268290048u, 14699724349295723422u, 117549435082228750u},
+    {0u, 5206161169240293376u, 4575641699882439235u, 73468396926392969u},
+    {2042133660145364371u, 9702060195405861314u, 6467325284806654637u, 107597969523956154u},
+    {15128847313296546509u, 11916317791371073891u, 788593023170869613u, 137108429762886488u},
+    {10998857860460266920u, 858411415306315808u, 12732466392391605111u, 136471991906002539u},
+    {5404652432687674341u, 18039986361557197657u, 2228774284272261859u, 94370442653226447u},
+    {15313487127299642753u, 9780770376910163681u, 15213531439620567348u, 93317108016191349u},
+    {7928436552078881485u, 723697829319983520u, 932817143438521969u, 72903990637649492u}};
 
 static uint32_t EXACT_INV_POW5_IDS[9] = {
-  10, 55, 56, 300, 1000, 2345, 3210, 4897 - 3, 4897 - 1
-};
+    10, 55, 56, 300, 1000, 2345, 3210, 4897 - 3, 4897 - 1};
 
 static uint64_t EXACT_INV_POW5[10][4] = {
- { 13362655651931650467u,  3917988799323120213u,  9037289074543890586u,   123794003928538027u },
- {   983662216614650042u, 15516934687640009097u,  8839031818921249472u,    88342353238919216u },
- {  1573859546583440066u,  2691002611772552616u,  6763753280790178510u,   141347765182270746u },
- {  1607391579053635167u,   943946735193622172u, 10726301928680150504u,    96512915280967053u },
- {  7238603269427345471u, 17319296798264127544u, 14852913523241959878u,    75740009093741608u },
- {  2734564866961569744u, 13277212449690943834u, 17231454566843360565u,    76093223027199785u },
- {  5348945211244460332u, 14119936934335594321u, 15647307321253222579u,   110040743956546595u },
- {  2848579222248330872u, 15087265905644220040u,  4449739884766224405u,   100774177495370196u },
- {  1432572115632717323u,  9719393440895634811u,  3482057763655621045u,   128990947194073851u }
-};
+    {13362655651931650467u, 3917988799323120213u, 9037289074543890586u, 123794003928538027u},
+    {983662216614650042u, 15516934687640009097u, 8839031818921249472u, 88342353238919216u},
+    {1573859546583440066u, 2691002611772552616u, 6763753280790178510u, 141347765182270746u},
+    {1607391579053635167u, 943946735193622172u, 10726301928680150504u, 96512915280967053u},
+    {7238603269427345471u, 17319296798264127544u, 14852913523241959878u, 75740009093741608u},
+    {2734564866961569744u, 13277212449690943834u, 17231454566843360565u, 76093223027199785u},
+    {5348945211244460332u, 14119936934335594321u, 15647307321253222579u, 110040743956546595u},
+    {2848579222248330872u, 15087265905644220040u, 4449739884766224405u, 100774177495370196u},
+    {1432572115632717323u, 9719393440895634811u, 3482057763655621045u, 128990947194073851u}};
 
 TEST(Generic128Test, generic_computePow5) {
   for (int i = 0; i < 10; i++) {
@@ -78,35 +74,35 @@ TEST(Generic128Test, generic_computeInvPow5) {
 }
 
 TEST(Generic128Test, multipleOfPowerOf5) {
-  ASSERT_EQ(true,  multipleOfPowerOf5(1, 0));
+  ASSERT_EQ(true, multipleOfPowerOf5(1, 0));
   ASSERT_EQ(false, multipleOfPowerOf5(1, 1));
-  ASSERT_EQ(true,  multipleOfPowerOf5(5, 1));
-  ASSERT_EQ(true,  multipleOfPowerOf5(25, 2));
-  ASSERT_EQ(true,  multipleOfPowerOf5(75, 2));
-  ASSERT_EQ(true,  multipleOfPowerOf5(50, 2));
+  ASSERT_EQ(true, multipleOfPowerOf5(5, 1));
+  ASSERT_EQ(true, multipleOfPowerOf5(25, 2));
+  ASSERT_EQ(true, multipleOfPowerOf5(75, 2));
+  ASSERT_EQ(true, multipleOfPowerOf5(50, 2));
   ASSERT_EQ(false, multipleOfPowerOf5(51, 2));
   ASSERT_EQ(false, multipleOfPowerOf5(75, 4));
 }
 
 TEST(Generic128Test, multipleOfPowerOf2) {
-  ASSERT_EQ(true,  multipleOfPowerOf5(1, 0));
+  ASSERT_EQ(true, multipleOfPowerOf5(1, 0));
   ASSERT_EQ(false, multipleOfPowerOf5(1, 1));
-  ASSERT_EQ(true,  multipleOfPowerOf2(2, 1));
-  ASSERT_EQ(true,  multipleOfPowerOf2(4, 2));
-  ASSERT_EQ(true,  multipleOfPowerOf2(8, 2));
-  ASSERT_EQ(true,  multipleOfPowerOf2(12, 2));
+  ASSERT_EQ(true, multipleOfPowerOf2(2, 1));
+  ASSERT_EQ(true, multipleOfPowerOf2(4, 2));
+  ASSERT_EQ(true, multipleOfPowerOf2(8, 2));
+  ASSERT_EQ(true, multipleOfPowerOf2(12, 2));
   ASSERT_EQ(false, multipleOfPowerOf2(13, 2));
   ASSERT_EQ(false, multipleOfPowerOf2(8, 4));
 }
 
 TEST(Generic128Test, mulShift) {
-  uint64_t m[4] = { 0, 0, 2, 0 };
+  uint64_t m[4] = {0, 0, 2, 0};
   ASSERT_EQ(1u, mulShift(1, m, 129));
   ASSERT_EQ(12345u, mulShift(12345, m, 129));
 }
 
 TEST(Generic128Test, mulShiftHuge) {
-  uint64_t m[4] = { 0, 0, 8, 0 };
+  uint64_t m[4] = {0, 0, 8, 0};
   uint128_t f = (((uint128_t) 123) << 64) | 321;
   ASSERT_EQ(f, mulShift(f, m, 131));
 }
@@ -165,7 +161,14 @@ static char* f2s(float f) {
   return result;
 }
 
-#define ASSERT_F2S(a, b) { char* result = f2s(b); ASSERT_STREQ(a, result); free(result); } while (0);
+#define ASSERT_F2S(a, b)     \
+  {                          \
+    char* result = f2s(b);   \
+    ASSERT_STREQ(a, result); \
+    free(result);            \
+  }                          \
+  while (0)                  \
+    ;
 
 static float int32Bits2Float(uint32_t bits) {
   float f;
@@ -254,7 +257,14 @@ static char* d2s(double d) {
   return result;
 }
 
-#define ASSERT_D2S(a, b) { char* result = d2s(b); ASSERT_STREQ(a, result); free(result); } while (0);
+#define ASSERT_D2S(a, b)     \
+  {                          \
+    char* result = d2s(b);   \
+    ASSERT_STREQ(a, result); \
+    free(result);            \
+  }                          \
+  while (0)                  \
+    ;
 
 static double int64Bits2Double(uint64_t bits) {
   double f;
@@ -320,7 +330,14 @@ static char* l2s(long double d) {
   return result;
 }
 
-#define ASSERT_L2S(a, b) { char* result = l2s(b); ASSERT_STREQ(a, result); free(result); } while (0);
+#define ASSERT_L2S(a, b)     \
+  {                          \
+    char* result = l2s(b);   \
+    ASSERT_STREQ(a, result); \
+    free(result);            \
+  }                          \
+  while (0)                  \
+    ;
 
 TEST(Generic128Test, long_double_to_fd128) {
   if (sizeof(long double) != 10) {

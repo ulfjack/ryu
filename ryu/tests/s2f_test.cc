@@ -20,7 +20,12 @@
 #include "ryu/ryu_parse.h"
 #include "third_party/gtest/gtest.h"
 
-#define EXPECT_S2F(a, b) do { float value; EXPECT_EQ(SUCCESS, s2f(b, &value)); EXPECT_EQ(a, value); } while (0);
+#define EXPECT_S2F(a, b)                \
+  do {                                  \
+    float value;                        \
+    EXPECT_EQ(SUCCESS, s2f(b, &value)); \
+    EXPECT_EQ(a, value);                \
+  } while (0);
 
 TEST(S2fTest, Basic) {
   EXPECT_S2F(0.0f, "0");

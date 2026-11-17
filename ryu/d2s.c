@@ -420,7 +420,7 @@ static inline int to_chars(const floating_decimal_64 v, const bool sign, char* c
 }
 
 static inline bool d2d_small_int(const uint64_t ieeeMantissa, const uint32_t ieeeExponent,
-  floating_decimal_64* const v) {
+                                 floating_decimal_64* const v) {
   const uint64_t m2 = (1ull << DOUBLE_MANTISSA_BITS) | ieeeMantissa;
   const int32_t e2 = (int32_t) ieeeExponent - DOUBLE_BIAS - DOUBLE_MANTISSA_BITS;
 

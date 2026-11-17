@@ -53,27 +53,27 @@ struct mean_and_variance {
 
 typedef struct mean_and_variance mean_and_variance;
 
-  void init(mean_and_variance* mv) {
-    mv->n = 0;
-    mv->mean = 0;
-    mv->m2 = 0;
-  }
+void init(mean_and_variance* mv) {
+  mv->n = 0;
+  mv->mean = 0;
+  mv->m2 = 0;
+}
 
-  void update(mean_and_variance* mv, double x) {
-    ++mv->n;
-    double d = x - mv->mean;
-    mv->mean += d / mv->n;
-    double d2 = x - mv->mean;
-    mv->m2 += d * d2;
-  }
+void update(mean_and_variance* mv, double x) {
+  ++mv->n;
+  double d = x - mv->mean;
+  mv->mean += d / mv->n;
+  double d2 = x - mv->mean;
+  mv->m2 += d * d2;
+}
 
-  double variance(mean_and_variance* mv) {
-    return mv->m2 / (mv->n - 1);
-  }
+double variance(mean_and_variance* mv) {
+  return mv->m2 / (mv->n - 1);
+}
 
-  double stddev(mean_and_variance* mv) {
-    return sqrt(variance(mv));
-  }
+double stddev(mean_and_variance* mv) {
+  return sqrt(variance(mv));
+}
 
 double generate_double(uint64_t* r) {
   *r = RandomU64();
@@ -97,7 +97,7 @@ static int bench64_fixed(const uint32_t samples, const uint32_t iterations, cons
     uint64_t r = 0;
     const double f = generate_double(&r);
 
-//    printf("%f\n", f);
+    //    printf("%f\n", f);
     clock_t t1 = clock();
     for (int j = 0; j < iterations; ++j) {
       d2fixed_buffered(f, precision, bufferown);
@@ -121,7 +121,7 @@ static int bench64_fixed(const uint32_t samples, const uint32_t iterations, cons
       printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
     }
 
-//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     if (strcmp(bufferown, buffer) != 0) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
@@ -150,8 +150,8 @@ static int bench64_exp(const uint32_t samples, const uint32_t iterations, const 
     uint64_t r = 0;
     const double f = generate_double(&r);
 
-//    printf("%.20e\n", f);
-//    printf("For %16" PRIX64 "\n", r);
+    //    printf("%.20e\n", f);
+    //    printf("For %16" PRIX64 "\n", r);
     clock_t t1 = clock();
     for (int j = 0; j < iterations; ++j) {
       d2exp_buffered(f, precision, bufferown);
@@ -175,7 +175,7 @@ static int bench64_exp(const uint32_t samples, const uint32_t iterations, const 
       printf("%s,%" PRIu64 ",%f,%f\n", bufferown, r, delta1, delta2);
     }
 
-//    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
+    //    printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     if ((strcmp(bufferown, buffer) != 0) && !verbose) {
       printf("For %16" PRIX64 " %28s %28s\n", r, bufferown, buffer);
     }
@@ -219,8 +219,8 @@ int main(int argc, char** argv) {
     }
   }
   if (false) {
-//    double d = int64Bits2Double(0x426E5FDA4A181F94);
-//    double d = int64Bits2Double(0xC27EF2838AD07A1A);
+    //    double d = int64Bits2Double(0x426E5FDA4A181F94);
+    //    double d = int64Bits2Double(0xC27EF2838AD07A1A);
     double d = int64Bits2Double(0x426C19FD2EFA7294);
     printf("%.10f\n", 1043657281728.98681640625);
     printf("%.10f\n", -2126683614471.63134765625);

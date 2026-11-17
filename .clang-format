@@ -1,0 +1,7 @@
+BasedOnStyle: LLVM
+ColumnLimit: 0
+SpaceAfterCStyleCast: true
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortBlocksOnASingleLine: Always
+SortIncludes: Never
+PointerAlignment: Left
