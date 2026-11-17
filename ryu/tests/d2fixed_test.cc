@@ -30,6 +30,7 @@ struct test_case {
 };
 
 // These values test every power of ten that's within the range of doubles.
+// clang-format off
 const test_case all_powers_of_ten[] = {
   {
     1e-323,
@@ -35619,6 +35620,7 @@ const test_case all_binary_exponents[] = {
     "6195117678217681054268005181200990732288e+308"
   },
 };
+// clang-format on
 
 static double int64Bits2Double(uint64_t bits) {
   double f;
